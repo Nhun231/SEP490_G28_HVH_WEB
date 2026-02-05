@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { IRoute } from '@/types/types';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import React, { PropsWithChildren, useContext } from 'react';
 import { Scrollbars } from 'react-custom-scrollbars-2';
 import { HiX } from 'react-icons/hi';
@@ -65,6 +66,13 @@ function Sidebar(props: SidebarProps) {
                 <HiX />
               </span>
               <div className={`mt-8 flex items-center justify-center`}>
+                <Image
+                  src="/img/logo.png"
+                  alt="Logo"
+                  width={40}
+                  height={40}
+                  className="rounded-sm mr-5"
+                />
                 <h5 className="me-2 text-2xl font-bold leading-5 text-zinc-950 dark:text-white">
                   Hà Nội Thiện Nguyện
                 </h5>

@@ -4,7 +4,9 @@
 import NavLink from '@/components/link/NavLink';
 import { IRoute } from '@/types/types';
 import { usePathname } from 'next/navigation';
-import { PropsWithChildren, useCallback } from 'react';
+import { PropsWithChildren, useCallback, useState } from 'react';
+import React from 'react';
+import { HiChevronDown } from 'react-icons/hi2';
 
 interface SidebarLinksProps extends PropsWithChildren {
   routes: IRoute[];
@@ -13,8 +15,39 @@ interface SidebarLinksProps extends PropsWithChildren {
 
 export function SidebarLinks(props: SidebarLinksProps) {
   const pathname = usePathname();
+  const [openCollapse, setOpenCollapse] = useState<{ [key: string]: boolean }>(
+    {}
+  );
 
   const { routes } = props;
+
+  // Auto-open parent collapse if a child is active
+  React.useEffect(() => {
+    const newOpenCollapse: { [key: string]: boolean } = {};
+
+    const checkAndOpenParent = (routes: IRoute[], level = 0) => {
+      routes.forEach((route, key) => {
+        const routeKey = `${level}-${key}`;
+        if (route.collapse && route.items) {
+          const hasActiveChild = route.items.some(
+            (item) =>
+              pathname === item.path ||
+              (pathname?.startsWith(item.path.split('?')[0]) &&
+                item.path !== '#')
+          );
+          if (hasActiveChild) {
+            newOpenCollapse[routeKey] = true;
+          }
+        }
+        if (route.items) {
+          checkAndOpenParent(route.items, level + 1);
+        }
+      });
+    };
+
+    checkAndOpenParent(routes);
+    setOpenCollapse(newOpenCollapse);
+  }, [pathname, routes]);
 
   // verifies if routeName is the one active (in browser input)
   const activeRoute = useCallback(
@@ -23,16 +56,13 @@ export function SidebarLinks(props: SidebarLinksProps) {
     },
     [pathname]
   );
-  const activeLayout = useCallback(
-    (routeName: string) => {
-      return pathname?.includes('/ai');
-    },
-    [pathname]
-  );
 
   // this function creates the links and collapses that appear in the sidebar (left menu)
-  const createLinks = (routes: IRoute[]) => {
+  const createLinks = (routes: IRoute[], level = 0) => {
     return routes.map((route, key) => {
+      const routeKey = `${level}-${key}`;
+      const isOpen = openCollapse[routeKey] || false;
+
       if (route.disabled) {
         return (
           <div
@@ -55,11 +85,44 @@ export function SidebarLinks(props: SidebarLinksProps) {
             </div>
           </div>
         );
+      } else if (route.collapse && route.items) {
+        return (
+          <div key={key}>
+            <button
+              onClick={() =>
+                setOpenCollapse({
+                  ...openCollapse,
+                  [`${level}-${key}`]: !isOpen
+                })
+              }
+              className={`flex w-full max-w-full items-center justify-between rounded-lg py-3 pl-8 font-medium text-zinc-950 dark:text-zinc-400`}
+            >
+              <div className="flex w-full items-center">
+                <div
+                  className={`text mr-3 mt-1.5 text-zinc-950 dark:text-white`}
+                >
+                  {route.icon}
+                </div>
+                <p className={`mr-auto text-sm`}>{route.name}</p>
+              </div>
+              <HiChevronDown
+                className={`mr-3 mt-1.5 transition-transform ${
+                  isOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+            {isOpen && (
+              <div className="ml-4">{createLinks(route.items, level + 1)}</div>
+            )}
+          </div>
+        );
       } else {
         return (
           <div key={key}>
             <div
-              className={`flex w-full max-w-full items-center justify-between rounded-lg py-3 pl-8 ${
+              className={`flex w-full max-w-full items-center justify-between rounded-lg py-3 pl-${
+                level > 0 ? '12' : '8'
+              } ${
                 activeRoute(route.path.toLowerCase())
                   ? 'bg-zinc-950 font-semibold text-white dark:bg-white dark:text-zinc-950'
                   : 'font-medium text-zinc-950 dark:text-zinc-400'

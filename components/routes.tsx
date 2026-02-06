@@ -57,7 +57,7 @@ export const routes: IRoute[] = [
     items: [
       {
         name: 'Sự kiện chờ phê duyệt',
-        path: '/dashboard/pending-approval?tab=events',
+        path: '/dashboard/pending-events',
         collapse: false
       },
       {

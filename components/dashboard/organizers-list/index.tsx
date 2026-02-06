@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { Eye, Lock, Plus } from 'lucide-react';
+import { Eye, Lock, Plus, Pencil } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import {
   Dialog,
@@ -255,16 +255,27 @@ const mockOrganizers = [
 ];
 
 export default function OrganizersList(props: Props) {
+  type Organizer = (typeof mockOrganizers)[0];
   const [organizers, setOrganizers] = useState(mockOrganizers);
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedUser, setSelectedUser] = useState<
-    (typeof mockOrganizers)[0] | null
-  >(null);
+  const [selectedUser, setSelectedUser] = useState<Organizer | null>(null);
   const [openDetailModal, setOpenDetailModal] = useState(false);
-  const [selectedLockUser, setSelectedLockUser] = useState<
-    (typeof mockOrganizers)[0] | null
-  >(null);
+  const [selectedLockUser, setSelectedLockUser] = useState<Organizer | null>(
+    null
+  );
   const [openLockModal, setOpenLockModal] = useState(false);
+  const [openEditModal, setOpenEditModal] = useState(false);
+  const [selectedEditUser, setSelectedEditUser] = useState<Organizer | null>(
+    null
+  );
+  const [editOrganizer, setEditOrganizer] = useState({
+    orgName: '',
+    fullName: '',
+    cccd: '',
+    phone: '',
+    email: '',
+    dob: ''
+  });
   const [searchField, setSearchField] = useState('name');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -289,6 +300,23 @@ export default function OrganizersList(props: Props) {
     dob: ''
   });
   const pageSize = 10;
+  const formatDobForInput = (dob: string) => {
+    if (!dob) return '';
+    if (dob.includes('/')) {
+      const [day, month, year] = dob.split('/');
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+    return dob;
+  };
+
+  const formatDobForDisplay = (dob: string) => {
+    if (!dob) return '';
+    if (dob.includes('-')) {
+      const [year, month, day] = dob.split('-');
+      return `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${year}`;
+    }
+    return dob;
+  };
   const filteredOrganizers = useMemo(() => {
     const parseDob = (dob: string) => {
       const [day, month, year] = dob.split('/').map(Number);
@@ -381,6 +409,21 @@ export default function OrganizersList(props: Props) {
     }
   };
 
+  const handleEdit = (orgId: number) => {
+    const org = organizers.find((o) => o.id === orgId);
+    if (!org) return;
+    setSelectedEditUser(org);
+    setEditOrganizer({
+      orgName: org.orgName,
+      fullName: org.fullName,
+      cccd: org.cccd,
+      phone: org.phone,
+      email: org.email,
+      dob: formatDobForInput(org.dob)
+    });
+    setOpenEditModal(true);
+  };
+
   const handleConfirmLock = () => {
     if (!selectedLockUser) return;
 
@@ -395,6 +438,27 @@ export default function OrganizersList(props: Props) {
       )
     );
     setOpenLockModal(false);
+  };
+
+  const handleConfirmEdit = () => {
+    if (!selectedEditUser) return;
+
+    setOrganizers((prev) =>
+      prev.map((org) =>
+        org.id === selectedEditUser.id
+          ? {
+              ...org,
+              orgName: editOrganizer.orgName,
+              fullName: editOrganizer.fullName,
+              cccd: editOrganizer.cccd,
+              phone: editOrganizer.phone,
+              email: editOrganizer.email,
+              dob: formatDobForDisplay(editOrganizer.dob)
+            }
+          : org
+      )
+    );
+    setOpenEditModal(false);
   };
 
   const handleOrgSearch = (query: string) => {
@@ -705,6 +769,14 @@ export default function OrganizersList(props: Props) {
                           variant="outline"
                           size="icon"
                           className="h-8 w-8"
+                          onClick={() => handleEdit(org.id)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
                           onClick={() => handleLock(org.id)}
                         >
                           <Lock className="h-4 w-4" />
@@ -853,6 +925,140 @@ export default function OrganizersList(props: Props) {
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+        {/* Edit Organizer Modal */}
+        <Dialog open={openEditModal} onOpenChange={setOpenEditModal}>
+          <DialogContent className="max-w-2xl bg-white dark:bg-white">
+            <DialogHeader>
+              <DialogTitle className="text-blue-600">
+                Cập nhật thông tin người tổ chức
+              </DialogTitle>
+              <DialogDescription>
+                Chỉnh sửa thông tin cơ bản của người tổ chức
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  Tên tổ chức
+                </label>
+                <Input
+                  placeholder="Nhập tên tổ chức"
+                  value={editOrganizer.orgName}
+                  onChange={(e) =>
+                    setEditOrganizer({
+                      ...editOrganizer,
+                      orgName: e.target.value
+                    })
+                  }
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  Họ và tên
+                </label>
+                <Input
+                  placeholder="Nhập họ và tên đầy đủ"
+                  value={editOrganizer.fullName}
+                  onChange={(e) =>
+                    setEditOrganizer({
+                      ...editOrganizer,
+                      fullName: e.target.value
+                    })
+                  }
+                  className="mt-1"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    Số CCCD
+                  </label>
+                  <Input
+                    placeholder="Nhập 12 số CCCD"
+                    value={editOrganizer.cccd}
+                    onChange={(e) =>
+                      setEditOrganizer({
+                        ...editOrganizer,
+                        cccd: e.target.value
+                      })
+                    }
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    Số điện thoại
+                  </label>
+                  <Input
+                    placeholder="Nhập số điện thoại"
+                    value={editOrganizer.phone}
+                    onChange={(e) =>
+                      setEditOrganizer({
+                        ...editOrganizer,
+                        phone: e.target.value
+                      })
+                    }
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  Email
+                </label>
+                <Input
+                  type="email"
+                  placeholder="Nhập địa chỉ email"
+                  value={editOrganizer.email}
+                  onChange={(e) =>
+                    setEditOrganizer({
+                      ...editOrganizer,
+                      email: e.target.value
+                    })
+                  }
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  Ngày sinh
+                </label>
+                <Input
+                  type="date"
+                  value={editOrganizer.dob}
+                  onChange={(e) =>
+                    setEditOrganizer({
+                      ...editOrganizer,
+                      dob: e.target.value
+                    })
+                  }
+                  className="mt-1"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setOpenEditModal(false)}
+                >
+                  Hủy
+                </Button>
+                <Button
+                  onClick={handleConfirmEdit}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Cập nhật
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
         {/* Lock Confirmation Modal */}

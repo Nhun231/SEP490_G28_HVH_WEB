@@ -78,7 +78,7 @@
     "cmdk": "^1.0.0",
     "crypto": "^1.0.1",
     "date-fns": "^3.6.0",
-    "embla-carousel-react": "^8.5.2",
+    "embla-carousel-react": "^8.6.0",
     "endent": "^2.1.0",
     "eventsource-parser": "^1.1.2",
     "framer-motion": "^11.2.6",

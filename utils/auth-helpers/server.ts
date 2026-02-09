@@ -96,7 +96,26 @@ export async function signInWithPassword(formData: FormData) {
     );
   } else if (data.user) {
     cookieStore.set('preferredSignInView', 'password_signin', { path: '/' });
-    redirectPath = getStatusRedirect('/', 'Success!', 'You are now signed in.');
+    
+    // Get role from JWT (app_metadata)
+    const role = data.user.app_metadata?.role;
+    
+    // Redirect based on role
+    switch (role) {
+      case 'SYS_ADMIN':
+        redirectPath = getStatusRedirect('/dashboard/main', 'Success!', 'Chào mừng Admin!');
+        break;
+      case 'ORG_MANAGER':
+        redirectPath = getStatusRedirect('/org-mng-dashboard', 'Success!', 'Chào mừng Quản lý tổ chức!');
+        break;
+      default:
+        // No role assigned or unknown role
+        redirectPath = getErrorRedirect(
+          '/dashboard/signin/password_signin',
+          'Không có quyền truy cập',
+          'Tài khoản của bạn chưa được gán vai trò.'
+        );
+    }
   } else {
     redirectPath = getErrorRedirect(
       '/dashboard/signin/password_signin',

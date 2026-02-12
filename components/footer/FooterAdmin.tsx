@@ -39,15 +39,6 @@ export default function Footer() {
               Điều khoản & Điều kiện
             </a>
           </li>
-          <li>
-            <a
-              target="blank"
-              href="https://blog.horizon-ui.com/"
-              className="text-sm font-medium text-zinc-500 hover:text-zinc-950 dark:text-zinc-400"
-            >
-              Chính sách hoàn tiền
-            </a>
-          </li>
         </ul>
       </div>
     </div>

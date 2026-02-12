@@ -29,6 +29,7 @@ interface PendingAccountVerification {
   reviewed_by: string | null;
   reviewed_at: string | null;
   volunteer_id: string | null;
+  note: string | null;
 }
 
 interface Props {
@@ -167,6 +168,17 @@ export default function PendingAccountDetail({
                   </div>
                 </div>
               </div>
+
+              {verification.note ? (
+                <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+                  <p className="text-lg font-bold text-zinc-800 dark:text-zinc-200">
+                    Ghi chú
+                  </p>
+                  <p className="mt-3 whitespace-pre-wrap text-gray-700">
+                    {verification.note}
+                  </p>
+                </div>
+              ) : null}
 
               <div className="flex flex-wrap justify-end gap-2">
                 <Button

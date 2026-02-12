@@ -371,6 +371,11 @@ export default function AboutUsPage() {
 
             <div className="panel team-grid reveal">
               <div className="avatars reveal" aria-label="Team photos">
+                <img
+                  className="avatar"
+                  src="/img/members/moon.jpg"
+                  alt="Moon"
+                />
                 <img className="avatar" src="/img/members/dat.jpg" alt="Dat" />
                 <img
                   className="avatar"
@@ -386,11 +391,6 @@ export default function AboutUsPage() {
                   className="avatar"
                   src="/img/members/kien.png"
                   alt="Kien"
-                />
-                <img
-                  className="avatar"
-                  src="/img/members/moon.jpg"
-                  alt="Moon"
                 />
                 <img className="avatar" src="/img/members/na.jpg" alt="Na" />
               </div>

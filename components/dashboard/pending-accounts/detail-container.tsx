@@ -66,7 +66,8 @@ export default function PendingAccountDetailContainer({
         created_at: data.createdAt ?? null,
         reviewed_by: data.reviewBy ?? null,
         reviewed_at: data.reviewAt ?? null,
-        volunteer_id: null
+        volunteer_id: null,
+        note: data.note ?? null
       }
     : null;
 

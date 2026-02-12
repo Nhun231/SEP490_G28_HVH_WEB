@@ -31,15 +31,6 @@ export default function Footer() {
             Giấy phép
           </a>
         </li>
-        <li>
-          <a
-            className="text-[10px] font-medium text-zinc-950 dark:text-zinc-400 lg:text-sm"
-            target="_blank"
-            href="https://horizon-ui.notion.site/Refund-Policy-1b0983287b92486cb6b18071b2343ac9"
-          >
-            Chính sách hoàn tiền
-          </a>
-        </li>
       </ul>
     </div>
   );

@@ -4,6 +4,7 @@ import { createClient } from '@/utils/supabase/server';
 import { getUserWithRole, getUserProfile } from '@/utils/supabase/queries';
 import { redirect } from 'next/navigation';
 import { MdAdd } from 'react-icons/md';
+import Link from 'next/link';
 
 export default async function HostsPage() {
   const supabase = await createClient();
@@ -28,10 +29,13 @@ export default async function HostsPage() {
               Danh sách và quản lý các host trong tổ chức
             </p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-[#42A5F5] hover:bg-[#64B5F6] text-white rounded-lg font-medium transition-colors shadow-md">
+          <Link 
+            href="/org-mng-dashboard/hosts/create"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#42A5F5] hover:bg-[#64B5F6] text-white rounded-lg font-medium transition-colors shadow-md"
+          >
             <MdAdd className="text-xl" />
             <span>Tạo Host mới</span>
-          </button>
+          </Link>
         </div>
 
         {/* Host Management Component */}

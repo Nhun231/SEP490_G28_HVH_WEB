@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/layout';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -47,8 +48,7 @@ const mockOrganizations: OrganizationItem[] = [
     reviews: 134,
     volunteers: 15420,
     donations: 328450,
-    imageUrl:
-      'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=120&q=80',
+    imageUrl: 'https://picsum.photos/seed/org01/120/120',
     tags: [
       { label: 'Cộng đồng', variant: 'outline' },
       { label: 'Dự án giáo dục', variant: 'secondary' }
@@ -65,8 +65,7 @@ const mockOrganizations: OrganizationItem[] = [
     reviews: 98,
     volunteers: 23600,
     donations: 456780,
-    imageUrl:
-      'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=120&q=80',
+    imageUrl: 'https://picsum.photos/seed/org02/120/120',
     tags: [
       { label: 'Y tế', variant: 'outline' },
       { label: 'Cứu trợ khẩn cấp', variant: 'secondary' }
@@ -83,8 +82,7 @@ const mockOrganizations: OrganizationItem[] = [
     reviews: 76,
     volunteers: 6805,
     donations: 124002,
-    imageUrl:
-      'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=120&q=80',
+    imageUrl: 'https://picsum.photos/seed/org03/120/120',
     tags: [
       { label: 'Trẻ em', variant: 'outline' },
       { label: 'Phúc lợi xã hội', variant: 'secondary' }
@@ -101,8 +99,7 @@ const mockOrganizations: OrganizationItem[] = [
     reviews: 45,
     volunteers: 1180,
     donations: 34560,
-    imageUrl:
-      'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=120&q=80',
+    imageUrl: 'https://picsum.photos/seed/org04/120/120',
     tags: [
       { label: 'Môi trường', variant: 'outline' },
       { label: 'Tình nguyện', variant: 'secondary' }
@@ -119,8 +116,7 @@ const mockOrganizations: OrganizationItem[] = [
     reviews: 112,
     volunteers: 12340,
     donations: 267890,
-    imageUrl:
-      'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=120&q=80',
+    imageUrl: 'https://picsum.photos/seed/org05/120/120',
     tags: [
       { label: 'Cứu trợ', variant: 'outline' },
       { label: 'Toàn cầu', variant: 'secondary' }
@@ -150,6 +146,7 @@ const renderStars = (rating: number) => {
 };
 
 export default function OrganizationsPage({ user, userDetails }: Props) {
+  const router = useRouter();
   const [searchType, setSearchType] = useState<'name' | 'taxCode'>('name');
   const [searchValue, setSearchValue] = useState('');
 
@@ -246,7 +243,8 @@ export default function OrganizationsPage({ user, userDetails }: Props) {
           {mockOrganizations.map((org) => (
             <Card
               key={org.id}
-              className="border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800"
+              className="cursor-pointer border-zinc-200 bg-white p-5 shadow-sm transition-all hover:shadow-md dark:border-zinc-800"
+              onClick={() => router.push(`/dashboard/organizations/${org.id}`)}
             >
               <div className="flex flex-wrap gap-4">
                 <img

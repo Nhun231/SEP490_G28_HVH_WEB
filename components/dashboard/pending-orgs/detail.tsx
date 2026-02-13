@@ -4,8 +4,19 @@ import DashboardLayout from '@/components/layout';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
+import { useVerifyOrgRegistration } from '@/hooks/features/approve-reject-organization/useVerifyOrgRegistration';
 import { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 interface OrgRegistrationDetail {
   id: string;
@@ -109,6 +120,57 @@ const splitEvidenceString = (value?: string | null) => {
 
 export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
   const router = useRouter();
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+  const [openRejectModal, setOpenRejectModal] = useState(false);
+  const [openApproveModal, setOpenApproveModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+
+  const { trigger: verify, isMutating: isVerifying } = useVerifyOrgRegistration(
+    {
+      id: detail?.id || '',
+      baseUrl: apiBaseUrl
+    }
+  );
+
+  const handleApprove = async () => {
+    if (!detail?.id) return;
+    try {
+      await verify({ approve: true });
+      setOpenApproveModal(false);
+      toast.success('Đã phê duyệt tổ chức.');
+      router.refresh();
+      router.push('/dashboard/pending-orgs');
+    } catch (error) {
+      setOpenApproveModal(false);
+      toast.error('Không thể phê duyệt', {
+        description:
+          error instanceof Error ? error.message : 'Vui lòng thử lại.'
+      });
+      console.error('Approve organization error:', error);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!detail?.id) return;
+    const reason = rejectReason.trim();
+    if (!reason) return;
+
+    try {
+      await verify({ approve: false, rejectionReason: reason });
+      setOpenRejectModal(false);
+      setRejectReason('');
+      toast.success('Đã từ chối tổ chức.');
+      router.refresh();
+      router.push('/dashboard/pending-orgs');
+    } catch (error) {
+      setOpenRejectModal(false);
+      toast.error('Không thể từ chối', {
+        description:
+          error instanceof Error ? error.message : 'Vui lòng thử lại.'
+      });
+      console.error('Reject organization error:', error);
+    }
+  };
 
   const evidenceUrls = detail?.otherEvidencesUrls ?? [];
   const organizationEvidenceUrls = splitEvidenceString(
@@ -325,9 +387,90 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
                 )}
               </div>
             </div>
+            <div className="mt-6 flex flex-wrap justify-end gap-2">
+              <Button
+                className="bg-red-600 text-white hover:bg-red-700"
+                onClick={() => setOpenRejectModal(true)}
+                disabled={isVerifying || !detail?.id}
+              >
+                Từ chối
+              </Button>
+              <Button
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={() => setOpenApproveModal(true)}
+                disabled={isVerifying || !detail?.id}
+              >
+                Phê duyệt
+              </Button>
+            </div>
           </Card>
         )}
       </div>
+
+      <Dialog open={openRejectModal} onOpenChange={setOpenRejectModal}>
+        <DialogContent className="bg-white dark:bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-black">Từ chối tổ chức</DialogTitle>
+            <DialogDescription>
+              Vui lòng nhập lý do từ chối để gửi lại cho tổ chức.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2">
+            <label className="text-sm font-medium text-zinc-700">
+              Lý do từ chối
+            </label>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="Nhập lý do từ chối..."
+              className="min-h-[120px] w-full rounded-md border border-zinc-200 bg-white p-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              className="bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+              onClick={() => setOpenRejectModal(false)}
+              disabled={isVerifying}
+            >
+              Hủy
+            </Button>
+            <Button
+              className="bg-red-600 text-white hover:bg-red-700"
+              onClick={handleReject}
+              disabled={isVerifying || !rejectReason.trim()}
+            >
+              {isVerifying ? 'Đang xử lý...' : 'Xác nhận từ chối'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={openApproveModal} onOpenChange={setOpenApproveModal}>
+        <DialogContent className="bg-white dark:bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-black">Phê duyệt tổ chức</DialogTitle>
+            <DialogDescription>
+              Bạn có chắc chắn muốn phê duyệt tổ chức này không?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              onClick={() => setOpenApproveModal(false)}
+              className="bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+              disabled={isVerifying}
+            >
+              Hủy
+            </Button>
+            <Button
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={handleApprove}
+              disabled={isVerifying}
+            >
+              {isVerifying ? 'Đang xử lý...' : 'Xác nhận phê duyệt'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }

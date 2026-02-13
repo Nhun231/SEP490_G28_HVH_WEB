@@ -11,9 +11,11 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
+import { useVerifyIdentity } from '@/hooks/features/identity-verification/useVerifyIdentity';
 import { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 interface PendingAccountVerification {
   id: string;
@@ -58,11 +60,67 @@ export default function PendingAccountDetail({
   verification
 }: Props) {
   const router = useRouter();
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
+
   const [openRejectModal, setOpenRejectModal] = useState(false);
   const [openApproveModal, setOpenApproveModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [accountName, setAccountName] = useState('');
   const isApproveEnabled = accountName.trim().length > 0;
+
+  const { trigger: verify, isMutating: isVerifying } = useVerifyIdentity({
+    id: verification?.id || '',
+    baseUrl: apiBaseUrl
+  });
+
+  const handleApprove = async () => {
+    try {
+      await verify(
+        {
+          approve: true,
+          rejectionReason: null,
+          fullName: accountName
+        },
+        { throwOnError: true }
+      );
+      setOpenApproveModal(false);
+      toast.success('Đã phê duyệt tài khoản.');
+      router.refresh();
+      router.push('/dashboard/pending-accounts');
+    } catch (error) {
+      setOpenApproveModal(false);
+      toast.error('Không thể phê duyệt', {
+        description:
+          error instanceof Error ? error.message : 'Vui lòng thử lại.'
+      });
+      console.error('Approve error:', error);
+    }
+  };
+
+  const handleReject = async () => {
+    try {
+      await verify(
+        {
+          approve: false,
+          rejectionReason: rejectReason,
+          fullName: accountName
+        },
+        { throwOnError: true }
+      );
+      setOpenRejectModal(false);
+      setRejectReason('');
+      toast.success('Đã từ chối tài khoản.');
+      router.refresh();
+      router.push('/dashboard/pending-accounts');
+    } catch (error) {
+      setOpenRejectModal(false);
+      toast.error('Không thể từ chối', {
+        description:
+          error instanceof Error ? error.message : 'Vui lòng thử lại.'
+      });
+      console.error('Reject error:', error);
+    }
+  };
 
   return (
     <DashboardLayout
@@ -184,13 +242,14 @@ export default function PendingAccountDetail({
                 <Button
                   className="bg-red-600 text-white hover:bg-red-700"
                   onClick={() => setOpenRejectModal(true)}
+                  disabled={isVerifying}
                 >
                   Từ chối
                 </Button>
                 <Button
                   className="bg-blue-600 hover:bg-blue-700"
                   onClick={() => setOpenApproveModal(true)}
-                  disabled={!isApproveEnabled}
+                  disabled={!isApproveEnabled || isVerifying}
                   title={
                     isApproveEnabled ? undefined : 'Vui lòng nhập tên tài khoản'
                   }
@@ -226,14 +285,16 @@ export default function PendingAccountDetail({
             <Button
               className="bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
               onClick={() => setOpenRejectModal(false)}
+              disabled={isVerifying}
             >
               Hủy
             </Button>
             <Button
               className="bg-red-600 text-white hover:bg-red-700"
-              onClick={() => setOpenRejectModal(false)}
+              onClick={handleReject}
+              disabled={isVerifying || !rejectReason.trim()}
             >
-              Xác nhận từ chối
+              {isVerifying ? 'Đang xử lý...' : 'Xác nhận từ chối'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -253,14 +314,16 @@ export default function PendingAccountDetail({
             <Button
               onClick={() => setOpenApproveModal(false)}
               className="bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+              disabled={isVerifying}
             >
               Hủy
             </Button>
             <Button
               className="bg-blue-600 hover:bg-blue-700"
-              onClick={() => setOpenApproveModal(false)}
+              onClick={handleApprove}
+              disabled={isVerifying}
             >
-              Xác nhận phê duyệt
+              {isVerifying ? 'Đang xử lý...' : 'Xác nhận phê duyệt'}
             </Button>
           </DialogFooter>
         </DialogContent>

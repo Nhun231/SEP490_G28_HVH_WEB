@@ -1,6 +1,7 @@
 // Auth Imports
 import { IRoute } from '@/types/types';
 import { Settings } from 'lucide-react';
+import { Building } from 'lucide-react';
 import {
   HiOutlineCpuChip,
   HiOutlineDocumentText,
@@ -43,6 +44,12 @@ export const routes: IRoute[] = [
         collapse: false
       }
     ]
+  },
+  {
+    name: 'Quản lý tổ chức',
+    path: '/dashboard/organizations',
+    icon: <Building className="-mt-[7px] h-4 w-4 stroke-2 text-inherit" />,
+    collapse: false
   },
   {
     name: 'Chờ phê duyệt',

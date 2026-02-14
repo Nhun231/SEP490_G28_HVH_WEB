@@ -22,7 +22,6 @@ export async function POST(request: NextRequest) {
     }
     
     // Forward request to backend API
-    // Backend expects { requests: [...] } structure even for single create
     const response = await fetch('http://localhost:8080/api/v1/host/create-account', {
       method: 'POST',
       headers,
@@ -55,31 +54,8 @@ export async function POST(request: NextRequest) {
     let errorMessage = '';
     
     // Check in raw text
-    if (rawText && (
-      rawText.includes('Email đã được sử dụng') ||
-      rawText.includes('email') && rawText.includes('đã tồn tại') ||
-      rawText.includes('already exists') ||
-      rawText.includes('duplicate')
-    )) {
+    if (rawText && rawText.includes('Email đã được sử dụng')) {
       errorMessage = rawText;
-    }
-    
-    // Check in parsed data
-    if (!errorMessage && data) {
-      if (data.message && typeof data.message === 'string') {
-        const msg = data.message.toLowerCase();
-        if (msg.includes('email') && (
-          msg.includes('đã được sử dụng') ||
-          msg.includes('đã tồn tại') ||
-          msg.includes('already exists') ||
-          msg.includes('duplicate')
-        )) {
-          errorMessage = data.message;
-        }
-      }
-      if (!errorMessage && data.error) {
-        errorMessage = data.error;
-      }
     }
 
     // If error detected, return error response

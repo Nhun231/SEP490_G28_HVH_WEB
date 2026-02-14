@@ -109,12 +109,12 @@ export default function BulkCreateModal({ isOpen, onClose }: BulkCreateModalProp
           }
         }
 
-        // Get ward/district from Excel
-        const rawAddress = String(row['Địa chỉ'] || '').trim();
-        // Format address with "Hà Nội, " prefix if not already present
-        let formattedAddress = rawAddress;
-        if (rawAddress && !rawAddress.includes('Hà Nội')) {
-          formattedAddress = `Hà Nội, ${rawAddress}`;
+        // Get ward/district from Excel column "Phường/Xã"
+        const ward = String(row['Phường/Xã'] || '').trim();
+        // Format address with "Hà Nội, " prefix
+        let formattedAddress = '';
+        if (ward) {
+          formattedAddress = ward.includes('Hà Nội') ? ward : `Hà Nội, ${ward}`;
         }
 
         return {
@@ -131,7 +131,7 @@ export default function BulkCreateModal({ isOpen, onClose }: BulkCreateModalProp
       // Validate required fields (after trimming)
       const invalidRows = hosts.filter(h => !h.fullName || !h.email || !h.phone || !h.address || !h.detailAddress);
       if (invalidRows.length > 0) {
-        setError(`Có ${invalidRows.length} hàng thiếu thông tin bắt buộc (Họ tên, Email, SĐT, Địa chỉ, Địa chỉ chi tiết)`);
+        setError(`Có ${invalidRows.length} hàng thiếu thông tin bắt buộc (Họ tên, Email, SĐT, Phường/Xã, Địa chỉ chi tiết)`);
         return;
       }
 
@@ -160,7 +160,7 @@ export default function BulkCreateModal({ isOpen, onClose }: BulkCreateModalProp
         'Số điện thoại': '0901234567',
         'Ngày sinh': '1990-01-15',
         'Số CCCD/CMND': '001234567890',
-        'Địa chỉ': 'Cầu Giấy',
+        'Phường/Xã': 'Cầu Giấy',
         'Địa chỉ chi tiết': 'Số 123 Đường Xuân Thủy'
       },
       {
@@ -169,7 +169,7 @@ export default function BulkCreateModal({ isOpen, onClose }: BulkCreateModalProp
         'Số điện thoại': '0912345678',
         'Ngày sinh': '1995-05-20',
         'Số CCCD/CMND': '001234567891',
-        'Địa chỉ': 'Hoàng Mai',
+        'Phường/Xã': 'Hoàng Mai',
         'Địa chỉ chi tiết': 'Số 456 Phố Giải Phóng'
       }
     ];
@@ -186,7 +186,7 @@ export default function BulkCreateModal({ isOpen, onClose }: BulkCreateModalProp
       { wch: 15 }, // SĐT
       { wch: 12 }, // Ngày sinh
       { wch: 15 }, // CCCD
-      { wch: 15 }, // Địa chỉ
+      { wch: 15 }, // Phường/Xã
       { wch: 30 }  // Địa chỉ chi tiết
     ];
 
@@ -214,36 +214,74 @@ export default function BulkCreateModal({ isOpen, onClose }: BulkCreateModalProp
         throw new Error('Không tìm thấy token xác thực. Vui lòng đăng nhập lại.');
       }
 
-      const response = await fetch('/api/hosts/bulk-create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        credentials: 'include',
-        body: JSON.stringify(parsedData)
-      });
-      
-      const result = await response.json();
-      console.log('Bulk create response:', result);
-      
-      if (!response.ok) {
-        // Get error message from response
-        const errorMessage = result.error || result.message || 'Có lỗi xảy ra khi tạo tài khoản';
-        
-        // Throw the actual error message from backend
-        throw new Error(errorMessage);
+      // Create hosts one by one using the single create API
+      let successCount = 0;
+      let errorCount = 0;
+      const errors: string[] = [];
+
+      for (let i = 0; i < parsedData.length; i++) {
+        try {
+          const response = await fetch('/api/hosts/create', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+            credentials: 'include',
+            body: JSON.stringify(parsedData[i])
+          });
+
+          // Check if response is ok (200-299)
+          if (!response.ok) {
+            const result = await response.json();
+            const errorMessage = result.error || result.message || 'Có lỗi xảy ra';
+            errors.push(`Hàng ${i + 1}: ${errorMessage}`);
+            errorCount++;
+            continue;
+          }
+
+          // Parse response (could be JSON or plain text)
+          const contentType = response.headers.get('content-type');
+          let result;
+          
+          if (contentType && contentType.includes('application/json')) {
+            result = await response.json();
+          } else {
+            const text = await response.text();
+            result = { message: text };
+          }
+
+          // Check for duplicate email even with 200 status
+          const resultText = JSON.stringify(result).toLowerCase();
+          if (resultText.includes('duplicate') || resultText.includes('already exists') || resultText.includes('tồn tại')) {
+            errors.push(`Hàng ${i + 1}: Email đã tồn tại`);
+            errorCount++;
+          } else {
+            successCount++;
+          }
+        } catch (err) {
+          errors.push(`Hàng ${i + 1}: ${err instanceof Error ? err.message : 'Lỗi không xác định'}`);
+          errorCount++;
+        }
+      }
+
+      // Display results
+      if (successCount > 0 && errorCount === 0) {
+        setSuccess(`Tạo thành công ${successCount} tài khoản host!`);
+      } else if (successCount > 0 && errorCount > 0) {
+        setSuccess(`Tạo thành công ${successCount} tài khoản host.`);
+        setError(`Có ${errorCount} lỗi:\n${errors.slice(0, 5).join('\n')}${errors.length > 5 ? '\n...' : ''}`);
+      } else {
+        setError(`Tất cả ${errorCount} tài khoản đều thất bại:\n${errors.slice(0, 5).join('\n')}${errors.length > 5 ? '\n...' : ''}`);
       }
       
-      // Success
-      setSuccess(`Tạo thành công ${parsedData.length} tài khoản host!`);
-      
-      // Wait a moment to show success message, then close and refresh
-      setTimeout(() => {
-        onClose();
-        window.location.reload(); // Refresh to show new hosts
-      }, 2000);
-      window.location.reload();
+      // Only refresh and close if we have at least one success
+      if (successCount > 0) {
+        setTimeout(() => {
+          onClose();
+          window.location.reload(); // Refresh to show new hosts
+        }, 2000);
+      }
     } catch (err) {
       console.error('Upload error:', err);
       setError(err instanceof Error ? err.message : 'Có lỗi xảy ra khi tải lên file. Vui lòng thử lại.');
@@ -400,7 +438,7 @@ export default function BulkCreateModal({ isOpen, onClose }: BulkCreateModalProp
                 </p>
                 <p className="text-sm text-yellow-700 dark:text-yellow-300">
                   File Excel cần có các cột: Họ tên, Email, Số điện thoại, Ngày sinh (YYYY-MM-DD), 
-                  Số CCCD/CMND, Địa chỉ (ví dụ: Cầu Giấy, Hoàng Mai), 
+                  Số CCCD/CMND, Phường/Xã (ví dụ: Cầu Giấy, Hoàng Mai), 
                   Địa chỉ chi tiết (số nhà, tên đường).
                 </p>
               </div>

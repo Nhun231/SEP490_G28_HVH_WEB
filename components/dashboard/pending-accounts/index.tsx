@@ -18,7 +18,7 @@ import { useRouter } from 'next/navigation';
 import {
   usePendingAccounts,
   type PendingAccountsResponse
-} from '@/hooks/features/identity-verification/usePendingAccountsList';
+} from '@/hooks/features/uc044-identity-verification/usePendingAccountsList';
 import { ACCOUNT_STATUS } from '@/constants/account-status';
 
 interface PendingAccountItem {
@@ -49,7 +49,7 @@ export default function PendingAccounts({ user, userDetails }: Props) {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
   const { data, error, isLoading } = usePendingAccounts({
     pageNumber: Math.max(0, currentPage - 1),
     pageSize,

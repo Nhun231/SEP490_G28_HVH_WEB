@@ -58,17 +58,22 @@ export const swrFetcher = async <T>(
     throw new Error(errorText || 'Request failed');
   }
 
+  if (response.status === 204) {
+    return null as T;
+  }
+
   if (isJson) {
+    const rawText = await response.text().catch(() => '');
+    if (!rawText.trim()) {
+      return null as T;
+    }
     try {
-      return (await response.json()) as T;
+      return JSON.parse(rawText) as T;
     } catch (error) {
-      const fallbackText = await response.text().catch(() => '');
-      if (fallbackText) {
-        return fallbackText as T;
-      }
       throw error;
     }
   }
 
-  return response.text() as Promise<T>;
+  const text = await response.text().catch(() => '');
+  return (text.trim() ? text : null) as T;
 };

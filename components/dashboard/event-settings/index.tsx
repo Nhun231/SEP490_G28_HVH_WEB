@@ -3,8 +3,6 @@
 import DashboardLayout from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import {
   Dialog,
   DialogContent,
@@ -12,17 +10,19 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { useCreateActivityDomain } from '@/hooks/features/uc060-create-service-domain-service-sub-domain/useCreateActivityDomain';
+import { useUpdateActivityDomain } from '@/hooks/features/uc061-update-activity-domain-activity-sub-domain/useUpdateActivityDomain';
+import { useGetListActivityDomain } from '@/hooks/features/uc063-view-activity-domain-activity-sub-domain/useGetListActivityDomain';
+import type {
+  UpdateActivityDomainRequest,
+  UpdateActivitySubDomainRequest
+} from '@/hooks/dto';
 import { User } from '@supabase/supabase-js';
-import { useState } from 'react';
-import { Trash2, Edit, Plus } from 'lucide-react';
+import { Edit, Plus, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 interface Props {
   user: User | null | undefined;
@@ -33,6 +33,7 @@ interface ActivityDomain {
   id: string;
   name: string;
   active: boolean;
+  activitySubDomainList?: SubActivityDomain[];
   start_time?: string;
   end_time?: string;
   service_time?: string;
@@ -42,76 +43,49 @@ interface ActivityDomain {
 
 interface SubActivityDomain {
   id: string;
-  activity_domain_id: string;
+  activity_domain_id?: string;
   name: string;
   active: boolean;
-  created_at: string;
+  created_at?: string;
 }
 
-// Mock data
-const mockActivityDomains: ActivityDomain[] = [
-  {
-    id: '1',
-    name: 'Giáo dục',
-    active: true,
-    start_time: '08:00',
-    end_time: '17:00',
-    service_time: '4',
-    max_service_time: '8',
-    created_at: '2024-01-01'
-  },
-  {
-    id: '2',
-    name: 'Môi trường',
-    active: true,
-    start_time: '06:00',
-    end_time: '18:00',
-    service_time: '8',
-    max_service_time: '16',
-    created_at: '2024-01-02'
-  },
-  {
-    id: '3',
-    name: 'Y tế',
-    active: false,
-    start_time: '07:00',
-    end_time: '19:00',
-    service_time: '6',
-    max_service_time: '12',
-    created_at: '2024-01-03'
-  }
-];
-
-const mockSubActivityDomains: SubActivityDomain[] = [
-  {
-    id: '1',
-    activity_domain_id: '1',
-    name: 'Dạy học',
-    active: true,
-    created_at: '2024-01-01'
-  },
-  {
-    id: '2',
-    activity_domain_id: '1',
-    name: 'Hỗ trợ học tập',
-    active: true,
-    created_at: '2024-01-02'
-  },
-  {
-    id: '3',
-    activity_domain_id: '2',
-    name: 'Trồng cây',
-    active: true,
-    created_at: '2024-01-03'
-  }
-];
-
 export default function EventSettings(props: Props) {
-  const [activityDomains, setActivityDomains] =
-    useState<ActivityDomain[]>(mockActivityDomains);
-  const [subActivityDomains, setSubActivityDomains] = useState<
-    SubActivityDomain[]
-  >(mockSubActivityDomains);
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
+  const { data: activityDomainData, mutate: refreshActivityDomains } =
+    useGetListActivityDomain({
+      pageNumber: 0,
+      pageSize: 50,
+      baseUrl: apiBaseUrl
+    });
+  const { trigger: createActivityDomain, isMutating: isCreating } =
+    useCreateActivityDomain({
+      baseUrl: apiBaseUrl
+    });
+
+  const fetchedActivityDomains = useMemo<ActivityDomain[]>(() => {
+    return (activityDomainData?.content ?? []).map((domain, index) => {
+      const domainId = domain.id ? String(domain.id) : String(index + 1);
+      return {
+        id: domainId,
+        name: domain.name,
+        active: domain.active,
+        activitySubDomainList: (domain.activitySubDomainList ?? []).map(
+          (subDomain, subIndex) => ({
+            id: String(subDomain.id ?? `${domainId}-${subIndex + 1}`),
+            activity_domain_id: domainId,
+            name: subDomain.name,
+            active: subDomain.active
+          })
+        ),
+        max_service_time: domain.specialSessionMaxTime
+          ? String(domain.specialSessionMaxTime)
+          : '',
+        created_at: domain.createdAt ?? ''
+      };
+    });
+  }, [activityDomainData]);
+
+  const [activityDomains, setActivityDomains] = useState<ActivityDomain[]>([]);
   const [selectedDomain, setSelectedDomain] = useState<ActivityDomain | null>(
     null
   );
@@ -123,13 +97,29 @@ export default function EventSettings(props: Props) {
   );
   const [newDomainName, setNewDomainName] = useState('');
   const [newSubDomainName, setNewSubDomainName] = useState('');
+  const [draftSubDomainName, setDraftSubDomainName] = useState('');
+  const [draftSubDomains, setDraftSubDomains] = useState<SubActivityDomain[]>(
+    []
+  );
+  const [editingSubDomainId, setEditingSubDomainId] = useState<string | null>(
+    null
+  );
+  const [editingSubDomainName, setEditingSubDomainName] = useState('');
   const [formData, setFormData] = useState({
     name: '',
-    start_time: '',
-    end_time: '',
     service_time: '',
-    max_service_time: ''
+    max_service_time: '4'
   });
+
+  const [serviceTimeReason, setServiceTimeReason] = useState('');
+  const [serviceTimeError, setServiceTimeError] = useState('');
+  const [createError, setCreateError] = useState<string | null>(null);
+  const { trigger: updateActivityDomain, isMutating: isUpdating } =
+    useUpdateActivityDomain({
+      id: editingDomain?.id ?? '',
+      baseUrl: apiBaseUrl
+    });
+  const isSubmitting = isCreating || isUpdating;
 
   // Confirmation modals
   const [openConfirmToggleDomain, setOpenConfirmToggleDomain] = useState(false);
@@ -141,86 +131,229 @@ export default function EventSettings(props: Props) {
   const [confirmingSubDomain, setConfirmingSubDomain] =
     useState<SubActivityDomain | null>(null);
 
-  const handleAddDomain = () => {
+  useEffect(() => {
+    setActivityDomains(fetchedActivityDomains);
+    setSelectedDomain((prev) => {
+      if (!prev) return null;
+      return (
+        fetchedActivityDomains.find((domain) => domain.id === prev.id) || null
+      );
+    });
+  }, [fetchedActivityDomains]);
+
+  const handleAddDomain = async () => {
     if (!formData.name.trim()) return;
-    const newDomain: ActivityDomain = {
-      id: String(activityDomains.length + 1),
-      name: formData.name,
-      active: true,
-      start_time: formData.start_time,
-      end_time: formData.end_time,
-      service_time: formData.service_time,
-      max_service_time: formData.max_service_time,
-      created_at: new Date().toISOString()
-    };
-    setActivityDomains([...activityDomains, newDomain]);
-    resetForm();
-    setOpenDetailDomainModal(false);
+
+    try {
+      setCreateError(null);
+      const payload = {
+        name: formData.name,
+        specialSessionMaxTime: Number(formData.max_service_time),
+        activitySubDomainUpdateRequests: draftSubDomains.map((d) => d.name)
+      };
+
+      await createActivityDomain(payload);
+      await refreshActivityDomains();
+      resetForm();
+      setOpenDetailDomainModal(false);
+      toast.success('Tạo lĩnh vực thành công.');
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Lỗi khi tạo lĩnh vực, vui lòng thử lại';
+      setCreateError(errorMessage);
+      console.error('Failed to create activity domain:', error);
+    }
   };
 
-  const handleEditDomain = () => {
+  const handleEditDomain = async () => {
     if (!editingDomain || !formData.name.trim()) return;
-    setActivityDomains(
-      activityDomains.map((d) =>
-        d.id === editingDomain.id
-          ? {
-              ...d,
-              name: formData.name,
-              start_time: formData.start_time,
-              end_time: formData.end_time,
-              service_time: formData.service_time,
-              max_service_time: formData.max_service_time
-            }
-          : d
-      )
-    );
-    if (selectedDomain?.id === editingDomain.id) {
-      setSelectedDomain({
-        ...selectedDomain,
-        name: formData.name,
-        start_time: formData.start_time,
-        end_time: formData.end_time,
-        service_time: formData.service_time,
-        max_service_time: formData.max_service_time
+
+    try {
+      setCreateError(null);
+      const originalSubDomains = editingDomain.activitySubDomainList ?? [];
+      const currentSubDomains = draftSubDomains;
+      const originalById = new Map<number, SubActivityDomain>();
+      const currentById = new Map<number, SubActivityDomain>();
+
+      originalSubDomains.forEach((subDomain) => {
+        const idValue = Number(subDomain.id);
+        if (Number.isFinite(idValue)) {
+          originalById.set(idValue, subDomain);
+        }
       });
+
+      currentSubDomains.forEach((subDomain) => {
+        const idValue = Number(subDomain.id);
+        if (Number.isFinite(idValue)) {
+          currentById.set(idValue, subDomain);
+        }
+      });
+
+      const activitySubDomainUpdateRequests: UpdateActivitySubDomainRequest[] =
+        [
+          ...originalSubDomains.flatMap(
+            (subDomain): UpdateActivitySubDomainRequest[] => {
+              const idValue = Number(subDomain.id);
+              if (!Number.isFinite(idValue)) return [];
+              const current = currentById.get(idValue);
+              if (!current) {
+                return [{ id: idValue, action: 'DELETE' as const }];
+              }
+              if (current.name.trim() !== subDomain.name.trim()) {
+                return [
+                  {
+                    id: idValue,
+                    name: current.name.trim(),
+                    action: 'EDIT' as const
+                  }
+                ];
+              }
+              return [];
+            }
+          ),
+          ...currentSubDomains.flatMap(
+            (subDomain): UpdateActivitySubDomainRequest[] => {
+              const idValue = Number(subDomain.id);
+              if (Number.isFinite(idValue)) return [];
+              const name = subDomain.name.trim();
+              if (!name) return [];
+              return [{ name, action: 'ADD' as const }];
+            }
+          )
+        ];
+
+      const payload: UpdateActivityDomainRequest = {
+        name: formData.name,
+        specialSessionMaxTime: Number(formData.max_service_time),
+        activitySubDomainUpdateRequests: activitySubDomainUpdateRequests
+      };
+
+      await updateActivityDomain(payload);
+      await refreshActivityDomains();
+      resetForm();
+      setOpenDetailDomainModal(false);
+      toast.success('Cập nhật lĩnh vực thành công.');
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Lỗi khi cập nhật lĩnh vực, vui lòng thử lại';
+      setCreateError(errorMessage);
+      console.error('Failed to update activity domain:', error);
     }
-    resetForm();
-    setOpenDetailDomainModal(false);
   };
 
   const resetForm = () => {
     setFormData({
       name: '',
-      start_time: '',
-      end_time: '',
       service_time: '',
-      max_service_time: ''
+      max_service_time: '4'
     });
+    setServiceTimeReason('');
+    setServiceTimeError('');
+    setCreateError(null);
     setEditingDomain(null);
+    setDraftSubDomainName('');
+    setDraftSubDomains([]);
+    setEditingSubDomainId(null);
+    setEditingSubDomainName('');
+  };
+
+  const handleServiceTimeBlur = () => {
+    const value = formData.max_service_time;
+    const numValue = Number(value);
+    if (numValue < 4 || numValue > 12) {
+      setServiceTimeError('Giá trị phải từ 4 đến 12 giờ');
+    } else {
+      setServiceTimeError('');
+    }
   };
 
   const openEditModal = (domain: ActivityDomain) => {
     setEditingDomain(domain);
     setFormData({
       name: domain.name,
-      start_time: domain.start_time || '',
-      end_time: domain.end_time || '',
       service_time: domain.service_time || '',
       max_service_time: domain.max_service_time || ''
     });
+    setServiceTimeReason('');
+    setDraftSubDomainName('');
+    setDraftSubDomains(domain.activitySubDomainList ?? []);
     setOpenDetailDomainModal(true);
+  };
+
+  const handleAddDraftSubDomain = () => {
+    if (!draftSubDomainName.trim()) return;
+    const newDraft: SubActivityDomain = {
+      id: `draft-${Date.now()}`,
+      name: draftSubDomainName.trim(),
+      active: true
+    };
+    setDraftSubDomains((prev) => [...prev, newDraft]);
+    setDraftSubDomainName('');
+  };
+
+  const removeDraftSubDomain = (subDomainId: string) => {
+    setDraftSubDomains((prev) => prev.filter((d) => d.id !== subDomainId));
+  };
+
+  const startEditSubDomain = (subDomain: SubActivityDomain) => {
+    setEditingSubDomainId(subDomain.id);
+    setEditingSubDomainName(subDomain.name);
+  };
+
+  const applyEditSubDomain = () => {
+    if (!editingSubDomainId) return;
+    const nextName = editingSubDomainName.trim();
+    if (!nextName) {
+      setEditingSubDomainId(null);
+      setEditingSubDomainName('');
+      return;
+    }
+    setDraftSubDomains((prev) =>
+      prev.map((d) =>
+        d.id === editingSubDomainId ? { ...d, name: nextName } : d
+      )
+    );
+    setEditingSubDomainId(null);
+    setEditingSubDomainName('');
   };
 
   const handleAddSubDomain = () => {
     if (!newSubDomainName.trim() || !selectedDomain) return;
     const newSubDomain: SubActivityDomain = {
-      id: String(subActivityDomains.length + 1),
+      id: `${selectedDomain.id}-${Date.now()}`,
       activity_domain_id: selectedDomain.id,
       name: newSubDomainName,
       active: true,
       created_at: new Date().toISOString()
     };
-    setSubActivityDomains([...subActivityDomains, newSubDomain]);
+    setActivityDomains((prev) =>
+      prev.map((domain) =>
+        domain.id === selectedDomain.id
+          ? {
+              ...domain,
+              activitySubDomainList: [
+                ...(domain.activitySubDomainList ?? []),
+                newSubDomain
+              ]
+            }
+          : domain
+      )
+    );
+    setSelectedDomain((prev) =>
+      prev
+        ? {
+            ...prev,
+            activitySubDomainList: [
+              ...(prev.activitySubDomainList ?? []),
+              newSubDomain
+            ]
+          }
+        : prev
+    );
     setNewSubDomainName('');
     setOpenAddSubDomainModal(false);
   };
@@ -248,10 +381,26 @@ export default function EventSettings(props: Props) {
 
   const handleConfirmToggleSubDomain = () => {
     if (!confirmingSubDomain) return;
-    setSubActivityDomains(
-      subActivityDomains.map((d) =>
-        d.id === confirmingSubDomain.id ? { ...d, active: !d.active } : d
-      )
+    setActivityDomains((prev) =>
+      prev.map((domain) => ({
+        ...domain,
+        activitySubDomainList: (domain.activitySubDomainList ?? []).map((d) =>
+          d.id === confirmingSubDomain.id ? { ...d, active: !d.active } : d
+        )
+      }))
+    );
+    setSelectedDomain((prev) =>
+      prev
+        ? {
+            ...prev,
+            activitySubDomainList: (prev.activitySubDomainList ?? []).map(
+              (d) =>
+                d.id === confirmingSubDomain.id
+                  ? { ...d, active: !d.active }
+                  : d
+            )
+          }
+        : prev
     );
     setOpenConfirmToggleDomain(false);
     setConfirmingSubDomain(null);
@@ -267,13 +416,11 @@ export default function EventSettings(props: Props) {
     setActivityDomains(
       activityDomains.filter((d) => d.id !== confirmingDomain.id)
     );
-    setSubActivityDomains(
-      subActivityDomains.filter(
-        (d) => d.activity_domain_id !== confirmingDomain.id
-      )
-    );
     setOpenConfirmDeleteDomain(false);
     setConfirmingDomain(null);
+    setSelectedDomain((prev) =>
+      prev?.id === confirmingDomain.id ? null : prev
+    );
   };
 
   const deleteSubDomain = (subDomain: SubActivityDomain) => {
@@ -283,15 +430,33 @@ export default function EventSettings(props: Props) {
 
   const handleConfirmDeleteSubDomain = () => {
     if (!confirmingSubDomain) return;
-    setSubActivityDomains(
-      subActivityDomains.filter((d) => d.id !== confirmingSubDomain.id)
+    setActivityDomains((prev) =>
+      prev.map((domain) => ({
+        ...domain,
+        activitySubDomainList: (domain.activitySubDomainList ?? []).filter(
+          (d) => d.id !== confirmingSubDomain.id
+        )
+      }))
+    );
+    setSelectedDomain((prev) =>
+      prev
+        ? {
+            ...prev,
+            activitySubDomainList: (prev.activitySubDomainList ?? []).filter(
+              (d) => d.id !== confirmingSubDomain.id
+            )
+          }
+        : prev
     );
     setOpenConfirmDeleteSubDomain(false);
     setConfirmingSubDomain(null);
   };
 
   const getSubDomainsByDomain = (domainId: string) => {
-    return subActivityDomains.filter((d) => d.activity_domain_id === domainId);
+    return (
+      activityDomains.find((d) => d.id === domainId)?.activitySubDomainList ??
+      []
+    );
   };
 
   return (
@@ -498,6 +663,12 @@ export default function EventSettings(props: Props) {
             </DialogDescription>
           </DialogHeader>
 
+          {createError && (
+            <div className="rounded-lg bg-red-50 border border-red-200 p-3 mb-4">
+              <p className="text-sm text-red-700">{createError}</p>
+            </div>
+          )}
+
           <div className="space-y-7">
             {/* Basic Information */}
             <div>
@@ -509,126 +680,141 @@ export default function EventSettings(props: Props) {
                   <Input
                     placeholder="Nhập tên lĩnh vực"
                     value={formData.name}
+                    disabled={isSubmitting}
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
-                    className="bg-blue-50 border-blue-200 focus:border-blue-500 focus-visible:outline-none text-zinc-900 placeholder:text-zinc-500"
+                    className="bg-blue-50 border-blue-200 focus:border-blue-500 focus-visible:outline-none text-zinc-900 placeholder:text-zinc-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
               </div>
             </div>
 
             {/* Time Information */}
+            {/* Time Information */}
             <div>
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-sm font-medium text-zinc-700 block mb-2">
-                      Thời gian bắt đầu <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      type="time"
-                      value={formData.start_time}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          start_time: e.target.value
-                        })
-                      }
-                      className="bg-blue-50 border-blue-200 focus:border-blue-500 focus-visible:outline-none text-zinc-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-zinc-700 block mb-2">
-                      Thời gian kết thúc <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      type="time"
-                      value={formData.end_time}
-                      onChange={(e) =>
-                        setFormData({ ...formData, end_time: e.target.value })
-                      }
-                      className="bg-blue-50 border-blue-200 focus:border-blue-500 focus-visible:outline-none text-zinc-900"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-sm font-medium text-zinc-700 block mb-2">
-                      Thời gian phục vụ (giờ){' '}
-                      <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      type="number"
-                      placeholder="Nhập số giờ"
-                      value={formData.service_time}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          service_time: e.target.value
-                        })
-                      }
-                      className="bg-blue-50 border-blue-200 focus:border-blue-500 focus-visible:outline-none text-zinc-900 placeholder:text-zinc-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-zinc-700 block mb-2">
-                      Thời gian tối đa (giờ){' '}
-                      <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      type="number"
-                      placeholder="Nhập số giờ"
-                      value={formData.max_service_time}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          max_service_time: e.target.value
-                        })
-                      }
-                      className="bg-blue-50 border-blue-200 focus:border-blue-500 focus-visible:outline-none text-zinc-900 placeholder:text-zinc-500"
-                    />
-                  </div>
-                </div>
-              </div>
+              <label className="text-sm font-medium text-zinc-700 block mb-2">
+                Thời gian phục vụ tối đa{' '}
+                <span className="text-red-500">
+                  (mặc định 4 tiếng nhưng ko được vượt quá 12 tiếng)
+                </span>
+              </label>
+              <Input
+                type="number"
+                placeholder="Nhập số giờ"
+                min={4}
+                max={12}
+                disabled={isSubmitting}
+                value={formData.max_service_time || '4'}
+                onChange={(e) => {
+                  setFormData({
+                    ...formData,
+                    max_service_time: e.target.value
+                  });
+                  setServiceTimeError('');
+                }}
+                onBlur={handleServiceTimeBlur}
+                className={`bg-white border-zinc-200 focus:border-blue-500 focus-visible:outline-none text-zinc-900 placeholder:text-zinc-500 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  serviceTimeError ? 'border-red-500' : ''
+                }`}
+              />
+              {serviceTimeError && (
+                <p className="text-sm text-red-500 mt-1">{serviceTimeError}</p>
+              )}
             </div>
 
             {/* Lĩnh vực con */}
-            {editingDomain && (
-              <div>
-                <h4 className="font-medium text-sm text-zinc-900 mb-3">
-                  Lĩnh vực con
-                </h4>
-                <div className="bg-zinc-50 rounded-lg p-4 border border-zinc-200">
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {getSubDomainsByDomain(editingDomain.id).length > 0 ? (
-                      getSubDomainsByDomain(editingDomain.id).map(
-                        (subDomain) => (
-                          <div
-                            key={subDomain.id}
-                            className="flex items-center justify-between bg-white dark:bg-zinc-800 rounded p-3 border border-zinc-200 dark:border-zinc-700"
-                          >
-                            <span className="text-sm text-zinc-700 dark:text-zinc-300">
-                              {subDomain.name}
-                            </span>
-                            <span className="text-xs px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
-                              {subDomain.active
-                                ? 'Hoạt động'
-                                : 'Không hoạt động'}
-                            </span>
-                          </div>
-                        )
-                      )
-                    ) : (
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center py-4">
-                        Chưa có lĩnh vực con
-                      </p>
-                    )}
+            <div>
+              <h4 className="font-medium text-sm text-zinc-900 mb-3">
+                Lĩnh vực con
+              </h4>
+              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-zinc-700">
+                    Thêm lĩnh vực con
+                  </label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Nhập tên lĩnh vực con"
+                      disabled={isSubmitting}
+                      value={draftSubDomainName}
+                      onChange={(e) => setDraftSubDomainName(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') handleAddDraftSubDomain();
+                      }}
+                      className="bg-white border-zinc-200 focus:border-blue-500 focus-visible:outline-none text-zinc-900 placeholder:text-zinc-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleAddDraftSubDomain}
+                      disabled={isSubmitting}
+                      className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Thêm lĩnh vực con
+                    </Button>
                   </div>
                 </div>
+
+                <div className="space-y-2 max-h-40 overflow-y-auto mt-4">
+                  {draftSubDomains.length > 0 ? (
+                    draftSubDomains.map((subDomain) => (
+                      <div
+                        key={subDomain.id}
+                        className="flex items-center justify-between gap-2 bg-white rounded p-3 border border-zinc-200"
+                      >
+                        {editingSubDomainId === subDomain.id ? (
+                          <Input
+                            value={editingSubDomainName}
+                            disabled={isSubmitting}
+                            onChange={(e) =>
+                              setEditingSubDomainName(e.target.value)
+                            }
+                            onBlur={applyEditSubDomain}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') applyEditSubDomain();
+                              if (e.key === 'Escape') {
+                                setEditingSubDomainId(null);
+                                setEditingSubDomainName('');
+                              }
+                            }}
+                            className="bg-white border-zinc-200 focus:border-blue-500 focus-visible:outline-none text-zinc-900 placeholder:text-zinc-500"
+                          />
+                        ) : (
+                          <span className="text-sm text-zinc-700">
+                            {subDomain.name}
+                          </span>
+                        )}
+                        <div className="flex items-center gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            disabled={isSubmitting}
+                            onClick={() => startEditSubDomain(subDomain)}
+                          >
+                            <Edit className="h-4 w-4 text-blue-600" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            disabled={isSubmitting}
+                            onClick={() => removeDraftSubDomain(subDomain.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-zinc-500 text-center py-3">
+                      Chưa có lĩnh vực con
+                    </p>
+                  )}
+                </div>
               </div>
-            )}
+            </div>
 
             <div className="flex justify-end gap-3 pt-6">
               <Button
@@ -642,9 +828,14 @@ export default function EventSettings(props: Props) {
               </Button>
               <Button
                 onClick={editingDomain ? handleEditDomain : handleAddDomain}
-                className="px-6 bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                disabled={!formData.name.trim() || isSubmitting}
+                className="px-6 bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {editingDomain ? 'Cập nhật lĩnh vực' : 'Tạo lĩnh vực'}
+                {isSubmitting
+                  ? 'Đang lưu...'
+                  : editingDomain
+                    ? 'Cập nhật lĩnh vực'
+                    : 'Tạo lĩnh vực'}
               </Button>
             </div>
           </div>

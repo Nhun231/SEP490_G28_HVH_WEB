@@ -2,7 +2,7 @@
 
 import DashboardLayout from '@/components/layout';
 import PendingOrgDetail from '@/components/dashboard/pending-orgs/detail';
-import { useOrgRegistrationDetail } from '@/hooks/features/approve-reject-organization/useOrgRegistrationDetail';
+import { useOrgRegistrationDetail } from '@/hooks/features/uc040-approve-reject-organization/useOrgRegistrationDetail';
 import { User } from '@supabase/supabase-js';
 
 interface Props {

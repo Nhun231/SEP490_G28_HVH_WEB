@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useOrgRegistrationsList } from '@/hooks/features/approve-reject-organization/useOrgRegistrationsList';
+import { useOrgRegistrationsList } from '@/hooks/features/uc040-approve-reject-organization/useOrgRegistrationsList';
 
 interface OrgRegistrationItem {
   id: string;
@@ -43,7 +43,7 @@ export default function PendingOrgs({ user, userDetails }: Props) {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
   const { data, error, isLoading } = useOrgRegistrationsList({
     pageNumber: Math.max(0, currentPage - 1),
     pageSize,

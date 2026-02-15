@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
-import { useVerifyOrgRegistration } from '@/hooks/features/approve-reject-organization/useVerifyOrgRegistration';
+import { useVerifyOrgRegistration } from '@/hooks/features/uc040-approve-reject-organization/useVerifyOrgRegistration';
 import { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -120,7 +120,7 @@ const splitEvidenceString = (value?: string | null) => {
 
 export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
   const router = useRouter();
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
   const [openRejectModal, setOpenRejectModal] = useState(false);
   const [openApproveModal, setOpenApproveModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');

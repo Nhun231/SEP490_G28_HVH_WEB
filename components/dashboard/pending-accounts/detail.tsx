@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
-import { useVerifyIdentity } from '@/hooks/features/identity-verification/useVerifyIdentity';
+import { useVerifyIdentity } from '@/hooks/features/uc044-identity-verification/useVerifyIdentity';
 import { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';

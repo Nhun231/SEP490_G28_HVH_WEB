@@ -16,25 +16,11 @@ import {
 } from '@/components/ui/select';
 import { User } from '@supabase/supabase-js';
 import { Plus, Star } from 'lucide-react';
+import type { OrganizationItem } from '@/hooks/entity';
 
 interface Props {
   user: User | null | undefined;
   userDetails: { [x: string]: any } | null;
-}
-
-interface OrganizationItem {
-  id: string;
-  name: string;
-  taxCode: string;
-  location: string;
-  orgType: string;
-  rating: number;
-  reviews: number;
-  volunteers: number;
-  donations: number;
-  imageUrl: string;
-  tags: Array<{ label: string; variant: 'default' | 'secondary' | 'outline' }>;
-  status: 'Hoạt động' | 'Ngừng hoạt động';
 }
 
 const mockOrganizations: OrganizationItem[] = [

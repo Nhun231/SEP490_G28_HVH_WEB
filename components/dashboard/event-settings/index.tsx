@@ -1,6 +1,7 @@
 'use client';
 
 import DashboardLayout from '@/components/layout';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -12,13 +13,14 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { useCreateActivityDomain } from '@/hooks/features/uc060-create-service-domain-service-sub-domain/useCreateActivityDomain';
+import { useCreateActivityDomain } from '@/hooks/features/uc060-create-activity-domain-activity-sub-domain/useCreateActivityDomain';
 import { useUpdateActivityDomain } from '@/hooks/features/uc061-update-activity-domain-activity-sub-domain/useUpdateActivityDomain';
 import { useGetListActivityDomain } from '@/hooks/features/uc063-view-activity-domain-activity-sub-domain/useGetListActivityDomain';
 import type {
   UpdateActivityDomainRequest,
   UpdateActivitySubDomainRequest
 } from '@/hooks/dto';
+import type { ActivityDomain, ActivitySubDomain } from '@/hooks/entity';
 import { User } from '@supabase/supabase-js';
 import { Edit, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -27,26 +29,6 @@ import { toast } from 'sonner';
 interface Props {
   user: User | null | undefined;
   userDetails: { [x: string]: any } | null;
-}
-
-interface ActivityDomain {
-  id: string;
-  name: string;
-  active: boolean;
-  activitySubDomainList?: SubActivityDomain[];
-  start_time?: string;
-  end_time?: string;
-  service_time?: string;
-  max_service_time?: string;
-  created_at: string;
-}
-
-interface SubActivityDomain {
-  id: string;
-  activity_domain_id?: string;
-  name: string;
-  active: boolean;
-  created_at?: string;
 }
 
 export default function EventSettings(props: Props) {
@@ -62,48 +44,50 @@ export default function EventSettings(props: Props) {
       baseUrl: apiBaseUrl
     });
 
-  const fetchedActivityDomains = useMemo<ActivityDomain[]>(() => {
-    return (activityDomainData?.content ?? []).map((domain, index) => {
-      const domainId = domain.id ? String(domain.id) : String(index + 1);
-      return {
-        id: domainId,
-        name: domain.name,
-        active: domain.active,
-        activitySubDomainList: (domain.activitySubDomainList ?? []).map(
-          (subDomain, subIndex) => ({
-            id: String(subDomain.id ?? `${domainId}-${subIndex + 1}`),
-            activity_domain_id: domainId,
-            name: subDomain.name,
-            active: subDomain.active
-          })
-        ),
-        max_service_time: domain.specialSessionMaxTime
-          ? String(domain.specialSessionMaxTime)
-          : '',
-        created_at: domain.createdAt ?? ''
-      };
-    });
+  const fetchedActivityDomains = useMemo<
+    (ActivityDomain & { max_service_time?: string })[]
+  >(() => {
+    return (activityDomainData?.content ?? []).map((domain, index) => ({
+      id: domain.id ?? index + 1,
+      name: domain.name,
+      active: domain.active,
+      activitySubDomains: (domain.activitySubDomainList ?? []).map((sd) => ({
+        id: sd.id,
+        name: sd.name,
+        active: sd.active,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      })),
+      specialSessionMaxTime: domain.specialSessionMaxTime,
+      createdAt: domain.createdAt ?? new Date().toISOString(),
+      updatedAt: domain.updatedAt ?? new Date().toISOString(),
+      max_service_time: domain.specialSessionMaxTime
+        ? String(domain.specialSessionMaxTime)
+        : ''
+    }));
   }, [activityDomainData]);
 
-  const [activityDomains, setActivityDomains] = useState<ActivityDomain[]>([]);
-  const [selectedDomain, setSelectedDomain] = useState<ActivityDomain | null>(
-    null
-  );
+  const [activityDomains, setActivityDomains] = useState<
+    (ActivityDomain & { max_service_time?: string })[]
+  >([]);
+  const [selectedDomain, setSelectedDomain] = useState<
+    (ActivityDomain & { max_service_time?: string }) | null
+  >(null);
   const [openAddDomainModal, setOpenAddDomainModal] = useState(false);
   const [openDetailDomainModal, setOpenDetailDomainModal] = useState(false);
   const [openAddSubDomainModal, setOpenAddSubDomainModal] = useState(false);
-  const [editingDomain, setEditingDomain] = useState<ActivityDomain | null>(
-    null
-  );
+  const [editingDomain, setEditingDomain] = useState<
+    (ActivityDomain & { max_service_time?: string }) | null
+  >(null);
   const [newDomainName, setNewDomainName] = useState('');
   const [newSubDomainName, setNewSubDomainName] = useState('');
   const [draftSubDomainName, setDraftSubDomainName] = useState('');
-  const [draftSubDomains, setDraftSubDomains] = useState<SubActivityDomain[]>(
-    []
-  );
-  const [editingSubDomainId, setEditingSubDomainId] = useState<string | null>(
-    null
-  );
+  const [draftSubDomains, setDraftSubDomains] = useState<
+    (Omit<ActivitySubDomain, 'id'> & { id: string | number })[]
+  >([]);
+  const [editingSubDomainId, setEditingSubDomainId] = useState<
+    string | number | null
+  >(null);
   const [editingSubDomainName, setEditingSubDomainName] = useState('');
   const [formData, setFormData] = useState({
     name: '',
@@ -116,7 +100,7 @@ export default function EventSettings(props: Props) {
   const [createError, setCreateError] = useState<string | null>(null);
   const { trigger: updateActivityDomain, isMutating: isUpdating } =
     useUpdateActivityDomain({
-      id: editingDomain?.id ?? '',
+      id: String(editingDomain?.id ?? ''),
       baseUrl: apiBaseUrl
     });
   const isSubmitting = isCreating || isUpdating;
@@ -128,8 +112,9 @@ export default function EventSettings(props: Props) {
     useState(false);
   const [confirmingDomain, setConfirmingDomain] =
     useState<ActivityDomain | null>(null);
-  const [confirmingSubDomain, setConfirmingSubDomain] =
-    useState<SubActivityDomain | null>(null);
+  const [confirmingSubDomain, setConfirmingSubDomain] = useState<
+    (Omit<ActivitySubDomain, 'id'> & { id: string | number }) | null
+  >(null);
 
   useEffect(() => {
     setActivityDomains(fetchedActivityDomains);
@@ -149,7 +134,7 @@ export default function EventSettings(props: Props) {
       const payload = {
         name: formData.name,
         specialSessionMaxTime: Number(formData.max_service_time),
-        activitySubDomainUpdateRequests: draftSubDomains.map((d) => d.name)
+        activitySubDomain: draftSubDomains.map((d) => d.name)
       };
 
       await createActivityDomain(payload);
@@ -172,39 +157,31 @@ export default function EventSettings(props: Props) {
 
     try {
       setCreateError(null);
-      const originalSubDomains = editingDomain.activitySubDomainList ?? [];
+      const originalSubDomains = editingDomain.activitySubDomains ?? [];
       const currentSubDomains = draftSubDomains;
-      const originalById = new Map<number, SubActivityDomain>();
-      const currentById = new Map<number, SubActivityDomain>();
 
-      originalSubDomains.forEach((subDomain) => {
-        const idValue = Number(subDomain.id);
-        if (Number.isFinite(idValue)) {
-          originalById.set(idValue, subDomain);
-        }
-      });
+      // Normalize all IDs to strings for comparison
+      const currentById = new Map<
+        string,
+        Omit<ActivitySubDomain, 'id'> & { id: string | number }
+      >();
 
       currentSubDomains.forEach((subDomain) => {
-        const idValue = Number(subDomain.id);
-        if (Number.isFinite(idValue)) {
-          currentById.set(idValue, subDomain);
-        }
+        currentById.set(String(subDomain.id), subDomain);
       });
 
       const activitySubDomainUpdateRequests: UpdateActivitySubDomainRequest[] =
         [
           ...originalSubDomains.flatMap(
             (subDomain): UpdateActivitySubDomainRequest[] => {
-              const idValue = Number(subDomain.id);
-              if (!Number.isFinite(idValue)) return [];
-              const current = currentById.get(idValue);
+              const current = currentById.get(String(subDomain.id));
               if (!current) {
-                return [{ id: idValue, action: 'DELETE' as const }];
+                return [{ id: subDomain.id, action: 'DELETE' as const }];
               }
               if (current.name.trim() !== subDomain.name.trim()) {
                 return [
                   {
-                    id: idValue,
+                    id: subDomain.id,
                     name: current.name.trim(),
                     action: 'EDIT' as const
                   }
@@ -215,11 +192,13 @@ export default function EventSettings(props: Props) {
           ),
           ...currentSubDomains.flatMap(
             (subDomain): UpdateActivitySubDomainRequest[] => {
-              const idValue = Number(subDomain.id);
-              if (Number.isFinite(idValue)) return [];
-              const name = subDomain.name.trim();
-              if (!name) return [];
-              return [{ name, action: 'ADD' as const }];
+              const idStr = String(subDomain.id);
+              if (idStr.startsWith('draft-')) {
+                const name = subDomain.name.trim();
+                if (!name) return [];
+                return [{ name, action: 'ADD' as const }];
+              }
+              return [];
             }
           )
         ];
@@ -262,44 +241,60 @@ export default function EventSettings(props: Props) {
   };
 
   const handleServiceTimeBlur = () => {
-    const value = formData.max_service_time;
+    const value = formData.max_service_time.trim();
+    if (!value) {
+      setServiceTimeError('');
+      return;
+    }
     const numValue = Number(value);
-    if (numValue < 4 || numValue > 12) {
+    if (isNaN(numValue) || numValue < 4 || numValue > 12) {
       setServiceTimeError('Giá trị phải từ 4 đến 12 giờ');
     } else {
       setServiceTimeError('');
     }
   };
 
-  const openEditModal = (domain: ActivityDomain) => {
+  const openEditModal = (
+    domain: ActivityDomain & { max_service_time?: string }
+  ) => {
     setEditingDomain(domain);
     setFormData({
       name: domain.name,
-      service_time: domain.service_time || '',
+      service_time: '',
       max_service_time: domain.max_service_time || ''
     });
     setServiceTimeReason('');
     setDraftSubDomainName('');
-    setDraftSubDomains(domain.activitySubDomainList ?? []);
+    setDraftSubDomains(
+      domain.activitySubDomains?.map((sd) => ({
+        ...sd,
+        id: String(sd.id)
+      })) ?? []
+    );
     setOpenDetailDomainModal(true);
   };
 
   const handleAddDraftSubDomain = () => {
     if (!draftSubDomainName.trim()) return;
-    const newDraft: SubActivityDomain = {
-      id: `draft-${Date.now()}`,
+    const timestamp = Date.now();
+    const newDraft: Omit<ActivitySubDomain, 'id'> & { id: string } = {
+      id: `draft-${timestamp}`,
       name: draftSubDomainName.trim(),
-      active: true
+      active: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
     setDraftSubDomains((prev) => [...prev, newDraft]);
     setDraftSubDomainName('');
   };
 
-  const removeDraftSubDomain = (subDomainId: string) => {
+  const removeDraftSubDomain = (subDomainId: string | number) => {
     setDraftSubDomains((prev) => prev.filter((d) => d.id !== subDomainId));
   };
 
-  const startEditSubDomain = (subDomain: SubActivityDomain) => {
+  const startEditSubDomain = (
+    subDomain: Omit<ActivitySubDomain, 'id'> & { id: string | number }
+  ) => {
     setEditingSubDomainId(subDomain.id);
     setEditingSubDomainName(subDomain.name);
   };
@@ -323,20 +318,20 @@ export default function EventSettings(props: Props) {
 
   const handleAddSubDomain = () => {
     if (!newSubDomainName.trim() || !selectedDomain) return;
-    const newSubDomain: SubActivityDomain = {
-      id: `${selectedDomain.id}-${Date.now()}`,
-      activity_domain_id: selectedDomain.id,
+    const newSubDomain: ActivitySubDomain = {
+      id: Date.now(),
       name: newSubDomainName,
       active: true,
-      created_at: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
     setActivityDomains((prev) =>
       prev.map((domain) =>
         domain.id === selectedDomain.id
           ? {
               ...domain,
-              activitySubDomainList: [
-                ...(domain.activitySubDomainList ?? []),
+              activitySubDomains: [
+                ...(domain.activitySubDomains ?? []),
                 newSubDomain
               ]
             }
@@ -347,8 +342,8 @@ export default function EventSettings(props: Props) {
       prev
         ? {
             ...prev,
-            activitySubDomainList: [
-              ...(prev.activitySubDomainList ?? []),
+            activitySubDomains: [
+              ...(prev.activitySubDomains ?? []),
               newSubDomain
             ]
           }
@@ -374,7 +369,9 @@ export default function EventSettings(props: Props) {
     setConfirmingDomain(null);
   };
 
-  const toggleSubDomainActive = (subDomain: SubActivityDomain) => {
+  const toggleSubDomainActive = (
+    subDomain: Omit<ActivitySubDomain, 'id'> & { id: string | number }
+  ) => {
     setConfirmingSubDomain(subDomain);
     setOpenConfirmToggleDomain(true);
   };
@@ -384,8 +381,10 @@ export default function EventSettings(props: Props) {
     setActivityDomains((prev) =>
       prev.map((domain) => ({
         ...domain,
-        activitySubDomainList: (domain.activitySubDomainList ?? []).map((d) =>
-          d.id === confirmingSubDomain.id ? { ...d, active: !d.active } : d
+        activitySubDomains: (domain.activitySubDomains ?? []).map((d) =>
+          String(d.id) === String(confirmingSubDomain.id)
+            ? { ...d, active: !d.active }
+            : d
         )
       }))
     );
@@ -393,11 +392,10 @@ export default function EventSettings(props: Props) {
       prev
         ? {
             ...prev,
-            activitySubDomainList: (prev.activitySubDomainList ?? []).map(
-              (d) =>
-                d.id === confirmingSubDomain.id
-                  ? { ...d, active: !d.active }
-                  : d
+            activitySubDomains: (prev.activitySubDomains ?? []).map((d) =>
+              String(d.id) === String(confirmingSubDomain.id)
+                ? { ...d, active: !d.active }
+                : d
             )
           }
         : prev
@@ -423,7 +421,9 @@ export default function EventSettings(props: Props) {
     );
   };
 
-  const deleteSubDomain = (subDomain: SubActivityDomain) => {
+  const deleteSubDomain = (
+    subDomain: Omit<ActivitySubDomain, 'id'> & { id: string | number }
+  ) => {
     setConfirmingSubDomain(subDomain);
     setOpenConfirmDeleteSubDomain(true);
   };
@@ -433,8 +433,8 @@ export default function EventSettings(props: Props) {
     setActivityDomains((prev) =>
       prev.map((domain) => ({
         ...domain,
-        activitySubDomainList: (domain.activitySubDomainList ?? []).filter(
-          (d) => d.id !== confirmingSubDomain.id
+        activitySubDomains: (domain.activitySubDomains ?? []).filter(
+          (d) => String(d.id) !== String(confirmingSubDomain.id)
         )
       }))
     );
@@ -442,8 +442,8 @@ export default function EventSettings(props: Props) {
       prev
         ? {
             ...prev,
-            activitySubDomainList: (prev.activitySubDomainList ?? []).filter(
-              (d) => d.id !== confirmingSubDomain.id
+            activitySubDomains: (prev.activitySubDomains ?? []).filter(
+              (d) => String(d.id) !== String(confirmingSubDomain.id)
             )
           }
         : prev
@@ -452,10 +452,9 @@ export default function EventSettings(props: Props) {
     setConfirmingSubDomain(null);
   };
 
-  const getSubDomainsByDomain = (domainId: string) => {
+  const getSubDomainsByDomain = (domainId: number | string) => {
     return (
-      activityDomains.find((d) => d.id === domainId)?.activitySubDomainList ??
-      []
+      activityDomains.find((d) => d.id === domainId)?.activitySubDomains ?? []
     );
   };
 
@@ -536,65 +535,114 @@ export default function EventSettings(props: Props) {
           </div>
         </Card>
 
-        {/* Sub Activity Domains */}
+        {/* Sub Activity Domains & Domain Details */}
         <Card className="p-6 border-zinc-300 dark:border-zinc-700">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              Lĩnh vực con
-              {selectedDomain && (
-                <span className="ml-2 text-sm font-normal text-zinc-500">
-                  ({selectedDomain.name})
-                </span>
-              )}
-            </h3>
-            <Button
-              size="sm"
-              className="gap-2 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!selectedDomain}
-              onClick={() => setOpenAddSubDomainModal(true)}
-            >
-              <Plus className="h-4 w-4" />
-              Thêm
-            </Button>
-          </div>
+          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
+            Chi tiết lĩnh vực
+          </h3>
 
-          <div className="space-y-2 max-h-96 overflow-y-auto">
-            {selectedDomain ? (
-              getSubDomainsByDomain(selectedDomain.id).length > 0 ? (
-                getSubDomainsByDomain(selectedDomain.id).map((subDomain) => (
-                  <div
-                    key={subDomain.id}
-                    className="flex items-center justify-between rounded-lg border border-zinc-300 p-3 dark:border-zinc-700 bg-white dark:bg-zinc-950"
-                  >
-                    <p className="text-sm text-zinc-900 dark:text-zinc-100">
-                      {subDomain.name}
+          {selectedDomain ? (
+            <div className="space-y-6">
+              {/* Domain Information */}
+              <div className="bg-white rounded-lg p-4 border border-zinc-300 space-y-3">
+                <div>
+                  <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
+                    Tên lĩnh vực
+                  </p>
+                  <p className="text-sm font-semibold text-zinc-900 mt-1">
+                    {selectedDomain.name}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
+                      Thời gian phục vụ tối đa
                     </p>
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={subDomain.active}
-                        onCheckedChange={() => toggleSubDomainActive(subDomain)}
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteSubDomain(subDomain)}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
+                    <p className="text-sm font-semibold text-zinc-900 mt-1">
+                      {selectedDomain.specialSessionMaxTime || 4} tiếng
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
+                      Trạng thái
+                    </p>
+                    <div className="mt-1">
+                      {selectedDomain.active ? (
+                        <Badge className="bg-green-100 text-green-800 hover:bg-green-100 border border-green-300">
+                          Public
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-zinc-100 text-zinc-600 hover:bg-zinc-100 border border-zinc-300">
+                          Hide
+                        </Badge>
+                      )}
                     </div>
                   </div>
-                ))
-              ) : (
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  Không có lĩnh vực con
-                </p>
-              )
-            ) : (
+                </div>
+                {selectedDomain.createdAt && (
+                  <div>
+                    <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
+                      Ngày tạo
+                    </p>
+                    <p className="text-sm text-zinc-700 mt-1">
+                      {new Date(selectedDomain.createdAt).toLocaleDateString(
+                        'vi-VN'
+                      )}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Sub Activity Domains */}
+              <div>
+                <div className="mb-3">
+                  <h4 className="text-sm font-semibold text-zinc-900">
+                    Lĩnh vực con (
+                    {selectedDomain.activitySubDomains?.length ?? 0})
+                  </h4>
+                </div>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {(selectedDomain.activitySubDomains?.length ?? 0) > 0 ? (
+                    selectedDomain.activitySubDomains?.map((subDomain) => (
+                      <div
+                        key={subDomain.id}
+                        className="flex items-center justify-between rounded-lg border border-zinc-300 p-3 bg-white dark:bg-zinc-950"
+                      >
+                        <p className="text-sm text-zinc-900 dark:text-zinc-100">
+                          {subDomain.name}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={subDomain.active}
+                            onCheckedChange={() =>
+                              toggleSubDomainActive(subDomain)
+                            }
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteSubDomain(subDomain)}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center py-3">
+                      Không có lĩnh vực con
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                Chọn một lĩnh vực để xem lĩnh vực con
+                Chọn một lĩnh vực hoạt động để xem chi tiết
               </p>
-            )}
-          </div>
+            </div>
+          )}
         </Card>
       </div>
 
@@ -702,10 +750,9 @@ export default function EventSettings(props: Props) {
               <Input
                 type="number"
                 placeholder="Nhập số giờ"
-                min={4}
                 max={12}
                 disabled={isSubmitting}
-                value={formData.max_service_time || '4'}
+                value={formData.max_service_time}
                 onChange={(e) => {
                   setFormData({
                     ...formData,

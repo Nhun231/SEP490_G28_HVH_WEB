@@ -12,27 +12,11 @@ import {
   DialogTitle
 } from '@/components/ui/dialog';
 import { useVerifyIdentity } from '@/hooks/features/uc044-identity-verification/useVerifyIdentity';
+import type { PendingAccountVerification } from '@/hooks/entity';
 import { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
-
-interface PendingAccountVerification {
-  id: string;
-  cid: string | null;
-  email: string | null;
-  phone: string | null;
-  cid_front: string | null;
-  cid_back: string | null;
-  cid_holding: string | null;
-  status: string | null;
-  rejection_reason: string | null;
-  created_at: string | null;
-  reviewed_by: string | null;
-  reviewed_at: string | null;
-  volunteer_id: string | null;
-  note: string | null;
-}
 
 interface Props {
   user: User | null | undefined;

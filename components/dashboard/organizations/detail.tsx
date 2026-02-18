@@ -16,43 +16,12 @@ import {
 } from '@/components/ui/carousel';
 import { User } from '@supabase/supabase-js';
 import { ArrowLeft, Edit, Star, X } from 'lucide-react';
+import type { OrganizationDetail } from '@/hooks/entity';
 
 interface Props {
   orgId: string;
   user: User | null | undefined;
   userDetails: { [x: string]: any } | null;
-}
-
-interface OrganizationDetail {
-  id: string;
-  name: string;
-  taxCode: string;
-  location: string;
-  orgType: string;
-  status: 'Hoạt động' | 'Ngừng hoạt động';
-  rating: number;
-  reviews: number;
-  volunteers: number;
-  donations: number;
-  imageUrl: string;
-  introduction: string;
-  applicationReason: string;
-  basicInfo: {
-    email: string;
-    address: string;
-    founded: string;
-    taxCode: string;
-    yearRegistered: string;
-  };
-  adminInfo: {
-    name: string;
-    position: string;
-    phone: string;
-    email: string;
-    cccd: string;
-  };
-  registrationImages: string[];
-  supportingDocuments: string[];
 }
 
 const mockOrgDetail: OrganizationDetail = {

@@ -20,15 +20,7 @@ import {
   type PendingAccountsResponse
 } from '@/hooks/features/uc044-identity-verification/usePendingAccountsList';
 import { ACCOUNT_STATUS } from '@/constants/account-status';
-
-interface PendingAccountItem {
-  id: string;
-  email: string | null;
-  phone: string | null;
-  cid: string | null;
-  status: string | null;
-  createdAt: string | null;
-}
+import type { PendingAccountItem } from '@/hooks/entity';
 
 interface Props {
   user: User | null | undefined;

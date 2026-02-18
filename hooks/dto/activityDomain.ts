@@ -19,7 +19,7 @@ export interface ActivityDomainDetailsResponse {
 export interface CreateActivityDomainRequest {
   name: string;
   specialSessionMaxTime: number;
-  activitySubDomainUpdateRequests?: string[];
+  activitySubDomain?: string[];
 }
 
 export type ActivitySubDomainAction = 'ADD' | 'EDIT' | 'DELETE';

@@ -16,16 +16,7 @@ import { Input } from '@/components/ui/input';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useOrgRegistrationsList } from '@/hooks/features/uc040-approve-reject-organization/useOrgRegistrationsList';
-
-interface OrgRegistrationItem {
-  id: string;
-  name: string | null;
-  dhaRegistered: boolean | null;
-  orgType: string | null;
-  managerFullName: string | null;
-  managerCid: string | null;
-  managerEmail: string | null;
-}
+import type { OrgRegistrationItem } from '@/hooks/entity';
 
 interface Props {
   user: User | null | undefined;

@@ -59,7 +59,7 @@ export default function PendingAccountDetail({
 
   const handleApprove = async () => {
     try {
-      await verify(
+      const response = await verify(
         {
           approve: true,
           rejectionReason: null,
@@ -68,9 +68,9 @@ export default function PendingAccountDetail({
         { throwOnError: true }
       );
       setOpenApproveModal(false);
-      toast.success('Đã phê duyệt tài khoản.');
+      toast.success(response?.message ?? 'Đã phê duyệt tài khoản.');
       router.refresh();
-      router.push('/dashboard/pending-accounts');
+      router.back();
     } catch (error) {
       setOpenApproveModal(false);
       toast.error('Không thể phê duyệt', {
@@ -83,7 +83,7 @@ export default function PendingAccountDetail({
 
   const handleReject = async () => {
     try {
-      await verify(
+      const response = await verify(
         {
           approve: false,
           rejectionReason: rejectReason,
@@ -93,7 +93,7 @@ export default function PendingAccountDetail({
       );
       setOpenRejectModal(false);
       setRejectReason('');
-      toast.success('Đã từ chối tài khoản.');
+      toast.success(response?.message ?? 'Đã từ chối tài khoản.');
       router.refresh();
       router.push('/dashboard/pending-accounts');
     } catch (error) {
@@ -212,11 +212,11 @@ export default function PendingAccountDetail({
               </div>
 
               {verification.note ? (
-                <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
-                  <p className="text-lg font-bold text-zinc-800 dark:text-zinc-200">
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 shadow-sm dark:border-amber-700/60 dark:bg-amber-950/20">
+                  <p className="text-lg font-bold text-amber-900 dark:text-amber-200">
                     Ghi chú
                   </p>
-                  <p className="mt-3 whitespace-pre-wrap text-gray-700">
+                  <p className="mt-3 whitespace-pre-wrap text-amber-900/90 dark:text-amber-100">
                     {verification.note}
                   </p>
                 </div>

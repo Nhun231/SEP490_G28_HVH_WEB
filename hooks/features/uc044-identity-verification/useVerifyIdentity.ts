@@ -23,7 +23,7 @@ export const useVerifyIdentity = ({ id, baseUrl = '' }: Params) => {
   const url = baseUrl ? `${baseUrl}${path}` : path;
 
   return useSWRMutation<
-    VerifyIdentityResponse,
+    VerifyIdentityResponse | null,
     Error,
     string,
     VerifyIdentityPayload

@@ -22,7 +22,7 @@ import type {
 } from '@/hooks/dto';
 import type { ActivityDomain, ActivitySubDomain } from '@/hooks/entity';
 import { User } from '@supabase/supabase-js';
-import { Edit, Plus, Trash2 } from 'lucide-react';
+import { Edit, EyeOff, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -527,7 +527,7 @@ export default function EventSettings(props: Props) {
                       deleteDomain(domain);
                     }}
                   >
-                    <Trash2 className="h-4 w-4 text-red-500" />
+                    <EyeOff className="h-4 w-4 text-red-500" />
                   </Button>
                 </div>
               </div>
@@ -623,7 +623,7 @@ export default function EventSettings(props: Props) {
                             size="sm"
                             onClick={() => deleteSubDomain(subDomain)}
                           >
-                            <Trash2 className="h-4 w-4 text-red-500" />
+                            <EyeOff className="h-4 w-4 text-red-500" />
                           </Button>
                         </div>
                       </div>
@@ -995,14 +995,14 @@ export default function EventSettings(props: Props) {
         <DialogContent className="max-w-md bg-white dark:bg-white">
           <DialogHeader>
             <DialogTitle className="text-black">
-              Xác nhận xóa lĩnh vực
+              Xác nhận ẩn lĩnh vực
             </DialogTitle>
             <DialogDescription>
               {confirmingDomain && (
                 <span className="text-red-600">
-                  Bạn có chắc muốn xóa lĩnh vực{' '}
+                  Bạn có chắc muốn ẩn lĩnh vực{' '}
                   <strong>{confirmingDomain.name}</strong> và tất cả lĩnh vực
-                  con của nó không? Hành động này không thể hoàn tác.
+                  con của nó không?
                 </span>
               )}
             </DialogDescription>
@@ -1021,7 +1021,7 @@ export default function EventSettings(props: Props) {
               onClick={handleConfirmDeleteDomain}
               className="bg-red-600 hover:bg-red-700"
             >
-              Xóa
+              Ẩn
             </Button>
           </div>
         </DialogContent>
@@ -1035,14 +1035,13 @@ export default function EventSettings(props: Props) {
         <DialogContent className="max-w-md bg-white dark:bg-white">
           <DialogHeader>
             <DialogTitle className="text-black">
-              Xác nhận xóa lĩnh vực con
+              Xác nhận ẩn lĩnh vực con
             </DialogTitle>
             <DialogDescription>
               {confirmingSubDomain && (
                 <span className="text-red-600">
-                  Bạn có chắc muốn xóa lĩnh vực con{' '}
-                  <strong>{confirmingSubDomain.name}</strong> không? Hành động
-                  này không thể hoàn tác.
+                  Bạn có chắc muốn ẩn lĩnh vực con{' '}
+                  <strong>{confirmingSubDomain.name}</strong> không?
                 </span>
               )}
             </DialogDescription>
@@ -1061,7 +1060,7 @@ export default function EventSettings(props: Props) {
               onClick={handleConfirmDeleteSubDomain}
               className="bg-red-600 hover:bg-red-700"
             >
-              Xóa
+              Ẩn
             </Button>
           </div>
         </DialogContent>

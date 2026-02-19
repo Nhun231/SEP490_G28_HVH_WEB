@@ -51,7 +51,27 @@ export const swrFetcher = async <T>(
   if (!response.ok) {
     if (isJson) {
       const errorBody = await response.json().catch(() => ({}));
-      throw new Error(errorBody.message || 'Request failed');
+      const moreInfo = errorBody?.moreInfo;
+      const infoMessages: string[] = [];
+
+      if (Array.isArray(moreInfo)) {
+        infoMessages.push(
+          ...moreInfo.filter((value: unknown) => typeof value === 'string')
+        );
+      } else if (moreInfo && typeof moreInfo === 'object') {
+        infoMessages.push(
+          ...Object.values(moreInfo).filter(
+            (value: unknown) => typeof value === 'string'
+          )
+        );
+      }
+
+      const message =
+        infoMessages.length > 0
+          ? infoMessages.join(' ')
+          : errorBody.message || 'Request failed';
+
+      throw new Error(message);
     }
 
     const errorText = await response.text().catch(() => 'Request failed');

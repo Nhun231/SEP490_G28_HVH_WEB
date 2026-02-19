@@ -139,7 +139,7 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
       setOpenApproveModal(false);
       toast.success('Đã phê duyệt tổ chức.');
       router.refresh();
-      router.push('/dashboard/pending-orgs');
+      router.back();
     } catch (error) {
       setOpenApproveModal(false);
       toast.error('Không thể phê duyệt', {
@@ -161,7 +161,7 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
       setRejectReason('');
       toast.success('Đã từ chối tổ chức.');
       router.refresh();
-      router.push('/dashboard/pending-orgs');
+      router.back();
     } catch (error) {
       setOpenRejectModal(false);
       toast.error('Không thể từ chối', {

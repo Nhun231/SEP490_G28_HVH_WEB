@@ -83,14 +83,14 @@ export default function PendingAccountDetail({
 
   const handleReject = async () => {
     try {
-      const response = await verify(
-        {
-          approve: false,
-          rejectionReason: rejectReason,
-          fullName: accountName
-        },
-        { throwOnError: true }
-      );
+      const rejectPayload: any = {
+        approve: false,
+        rejectionReason: rejectReason
+      };
+      if (accountName.trim()) {
+        rejectPayload.fullName = accountName;
+      }
+      const response = await verify(rejectPayload, { throwOnError: true });
       setOpenRejectModal(false);
       setRejectReason('');
       toast.success(response?.message ?? 'Đã từ chối tài khoản.');

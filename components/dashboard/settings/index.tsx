@@ -107,9 +107,11 @@ export default function Settings(props: Props) {
             <Avatar className="min-h-[68px] min-w-[68px]">
               <AvatarImage src={props.user?.user_metadata.avatar_url} />
               <AvatarFallback className="text-2xl font-bold dark:text-zinc-950">
-                {props.user.user_metadata.full_name
+                {props.user.user_metadata.full_name && props.user.user_metadata.full_name.length > 0
                   ? `${props.user.user_metadata.full_name[0]}`
-                  : `${props.user?.user_metadata.email[0].toUpperCase()}`}
+                  : (props.user?.user_metadata.email && props.user.user_metadata.email.length > 0
+                      ? `${props.user.user_metadata.email[0].toUpperCase()}`
+                      : '?')}
               </AvatarFallback>
             </Avatar>
             <div>

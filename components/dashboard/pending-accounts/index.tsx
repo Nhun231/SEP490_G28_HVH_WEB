@@ -40,6 +40,10 @@ export default function PendingAccounts({ user, userDetails }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
+    null
+  );
+  const { cn } = require('@/utils/cn');
 
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
   const { data, error, isLoading } = usePendingAccounts({
@@ -105,10 +109,10 @@ export default function PendingAccounts({ user, userDetails }: Props) {
           />
         </div>
 
-        <div className="rounded-lg border border-gray-200 bg-white">
+        <div className="rounded-lg border border-gray-200 bg-[#e6f1fb] overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="border-b border-gray-200 bg-gray-50">
+              <TableRow className="border-b border-gray-200 bg-[#e6f1fb]">
                 <TableHead className="w-40 text-gray-700">ID</TableHead>
                 <TableHead className="w-56 text-gray-700">Email</TableHead>
                 <TableHead className="w-36 text-gray-700">Số CCCD</TableHead>
@@ -140,10 +144,15 @@ export default function PendingAccounts({ user, userDetails }: Props) {
                 paginatedAccounts.map((account) => (
                   <TableRow
                     key={account.id}
-                    className="cursor-pointer border-b border-gray-200 hover:bg-blue-50"
-                    onClick={() =>
-                      router.push(`/dashboard/pending-accounts/${account.id}`)
-                    }
+                    className={cn(
+                      'border-b border-gray-200',
+                      selectedAccountId === account.id ? 'bg-[#d3e7fa]' : '',
+                      'hover:bg-[#d3e7fa] cursor-pointer'
+                    )}
+                    onClick={() => {
+                      setSelectedAccountId(account.id);
+                      router.push(`/dashboard/pending-accounts/${account.id}`);
+                    }}
                   >
                     <TableCell
                       className="w-40 max-w-[10rem] truncate font-medium text-gray-900"
@@ -167,10 +176,8 @@ export default function PendingAccounts({ user, userDetails }: Props) {
                       {formatDate(account.createdAt)}
                     </TableCell>
                     <TableCell className="w-32">
-                      <Badge className="border-blue-200 bg-blue-50 text-blue-700">
-                        {account.status === ACCOUNT_STATUS.PENDING
-                          ? 'Chờ phê duyệt'
-                          : account.status || '-'}
+                      <Badge className="rounded-full bg-gray-500 text-white font-semibold px-3 py-0.5 text-xs">
+                        Chờ phê duyệt
                       </Badge>
                     </TableCell>
                   </TableRow>

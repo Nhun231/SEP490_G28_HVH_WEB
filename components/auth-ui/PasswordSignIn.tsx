@@ -9,10 +9,12 @@ import { Input } from '../ui/input';
 
 interface PasswordSignInProps {
   redirectMethod: string;
+  isAdmin?: boolean;
 }
 
 export default function PasswordSignIn({
-  redirectMethod
+  redirectMethod,
+  isAdmin = false
 }: PasswordSignInProps) {
   const router = redirectMethod === 'client' ? useRouter() : null;
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,6 +32,11 @@ export default function PasswordSignIn({
         className="mb-4"
         onSubmit={(e) => handleSubmit(e)}
       >
+        <input
+          type="hidden"
+          name="isAdmin"
+          value={isAdmin ? 'true' : 'false'}
+        />
         <div className="grid gap-2">
           <div className="grid gap-1">
             <label className="text-zinc-950 dark:text-white" htmlFor="email">
@@ -90,7 +97,11 @@ export default function PasswordSignIn({
       </form>
       <p>
         <a
-          href="/dashboard/signin/forgot_password"
+          href={
+            isAdmin
+              ? '/dashboard/signin/forgot_password'
+              : '/signin/forgot_password'
+          }
           className="font-medium text-zinc-950 dark:text-white text-sm"
         >
           Quên mật khẩu?
@@ -98,7 +109,7 @@ export default function PasswordSignIn({
       </p>
       <p>
         <a
-          href="/dashboard/signin/signup"
+          href={isAdmin ? '/dashboard/signin/signup' : '/signin/signup'}
           className="font-medium text-zinc-950 dark:text-white text-sm"
         >
           Chưa có tài khoản? Đăng ký

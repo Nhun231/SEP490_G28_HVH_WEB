@@ -71,14 +71,10 @@ export function SidebarLinks(props: SidebarLinksProps) {
           >
             <div className="w-full items-center justify-center">
               <div className="flex w-full items-center justify-center">
-                <div
-                  className={`text mr-3 mt-1.5 text-zinc-950 opacity-30 dark:text-white`}
-                >
+                <div className={`text mr-3 mt-1.5 text-slate-500 opacity-50`}>
                   {route.icon}
                 </div>
-                <p
-                  className={`mr-auto text-sm text-zinc-950 opacity-30 dark:text-white`}
-                >
+                <p className={`mr-auto text-sm text-slate-500 opacity-50`}>
                   {route.name}
                 </p>
               </div>
@@ -95,12 +91,10 @@ export function SidebarLinks(props: SidebarLinksProps) {
                   [`${level}-${key}`]: !isOpen
                 })
               }
-              className={`flex w-full max-w-full items-center justify-between rounded-lg py-3 pl-8 font-medium text-zinc-950 dark:text-zinc-400`}
+              className={`flex w-full max-w-full items-center justify-between rounded-lg py-3 pl-8 font-medium text-slate-300 hover:text-white`}
             >
               <div className="flex w-full items-center">
-                <div
-                  className={`text mr-3 mt-1.5 text-zinc-950 dark:text-white`}
-                >
+                <div className={`text mr-3 mt-1.5 text-slate-300`}>
                   {route.icon}
                 </div>
                 <p className={`mr-auto text-sm`}>{route.name}</p>
@@ -124,8 +118,8 @@ export function SidebarLinks(props: SidebarLinksProps) {
                 level > 0 ? '12' : '8'
               } ${
                 activeRoute(route.path.toLowerCase())
-                  ? 'bg-blue-600 font-semibold text-white dark:bg-blue-500 dark:text-white'
-                  : 'font-medium text-zinc-950 dark:text-zinc-400'
+                  ? 'bg-gradient-to-r from-blue-950 to-slate-800 font-semibold text-white border-l-4 border-blue-500'
+                  : 'font-medium text-slate-300 hover:text-white hover:bg-slate-800/50'
               }`}
             >
               <NavLink
@@ -138,8 +132,8 @@ export function SidebarLinks(props: SidebarLinksProps) {
                     <div
                       className={`text mr-3 mt-1.5 ${
                         activeRoute(route.path.toLowerCase())
-                          ? 'font-semibold text-white dark:text-white'
-                          : 'text-zinc-950 dark:text-white'
+                          ? 'font-semibold text-white'
+                          : 'text-slate-300'
                       } `}
                     >
                       {route.icon}
@@ -147,8 +141,8 @@ export function SidebarLinks(props: SidebarLinksProps) {
                     <p
                       className={`mr-auto text-sm ${
                         activeRoute(route.path.toLowerCase())
-                          ? 'font-semibold text-white dark:text-white'
-                          : 'font-medium text-zinc-950 dark:text-zinc-400'
+                          ? 'font-semibold text-white'
+                          : 'font-medium text-slate-300'
                       }`}
                     >
                       {route.name}

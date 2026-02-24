@@ -2,13 +2,14 @@ import { getUser } from '@/utils/supabase/queries';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
 
-export default async function Dashboard() {
+export default async function Home() {
   const supabase = await createClient();
   const [user] = await Promise.all([getUser(supabase)]);
 
   if (!user) {
-    return redirect('/dashboard/signin');
+    return redirect('/signin/password_signin');
   } else {
-    redirect('/dashboard/main');
+    // Redirect to organizer view (you can create organizer main page later)
+    redirect('/organizer/main');
   }
 }

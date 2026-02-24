@@ -29,12 +29,12 @@ const DashboardLayout: React.FC<Props> = (props: Props) => {
     <UserContext.Provider value={props.user}>
       <UserDetailsContext.Provider value={props.userDetails}>
         <OpenContext.Provider value={{ open, setOpen }}>
-          <div className="dark:bg-background-900 flex h-full w-full bg-white">
+          <div className="flex h-full w-full bg-gradient-to-br from-slate-900 to-slate-950">
             <Toaster />
             <Sidebar routes={routes} setOpen={setOpen} />
-            <div className="h-full w-full dark:bg-zinc-950">
+            <div className="h-full w-full bg-transparent">
               <main
-                className={`mx-2.5 flex-none transition-all dark:bg-zinc-950 md:pr-2 xl:ml-[328px]`}
+                className={`mx-2.5 flex-none transition-all bg-transparent md:pr-2 xl:ml-[300px]`}
               >
                 <div className="mx-auto min-h-screen p-2 !pt-[90px] md:p-2 md:!pt-[118px]">
                   {props.children}

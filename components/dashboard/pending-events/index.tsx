@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { cn } from '@/utils/cn';
 
 interface Props {
   user: User | null | undefined;
@@ -58,6 +59,7 @@ export default function PendingEvents({ user, userDetails }: Props) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
   const pageSize = 10;
 
   const filteredEvents = useMemo(() => {
@@ -100,10 +102,10 @@ export default function PendingEvents({ user, userDetails }: Props) {
           />
         </div>
 
-        <div className="rounded-lg border border-gray-200 bg-white">
+        <div className="rounded-lg border border-gray-200 bg-[#e6f1fb] overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="border-b border-gray-200 bg-gray-50">
+              <TableRow className="border-b border-gray-200 bg-[#e6f1fb]">
                 <TableHead className="text-gray-700">Tên sự kiện</TableHead>
                 <TableHead className="text-gray-700">Tổ chức</TableHead>
                 <TableHead className="text-gray-700">Địa điểm</TableHead>
@@ -117,10 +119,15 @@ export default function PendingEvents({ user, userDetails }: Props) {
                 paginatedEvents.map((event) => (
                   <TableRow
                     key={event.id}
-                    className="cursor-pointer border-b border-gray-200 hover:bg-blue-50"
-                    onClick={() =>
-                      router.push(`/dashboard/pending-events/${event.id}`)
-                    }
+                    className={cn(
+                      'border-b border-gray-200',
+                      selectedEventId === event.id ? 'bg-[#d3e7fa]' : '',
+                      'hover:bg-[#d3e7fa] cursor-pointer'
+                    )}
+                    onClick={() => {
+                      setSelectedEventId(event.id);
+                      router.push(`/dashboard/pending-events/${event.id}`);
+                    }}
                   >
                     <TableCell className="font-medium text-gray-900">
                       {event.eventName}
@@ -138,8 +145,8 @@ export default function PendingEvents({ user, userDetails }: Props) {
                       {event.submittedDate}
                     </TableCell>
                     <TableCell>
-                      <Badge className="border-blue-200 bg-blue-50 text-blue-700">
-                        {event.status}
+                      <Badge className="rounded-full bg-gray-500 text-white font-semibold px-3 py-0.5 text-xs">
+                        Chờ phê duyệt
                       </Badge>
                     </TableCell>
                   </TableRow>

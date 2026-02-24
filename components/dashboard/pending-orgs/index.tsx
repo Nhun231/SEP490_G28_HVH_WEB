@@ -33,6 +33,8 @@ export default function PendingOrgs({ user, userDetails }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
+  const [selectedOrgId, setSelectedOrgId] = useState<number | null>(null);
+  const { cn } = require('@/utils/cn');
 
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
   const { data, error, isLoading } = useOrgRegistrationsList({
@@ -88,18 +90,18 @@ export default function PendingOrgs({ user, userDetails }: Props) {
           />
         </div>
 
-        <div className="rounded-lg border border-gray-200 bg-white">
+        <div className="rounded-lg border border-gray-200 bg-[#e6f1fb] overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="border-b border-gray-200 bg-gray-50">
-                <TableHead className="text-gray-700">ID</TableHead>
+              <TableRow className="border-b border-gray-200 bg-[#e6f1fb]">
+                <TableHead className="text-gray-700 w-48">ID</TableHead>
                 <TableHead className="text-gray-700">Tên tổ chức</TableHead>
                 <TableHead className="text-gray-700">Loại tổ chức</TableHead>
                 <TableHead className="text-gray-700">DHA</TableHead>
                 <TableHead className="text-gray-700">Quản lý</TableHead>
                 <TableHead className="text-gray-700">CCCD</TableHead>
                 <TableHead className="text-gray-700">Email</TableHead>
-                <TableHead className="text-gray-700">Trạng thái</TableHead>
+                <TableHead className="text-gray-700 w-44">Trạng thái</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -125,12 +127,20 @@ export default function PendingOrgs({ user, userDetails }: Props) {
                 paginatedOrgs.map((org) => (
                   <TableRow
                     key={org.id}
-                    className="cursor-pointer border-b border-gray-200 hover:bg-blue-50"
-                    onClick={() =>
-                      router.push(`/dashboard/pending-orgs/${org.id}`)
-                    }
+                    className={cn(
+                      'border-b border-gray-200',
+                      selectedOrgId === Number(org.id) ? 'bg-[#d3e7fa]' : '',
+                      'hover:bg-[#d3e7fa] cursor-pointer'
+                    )}
+                    onClick={() => {
+                      setSelectedOrgId(Number(org.id));
+                      router.push(`/dashboard/pending-orgs/${org.id}`);
+                    }}
                   >
-                    <TableCell className="font-medium text-gray-900">
+                    <TableCell
+                      className="font-medium text-gray-900 w-48 max-w-[12rem] truncate"
+                      title={org.id}
+                    >
                       {org.id}
                     </TableCell>
                     <TableCell className="text-gray-600">
@@ -151,9 +161,9 @@ export default function PendingOrgs({ user, userDetails }: Props) {
                     <TableCell className="text-gray-600">
                       {org.managerEmail || '-'}
                     </TableCell>
-                    <TableCell>
-                      <Badge className="border-blue-200 bg-blue-50 text-blue-700">
-                        PENDING
+                    <TableCell className="align-middle w-44">
+                      <Badge className="inline-block rounded-full bg-gray-500 text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150 hover:bg-gray-600">
+                        Chờ phê duyệt
                       </Badge>
                     </TableCell>
                   </TableRow>

@@ -580,7 +580,7 @@ export default function OrganizersList(props: Props) {
       description="Quản lý danh sách người tổ chức"
     >
       <div className="w-full">
-        <div className="sticky top-0 z-20 -mx-1 mb-4 bg-white/90 px-1 py-3 backdrop-blur dark:bg-zinc-950/90">
+        <div className="sticky top-0 z-20 -mx-1 mb-4 px-1 py-3">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:flex-1">
               <Select
@@ -704,7 +704,7 @@ export default function OrganizersList(props: Props) {
             </Select>
           </div>
         </div>
-        <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="rounded-lg border border-zinc-200 bg-card dark:border-zinc-800">
           <div className="w-full overflow-x-auto">
             <Table className="min-w-[1200px]">
               <TableHeader>
@@ -830,9 +830,9 @@ export default function OrganizersList(props: Props) {
         </div>
         {/* Detail Modal */}
         <Dialog open={openDetailModal} onOpenChange={setOpenDetailModal}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl bg-card dark:bg-zinc-950">
             <DialogHeader>
-              <DialogTitle className="text-black">
+              <DialogTitle className="text-zinc-900 dark:text-white">
                 Chi tiết thông tin người tổ chức
               </DialogTitle>
               <DialogDescription>
@@ -931,9 +931,9 @@ export default function OrganizersList(props: Props) {
         </Dialog>
         {/* Edit Organizer Modal */}
         <Dialog open={openEditModal} onOpenChange={setOpenEditModal}>
-          <DialogContent className="max-w-2xl bg-white dark:bg-white">
+          <DialogContent className="max-w-2xl bg-card dark:bg-zinc-950">
             <DialogHeader>
-              <DialogTitle className="text-black">
+              <DialogTitle className="text-zinc-900 dark:text-white">
                 Cập nhật thông tin người tổ chức
               </DialogTitle>
               <DialogDescription>
@@ -1065,9 +1065,9 @@ export default function OrganizersList(props: Props) {
         </Dialog>
         {/* Lock Confirmation Modal */}
         <Dialog open={openLockModal} onOpenChange={setOpenLockModal}>
-          <DialogContent className="max-w-md bg-white dark:bg-white">
+          <DialogContent className="max-w-md bg-card dark:bg-zinc-950">
             <DialogHeader>
-              <DialogTitle className="text-black">
+              <DialogTitle className="text-zinc-900 dark:text-white">
                 Xác nhận thay đổi trạng thái
               </DialogTitle>
               <DialogDescription>
@@ -1109,9 +1109,9 @@ export default function OrganizersList(props: Props) {
         </Dialog>
         {/* Add Host Modal */}
         <Dialog open={openAddHostModal} onOpenChange={setOpenAddHostModal}>
-          <DialogContent className="max-w-2xl bg-white dark:bg-white">
+          <DialogContent className="max-w-2xl bg-card dark:bg-zinc-950">
             <DialogHeader>
-              <DialogTitle className="text-black">
+              <DialogTitle className="text-zinc-900 dark:text-white">
                 Tạo tài khoản Host mới
               </DialogTitle>
               <DialogDescription>Nhập thông tin Host</DialogDescription>

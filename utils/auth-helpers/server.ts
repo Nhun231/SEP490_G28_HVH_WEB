@@ -80,6 +80,7 @@ export async function signInWithPassword(formData: FormData) {
   const cookieStore = await cookies();
   const email = String(formData.get('email')).trim();
   const password = String(formData.get('password')).trim();
+  const isAdmin = String(formData.get('isAdmin') || '').trim() === 'true';
   let redirectPath: string;
 
   const supabase = await createClient();
@@ -90,16 +91,20 @@ export async function signInWithPassword(formData: FormData) {
 
   if (error) {
     redirectPath = getErrorRedirect(
-      '/dashboard/signin/password_signin',
+      isAdmin ? '/dashboard/signin/password_signin' : '/signin/password_signin',
       'Sign in failed.',
       error.message
     );
   } else if (data.user) {
     cookieStore.set('preferredSignInView', 'password_signin', { path: '/' });
-    redirectPath = getStatusRedirect('/', 'Success!', 'You are now signed in.');
+    redirectPath = getStatusRedirect(
+      isAdmin ? '/dashboard/main' : '/organizer/main',
+      'Success!',
+      'You are now signed in.'
+    );
   } else {
     redirectPath = getErrorRedirect(
-      '/dashboard/signin/password_signin',
+      isAdmin ? '/dashboard/signin/password_signin' : '/signin/password_signin',
       'Hmm... Something went wrong.',
       'You could not be signed in.'
     );

@@ -43,13 +43,11 @@ function Sidebar(props: SidebarProps) {
   // SIDEBAR
   return (
     <div
-      className={`lg:!z-99 fixed !z-[99] min-h-full w-[300px] transition-all md:!z-[99] xl:!z-0 ${
+      className={`lg:!z-99 fixed !z-[99] min-h-screen w-[300px] bg-gradient-to-b from-slate-900 to-slate-950 transition-all md:!z-[99] xl:!z-0 ${
         props.variant === 'auth' ? 'xl:hidden' : 'xl:block'
       } ${props.open ? '' : '-translate-x-[120%] xl:translate-x-[unset]'}`}
     >
-      <Card
-        className={`m-3 ml-3 h-[96.5vh] w-full overflow-hidden !rounded-lg border-zinc-200 pe-4 dark:border-zinc-800 sm:my-4 sm:mr-4 md:m-5 md:mr-[-50px]`}
-      >
+      <div className="h-screen w-full overflow-y-auto overflow-x-hidden px-4 py-4">
         <Scrollbars
           autoHide
           renderTrackVertical={renderTrack}
@@ -60,7 +58,7 @@ function Sidebar(props: SidebarProps) {
           <div className="flex h-full flex-col justify-between">
             <div>
               <span
-                className="absolute top-4 block cursor-pointer text-zinc-200 dark:text-white/40 xl:hidden"
+                className="absolute top-4 right-4 block cursor-pointer text-slate-400 hover:text-white xl:hidden"
                 onClick={() => props.setOpen(false)}
               >
                 <HiX />
@@ -73,12 +71,12 @@ function Sidebar(props: SidebarProps) {
                   height={50}
                   className="rounded-sm mr-5"
                 />
-                <h5 className="me-2 text-2xl font-bold leading-5 text-zinc-950 dark:text-white">
+                <h5 className="me-2 text-2xl font-bold leading-5 text-white">
                   <span className="block">Hà Nội</span>
                   <span className="mt-2   block">Thiện Nguyện</span>
                 </h5>
               </div>
-              <div className="mb-8 mt-8 h-px bg-zinc-200 dark:bg-white/10" />
+              <div className="mb-8 mt-8 h-px bg-slate-700" />
               {/* Nav item */}
               <ul>
                 <Links routes={routes} />
@@ -86,7 +84,7 @@ function Sidebar(props: SidebarProps) {
             </div>
           </div>
         </Scrollbars>
-      </Card>
+      </div>
     </div>
   );
 }

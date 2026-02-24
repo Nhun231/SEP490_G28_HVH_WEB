@@ -7,6 +7,8 @@ import UpdatePassword from '@/components/auth-ui/UpdatePassword';
 import SignUp from '@/components/auth-ui/Signup';
 
 export default function AuthUI(props: any) {
+  const isAdmin = props.isAdmin ?? false;
+
   return (
     <div className="my-auto mb-auto mt-8 flex flex-col md:mt-[70px] md:max-w-full lg:mt-[130px] lg:max-w-[420px]">
       <p className="text-[32px] font-bold text-zinc-950 dark:text-white">
@@ -33,7 +35,10 @@ export default function AuthUI(props: any) {
         </>
       )}
       {props.viewProp === 'password_signin' && (
-        <PasswordSignIn redirectMethod={props.redirectMethod} />
+        <PasswordSignIn
+          redirectMethod={props.redirectMethod}
+          isAdmin={isAdmin}
+        />
       )}
       {props.viewProp === 'forgot_password' && (
         <ForgotPassword

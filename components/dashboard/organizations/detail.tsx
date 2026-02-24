@@ -122,7 +122,7 @@ export default function OrganizationDetailPage({
         </div>
 
         {/* Organization Header Card */}
-        <Card className="mb-6 border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800">
+        <Card className="mb-6 border-zinc-200 bg-card p-6 shadow-sm dark:border-zinc-800">
           <div className="flex gap-6">
             <img
               src={org.imageUrl}
@@ -161,15 +161,15 @@ export default function OrganizationDetailPage({
 
           {/* Stats Row */}
           <div className="mt-6 grid grid-cols-2 gap-4">
-            <div className="rounded-lg border border-green-100 bg-green-50 p-4 text-center">
+            <div className="rounded-lg border border-green-300 bg-[#b6f2d6] p-4 text-center">
               <p className="text-sm text-zinc-600">Số người ứng tuyển</p>
-              <p className="mt-2 text-3xl font-bold text-green-700">
+              <p className="mt-2 text-3xl font-extrabold text-green-800">
                 {org.volunteers.toLocaleString('vi-VN')}
               </p>
             </div>
-            <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 text-center">
+            <div className="rounded-lg border border-blue-300 bg-[#b3d8fd] p-4 text-center">
               <p className="text-sm text-zinc-600">Số giờ uy tín</p>
-              <p className="mt-2 text-3xl font-bold text-blue-700">
+              <p className="mt-2 text-3xl font-extrabold text-blue-800">
                 {org.donations.toLocaleString('vi-VN')}
               </p>
             </div>
@@ -179,7 +179,7 @@ export default function OrganizationDetailPage({
         {/* Basic Info and Admin Info */}
         <div className="mb-6 grid gap-6 md:grid-cols-2">
           {/* Basic Info */}
-          <Card className="border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800">
+          <Card className="border-zinc-200 bg-card p-6 shadow-sm dark:border-zinc-800">
             <h2 className="text-lg font-semibold text-zinc-900">
               Thông tin cơ bản
             </h2>
@@ -220,7 +220,7 @@ export default function OrganizationDetailPage({
           </Card>
 
           {/* Admin Info */}
-          <Card className="border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800">
+          <Card className="border-zinc-200 bg-card p-6 shadow-sm dark:border-zinc-800">
             <h2 className="text-lg font-semibold text-zinc-900">
               Thông tin quản trị viên
             </h2>
@@ -262,7 +262,7 @@ export default function OrganizationDetailPage({
         </div>
 
         {/* Organization Introduction */}
-        <Card className="mb-6 border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800">
+        <Card className="mb-6 border-zinc-200 bg-card p-6 shadow-sm dark:border-zinc-800">
           <h2 className="text-lg font-semibold text-zinc-900">
             Giới thiệu tổ chức
           </h2>
@@ -272,7 +272,7 @@ export default function OrganizationDetailPage({
         </Card>
 
         {/* Application Reason */}
-        <Card className="mb-6 border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800">
+        <Card className="mb-6 border-zinc-200 bg-card p-6 shadow-sm dark:border-zinc-800">
           <h2 className="text-lg font-semibold text-zinc-900">
             Lý do ứng tuyển
           </h2>
@@ -282,7 +282,7 @@ export default function OrganizationDetailPage({
         </Card>
 
         {/* Registration Images */}
-        <Card className="mb-6 border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800">
+        <Card className="mb-6 border-zinc-200 bg-card p-6 shadow-sm dark:border-zinc-800">
           <h2 className="text-lg font-semibold text-zinc-900">
             Mẫu đơn đăng ký tổ chức
           </h2>
@@ -317,7 +317,7 @@ export default function OrganizationDetailPage({
         </Card>
 
         {/* Supporting Documents */}
-        <Card className="border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800">
+        <Card className="border-zinc-200 bg-card p-6 shadow-sm dark:border-zinc-800">
           <h2 className="text-lg font-semibold text-zinc-900">
             Tài liệu hỗ trợ
           </h2>

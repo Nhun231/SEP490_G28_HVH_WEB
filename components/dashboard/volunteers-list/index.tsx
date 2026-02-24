@@ -488,10 +488,10 @@ export default function VolunteersList(props: Props) {
       user={props.user}
       userDetails={props.userDetails}
       title="Quản Lý Tình Nguyện Viên"
-      description="Quản lý danh sách tình nguyện viên"
+      description="Quản lý danh sách tình nguyện viê4n"
     >
       <div className="w-full">
-        <div className="sticky top-0 z-20 -mx-1 mb-4 bg-white/90 px-1 py-3 backdrop-blur dark:bg-zinc-950/90">
+        <div className="sticky top-0 z-30 -mx-1 mb-4 px-1 py-3">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-col gap-3 md:flex-row md:flex-1 md:items-center">
               <Select
@@ -602,7 +602,7 @@ export default function VolunteersList(props: Props) {
             </div>
           </div>
         </div>
-        <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="rounded-lg border border-zinc-200 bg-card dark:border-zinc-800">
           <div className="w-full overflow-x-auto">
             <Table className="min-w-[1200px]">
               <TableHeader>
@@ -735,9 +735,9 @@ export default function VolunteersList(props: Props) {
 
         {/* Detail Modal */}
         <Dialog open={openDetailModal} onOpenChange={setOpenDetailModal}>
-          <DialogContent className="max-w-2xl bg-white dark:bg-white">
+          <DialogContent className="max-w-2xl bg-card dark:bg-zinc-950">
             <DialogHeader>
-              <DialogTitle className="text-black">
+              <DialogTitle className="text-zinc-900 dark:text-white">
                 Chi tiết thông tin tình nguyện viên
               </DialogTitle>
               <DialogDescription>
@@ -848,19 +848,19 @@ export default function VolunteersList(props: Props) {
 
         {/* Edit Volunteer Modal */}
         <Dialog open={openEditModal} onOpenChange={setOpenEditModal}>
-          <DialogContent className="max-w-2xl bg-white dark:bg-white">
+          <DialogContent className="max-w-2xl bg-card dark:bg-zinc-950">
             <DialogHeader>
-              <DialogTitle className="text-black">
+              <DialogTitle className="text-zinc-900 dark:text-white">
                 Cập nhật thông tin tình nguyện viên
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-slate-400">
                 Chỉnh sửa thông tin cơ bản của tình nguyện viên
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <label className="text-sm font-medium text-slate-300">
                   Họ và tên
                 </label>
                 <Input
@@ -966,9 +966,9 @@ export default function VolunteersList(props: Props) {
 
         {/* Lock Confirmation Modal */}
         <Dialog open={openLockModal} onOpenChange={setOpenLockModal}>
-          <DialogContent className="max-w-md bg-white dark:bg-white">
+          <DialogContent className="max-w-md bg-card dark:bg-zinc-950">
             <DialogHeader>
-              <DialogTitle className="text-black">
+              <DialogTitle className="text-zinc-900 dark:text-white">
                 Xác nhận thay đổi trạng thái
               </DialogTitle>
               <DialogDescription>
@@ -1011,7 +1011,7 @@ export default function VolunteersList(props: Props) {
 
         {/* Add Volunteer Modal */}
         <Dialog open={openAddModal} onOpenChange={setOpenAddModal}>
-          <DialogContent className="max-w-2xl bg-white dark:bg-white">
+          <DialogContent className="max-w-2xl bg-card dark:bg-zinc-950">
             <DialogHeader>
               <DialogTitle className="text-black">
                 Tạo tài khoản tình nguyện viên mới

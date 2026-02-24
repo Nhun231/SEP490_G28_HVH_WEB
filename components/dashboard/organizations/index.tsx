@@ -229,7 +229,7 @@ export default function OrganizationsPage({ user, userDetails }: Props) {
           {mockOrganizations.map((org) => (
             <Card
               key={org.id}
-              className="cursor-pointer border-zinc-200 bg-white p-5 shadow-sm transition-all hover:shadow-md dark:border-zinc-800"
+              className="cursor-pointer border-zinc-200 bg-card p-5 shadow-sm transition-all hover:bg-[#d3e7fa] hover:shadow-md dark:border-zinc-800"
               onClick={() => router.push(`/dashboard/organizations/${org.id}`)}
             >
               <div className="flex flex-wrap gap-4">
@@ -284,15 +284,15 @@ export default function OrganizationsPage({ user, userDetails }: Props) {
                   </div>
 
                   <div className="mt-4 grid gap-3 md:grid-cols-2">
-                    <div className="rounded-lg border border-green-100 bg-green-50 p-3 text-center">
+                    <div className="rounded-lg border border-green-300 bg-[#b6f2d6] p-3 text-center">
                       <p className="text-xs text-zinc-500">Số thành viên</p>
-                      <p className="mt-2 text-2xl font-bold text-green-700">
+                      <p className="mt-2 text-2xl font-extrabold text-green-800">
                         {org.volunteers.toLocaleString('vi-VN')}
                       </p>
                     </div>
-                    <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-center">
+                    <div className="rounded-lg border border-blue-300 bg-[#b3d8fd] p-3 text-center">
                       <p className="text-xs text-zinc-500">Số giờ uy tín</p>
-                      <p className="mt-2 text-2xl font-bold text-blue-700">
+                      <p className="mt-2 text-2xl font-extrabold text-blue-800">
                         {org.donations.toLocaleString('vi-VN')}
                       </p>
                     </div>

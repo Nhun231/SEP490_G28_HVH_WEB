@@ -43,7 +43,7 @@ export default function HeaderLinks(props: { [x: string]: any }) {
     <div className="relative flex min-w-max max-w-max flex-grow items-center justify-around gap-1 rounded-lg md:px-2 md:py-2 md:pl-3 xl:gap-2">
       <Button
         variant="outline"
-        className="flex h-9 min-w-9 cursor-pointer rounded-full border-zinc-200 p-0 text-xl text-zinc-950 dark:border-zinc-800 dark:text-white md:min-h-10 md:min-w-10 xl:hidden"
+        className="flex h-9 min-w-9 cursor-pointer rounded-full border-slate-600 bg-slate-800/50 p-0 text-xl text-slate-200 hover:bg-slate-700 hover:text-white md:min-h-10 md:min-w-10 xl:hidden"
         onClick={onOpen}
       >
         <FiAlignJustify className="h-4 w-4" />
@@ -52,9 +52,9 @@ export default function HeaderLinks(props: { [x: string]: any }) {
       <Button
         onClick={(e) => handleSignOut(e)}
         variant="outline"
-        className="flex h-9 min-w-9 cursor-pointer rounded-full border-zinc-200 p-0 text-xl text-zinc-950 dark:border-zinc-800 dark:text-white md:min-h-10 md:min-w-10"
+        className="flex h-9 min-w-9 cursor-pointer rounded-full border-slate-600 bg-slate-800/50 p-0 text-xl text-slate-200 hover:bg-slate-700 hover:text-white md:min-h-10 md:min-w-10"
       >
-        <HiOutlineArrowRightOnRectangle className="h-4 w-4 stroke-2 text-zinc-950 dark:text-white" />
+        <HiOutlineArrowRightOnRectangle className="h-4 w-4 stroke-2 text-slate-200" />
       </Button>
       <a className="w-full" href="/dashboard/settings">
         <Avatar className="h-9 min-w-9 md:min-h-10 md:min-w-10">

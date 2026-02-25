@@ -1,7 +1,7 @@
 import { Card } from '@/components/ui/card';
 import ReactMarkdown from 'react-markdown';
 
-export default function MessageBox(props: { output: string }) {
+// export default function MessageBox(props: { output: string }) {
   const { output } = props;
   return (
     <Card

@@ -18,14 +18,6 @@ export const routes: IRoute[] = [
     collapse: false
   },
   {
-    name: 'Chat AI',
-    path: '/dashboard/ai-chat',
-    icon: (
-      <HiOutlineCpuChip className="-mt-[7px] h-4 w-4 stroke-2 text-inherit" />
-    ),
-    collapse: false
-  },
-  {
     name: 'Quản lý người dùng',
     path: '#',
     icon: (

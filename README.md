@@ -27,17 +27,11 @@
 
 ### Introduction
 
-Hà Nội Thiện Nguyện Boilerplate is the first open-source Admin Dashboard OpenAI ChatGPT AI Template made for Shadcn UI, NextJS, and Tailwind CSS! Start creating outstanding Chat AI SaaS Apps faster.
-
 It comes with over 30+ dark/light frontend individual elements, like buttons, inputs, navbars, nav tabs, cards, or alerts, giving you the freedom of choosing and combining.
 
 ### Documentation
 
-Each element is well presented in a very complex documentation. You can read more about the <a href="https://horizon-ui.com/docs-boilerplate/shadcn-components/chat" target="_blank">documentation here.</a>
-
 ### Quick Start
-
-Install Horizon ChatGPT AI Template by running either of the following:
 
 - Install NodeJS LTS from [NodeJs Official Page](https://nodejs.org/en/?ref=horizon-documentation) (NOTE: Product only works with LTS version)
 
@@ -73,7 +67,6 @@ npm run dev
 
 ### Your API Key is not working?
 
-- Make sure you have an [OpenAI account](https://platform.openai.com/account) and a valid API key to use ChatGPT. We don't sell API keys.
 - Make sure you have your billing info added in [OpenAI Billing page](https://platform.openai.com/account/billing/overview). Without billing info, your API key will not work.
 - The app will connect to the OpenAI API server to check if your API Key is working properly.
 
@@ -134,4 +127,3 @@ Special thanks to the open-source resources that helped us create this awesome b
 
 - [Shadcn UI Library](https://ui.shadcn.com/)
 - [NextJS Subscription Payments](https://github.com/vercel/nextjs-subscription-payments)
-- [ChatBot UI by mckaywrigley](https://github.com/mckaywrigley/chatbot-ui)

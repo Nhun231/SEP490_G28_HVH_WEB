@@ -117,6 +117,8 @@ export function SidebarLinks(props: SidebarLinksProps) {
               className={`flex w-full max-w-full items-center justify-between rounded-lg py-3 pl-${
                 level > 0 ? '12' : '8'
               } ${
+                route.path &&
+                typeof route.path === 'string' &&
                 activeRoute(route.path.toLowerCase())
                   ? 'bg-gradient-to-r from-blue-950 to-slate-800 font-semibold text-white border-l-4 border-blue-500'
                   : 'font-medium text-slate-300 hover:text-white hover:bg-slate-800/50'

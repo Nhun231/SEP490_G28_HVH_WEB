@@ -96,12 +96,22 @@ export async function signInWithPassword(formData: FormData) {
       error.message
     );
   } else if (data.user) {
-    cookieStore.set('preferredSignInView', 'password_signin', { path: '/' });
-    redirectPath = getStatusRedirect(
-      isAdmin ? '/dashboard/main' : '/organizer/main',
-      'Success!',
-      'You are now signed in.'
-    );
+    // Check role for admin login
+    const userRole = data.user.app_metadata?.role;
+    if (isAdmin && userRole !== 'SYS_ADMIN') {
+      redirectPath = getErrorRedirect(
+        '/dashboard/signin/password_signin',
+        'Đăng nhập thất bại.',
+        'Chỉ tài khoản SYS_ADMIN mới được phép đăng nhập vào trang quản trị.'
+      );
+    } else {
+      cookieStore.set('preferredSignInView', 'password_signin', { path: '/' });
+      redirectPath = getStatusRedirect(
+        isAdmin ? '/dashboard/main' : '/organizer/main',
+        'Success!',
+        'You are now signed in.'
+      );
+    }
   } else {
     redirectPath = getErrorRedirect(
       isAdmin ? '/dashboard/signin/password_signin' : '/signin/password_signin',

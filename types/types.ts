@@ -16,11 +16,6 @@ export interface TranslateBody {
   model: OpenAIModel;
   type?: 'review' | 'refactor' | 'complexity' | 'normal';
 }
-export interface ChatBody {
-  inputMessage: string;
-  model: OpenAIModel;
-  apiKey?: string | undefined | null;
-}
 export interface TranslateResponse {
   code: string;
 }

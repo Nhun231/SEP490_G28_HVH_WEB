@@ -267,14 +267,14 @@ export default function PendingAccountDetail({
           </div>
           <DialogFooter>
             <Button
-              className="bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+              className="bg-red-600 text-white hover:bg-red-700"
               onClick={() => setOpenRejectModal(false)}
               disabled={isVerifying}
             >
               Hủy
             </Button>
             <Button
-              className="bg-red-600 text-white hover:bg-red-700"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
               onClick={handleReject}
               disabled={isVerifying || !rejectReason.trim()}
             >
@@ -297,13 +297,13 @@ export default function PendingAccountDetail({
           <DialogFooter>
             <Button
               onClick={() => setOpenApproveModal(false)}
-              className="bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+              className="bg-red-600 text-white hover:bg-red-700"
               disabled={isVerifying}
             >
               Hủy
             </Button>
             <Button
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
               onClick={handleApprove}
               disabled={isVerifying}
             >

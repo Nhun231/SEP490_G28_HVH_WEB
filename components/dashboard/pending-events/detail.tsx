@@ -332,21 +332,20 @@ export default function PendingEventDetail({
               </div>
               <div className="mt-6 flex flex-wrap justify-end gap-2">
                 <Button
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-red-600 text-white hover:bg-red-700"
+                  onClick={() => {
+                    // TODO: handle reject
+                  }}
+                >
+                  Hủy
+                </Button>
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
                   onClick={() => {
                     // TODO: handle approve
                   }}
                 >
                   Phê duyệt
-                </Button>
-                <Button
-                  variant="destructive"
-                  className="bg-red-600 hover:bg-red-700"
-                  onClick={() => {
-                    // TODO: handle reject
-                  }}
-                >
-                  Từ chối
                 </Button>
               </div>
             </Card>

@@ -69,7 +69,7 @@ export default function PasswordSignIn({
           </div>
           <Button
             type="submit"
-            className="mt-2 flex h-[unset] w-full items-center justify-center rounded-lg px-4 py-4 text-sm font-medium"
+            className="mt-2 flex h-[unset] w-full items-center justify-center rounded-lg px-4 py-4 text-sm font-medium bg-gradient-to-r from-[#0f172a] to-[#1e293b] text-white hover:from-[#1e293b] hover:to-[#0f172a]"
           >
             {isSubmitting ? (
               <svg

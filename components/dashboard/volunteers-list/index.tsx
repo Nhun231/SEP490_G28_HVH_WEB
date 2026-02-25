@@ -735,7 +735,7 @@ export default function VolunteersList(props: Props) {
 
         {/* Detail Modal */}
         <Dialog open={openDetailModal} onOpenChange={setOpenDetailModal}>
-          <DialogContent className="max-w-2xl bg-card dark:bg-zinc-950">
+          <DialogContent className="max-w-2xl bg-white">
             <DialogHeader>
               <DialogTitle className="text-zinc-900 dark:text-white">
                 Chi tiết thông tin tình nguyện viên
@@ -848,7 +848,7 @@ export default function VolunteersList(props: Props) {
 
         {/* Edit Volunteer Modal */}
         <Dialog open={openEditModal} onOpenChange={setOpenEditModal}>
-          <DialogContent className="max-w-2xl bg-card dark:bg-zinc-950">
+          <DialogContent className="max-w-2xl bg-white">
             <DialogHeader>
               <DialogTitle className="text-zinc-900 dark:text-white">
                 Cập nhật thông tin tình nguyện viên
@@ -925,7 +925,7 @@ export default function VolunteersList(props: Props) {
                       email: e.target.value
                     })
                   }
-                  className="mt-1"
+                  className="mt-1 bg-blue-50 border-blue-200 focus:border-blue-500"
                 />
               </div>
 
@@ -949,13 +949,13 @@ export default function VolunteersList(props: Props) {
               <div className="flex justify-end gap-2 pt-4">
                 <Button
                   onClick={() => setOpenEditModal(false)}
-                  className="bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+                  className="bg-red-600 hover:bg-red-700 text-white"
                 >
                   Hủy
                 </Button>
                 <Button
                   onClick={handleConfirmEdit}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   Cập nhật
                 </Button>
@@ -966,7 +966,7 @@ export default function VolunteersList(props: Props) {
 
         {/* Lock Confirmation Modal */}
         <Dialog open={openLockModal} onOpenChange={setOpenLockModal}>
-          <DialogContent className="max-w-md bg-card dark:bg-zinc-950">
+          <DialogContent className="max-w-md bg-white">
             <DialogHeader>
               <DialogTitle className="text-zinc-900 dark:text-white">
                 Xác nhận thay đổi trạng thái
@@ -995,13 +995,13 @@ export default function VolunteersList(props: Props) {
             <div className="flex justify-end gap-2">
               <Button
                 onClick={() => setOpenLockModal(false)}
-                className="bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+                className="bg-red-600 hover:bg-red-700 text-white"
               >
                 Hủy
               </Button>
               <Button
                 onClick={handleConfirmLock}
-                className="bg-red-600 hover:bg-red-700"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 Xác nhận
               </Button>
@@ -1011,7 +1011,7 @@ export default function VolunteersList(props: Props) {
 
         {/* Add Volunteer Modal */}
         <Dialog open={openAddModal} onOpenChange={setOpenAddModal}>
-          <DialogContent className="max-w-2xl bg-card dark:bg-zinc-950">
+          <DialogContent className="max-w-2xl bg-white">
             <DialogHeader>
               <DialogTitle className="text-black">
                 Tạo tài khoản tình nguyện viên mới

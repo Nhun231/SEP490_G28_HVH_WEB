@@ -1013,13 +1013,13 @@ export default function EventSettings(props: Props) {
                 setOpenConfirmDeleteDomain(false);
                 setConfirmingDomain(null);
               }}
-              className="bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+              className="bg-red-600 text-white hover:bg-red-700"
             >
               Hủy
             </Button>
             <Button
               onClick={handleConfirmDeleteDomain}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-blue-600 hover:bg-blue-700"
             >
               Ẩn
             </Button>
@@ -1052,13 +1052,13 @@ export default function EventSettings(props: Props) {
                 setOpenConfirmDeleteSubDomain(false);
                 setConfirmingSubDomain(null);
               }}
-              className="bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+              className="bg-red-600 text-white hover:bg-red-700"
             >
               Hủy
             </Button>
             <Button
               onClick={handleConfirmDeleteSubDomain}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-blue-600 hover:bg-blue-700"
             >
               Ẩn
             </Button>

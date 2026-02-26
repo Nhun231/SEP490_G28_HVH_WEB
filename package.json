@@ -94,6 +94,7 @@
     "react-custom-scrollbars-2": "^4.5.0",
     "react-day-picker": "^8.10.1",
     "react-dom": "^19.0.0-rc.1",
+    "react-dropzone": "^15.0.0",
     "react-github-btn": "^1.4.0",
     "react-github-button": "^0.1.11",
     "react-hook-form": "^7.54.2",

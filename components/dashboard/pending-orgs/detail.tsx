@@ -135,7 +135,7 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
   const handleApprove = async () => {
     if (!detail?.id) return;
     try {
-      await verify({ approve: true });
+      await verify({ approve: true, rejectionReason: null });
       setOpenApproveModal(false);
       toast.success('Đã phê duyệt tổ chức.');
       router.refresh();

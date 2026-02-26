@@ -1,16 +1,9 @@
 import { useMemo } from 'react';
 import useSWR from 'swr';
+import { OrganizationRegistrationSimpleResponse } from '@/hooks/dto';
 
 export interface OrgRegistrationsResponse {
-  content: Array<{
-    id: string;
-    name: string | null;
-    dhaRegistered: boolean | null;
-    orgType: string | null;
-    managerFullName: string | null;
-    managerCid: string | null;
-    managerEmail: string | null;
-  }>;
+  content: OrganizationRegistrationSimpleResponse[];
   page: {
     size: number;
     number: number;

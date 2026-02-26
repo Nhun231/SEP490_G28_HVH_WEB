@@ -1,16 +1,6 @@
 import useSWRMutation from 'swr/mutation';
 import { swrFetcher } from '@/utils/swr-fetcher';
-
-export interface VerifyOrgRegistrationPayload {
-  approve: boolean;
-  rejectionReason?: string | null;
-}
-
-export interface VerifyOrgRegistrationResponse {
-  id: string;
-  status: string;
-  message?: string;
-}
+import { OrganizationRegistrationVerifyRequest } from '@/hooks/dto';
 
 interface Params {
   id: string;
@@ -22,10 +12,10 @@ export const useVerifyOrgRegistration = ({ id, baseUrl = '' }: Params) => {
   const url = baseUrl ? `${baseUrl}${path}` : path;
 
   return useSWRMutation<
-    VerifyOrgRegistrationResponse,
+    void,
     Error,
     string,
-    VerifyOrgRegistrationPayload
+    OrganizationRegistrationVerifyRequest
   >(url, (url, { arg }) =>
     swrFetcher(url, {
       method: 'POST',

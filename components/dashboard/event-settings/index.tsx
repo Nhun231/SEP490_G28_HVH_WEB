@@ -461,14 +461,18 @@ export default function EventSettings(props: Props) {
   };
 
   // State to keep original sub domain order for each domain
-  const [subDomainOrderMap, setSubDomainOrderMap] = useState<Record<string, string[]>>({});
+  const [subDomainOrderMap, setSubDomainOrderMap] = useState<
+    Record<string, string[]>
+  >({});
 
   // Update subDomainOrderMap when fetchedActivityDomains changes
   useEffect(() => {
     if (fetchedActivityDomains.length) {
       const orderMap: Record<string, string[]> = {};
-      fetchedActivityDomains.forEach(domain => {
-        orderMap[String(domain.id)] = (domain.activitySubDomains ?? []).map(sd => String(sd.id));
+      fetchedActivityDomains.forEach((domain) => {
+        orderMap[String(domain.id)] = (domain.activitySubDomains ?? []).map(
+          (sd) => String(sd.id)
+        );
       });
       setSubDomainOrderMap(orderMap);
     }
@@ -604,9 +608,14 @@ export default function EventSettings(props: Props) {
                         <div className="flex items-center gap-2">
                           <Switch
                             checked={subDomain.active}
-                            onCheckedChange={() =>
-                              handleSwitchSubDomain(subDomain)
-                            }
+                            onCheckedChange={() => {
+                              // Only allow switching for subdomains with numeric id (persisted)
+                              if (typeof subDomain.id === 'number') {
+                                handleSwitchSubDomain(
+                                  subDomain as ActivitySubDomain
+                                );
+                              }
+                            }}
                           />
                         </div>
                       </div>
@@ -798,9 +807,14 @@ export default function EventSettings(props: Props) {
                         <div className="flex items-center gap-2">
                           <Switch
                             checked={subDomain.active}
-                            onCheckedChange={() =>
-                              handleSwitchSubDomain(subDomain)
-                            }
+                            onCheckedChange={() => {
+                              // Only allow switching for subdomains with numeric id (persisted)
+                              if (typeof subDomain.id === 'number') {
+                                handleSwitchSubDomain(
+                                  subDomain as ActivitySubDomain
+                                );
+                              }
+                            }}
                           />
                         </div>
                       </div>

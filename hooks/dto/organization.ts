@@ -1,6 +1,20 @@
-// Organization Registration DTOs
-
 import type { SystemAdmin } from '@/hooks/entity';
+export interface RegisterOrganizationRequest {
+  otp: string;
+  name: string;
+  dhaRegistered: boolean;
+  orgType: string;
+  orgIntroduction: string;
+  managerFullName: string;
+  managerCid: string;
+  managerPhone: string;
+  managerEmail: string;
+  managerCidFrontExtension: string;
+  managerCidBackExtension: string;
+  managerCidHoldingExtension: string;
+  otherEvidencesExtensions: string;
+  applicationReason: string;
+}
 
 export enum EOrgType {
   NGO = 'NGO',

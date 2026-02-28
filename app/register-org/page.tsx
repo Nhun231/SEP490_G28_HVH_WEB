@@ -3,30 +3,50 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { useState } from 'react';
+import { useReplaceFiles } from '@/hooks/features/commons/bucket/useReplaceFiles';
+import { useRegisterOrg } from '@/hooks/features/uc016-register-organization/useRegisterOrg';
 import { useSendRegisterOrgVerifyMail } from '@/hooks/features/uc016-register-organization/useSendRegisterOrgVerifyMail';
+import { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 
 export default function RegisterOrgPage() {
+  const { replaceFile } = useReplaceFiles();
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL!;
+  const {
+    trigger: registerOrg,
+    isMutating: registering,
+    error: registerError
+  } = useRegisterOrg(apiBase);
   const {
     trigger: sendVerifyMail,
     isMutating: sendingMail,
     error: sendMailError
-  } = useSendRegisterOrgVerifyMail();
+  } = useSendRegisterOrgVerifyMail(apiBase);
+  const [otpFeedback, setOtpFeedback] = useState<string | null>(null);
   const [form, setForm] = useState({
+    otp: '',
     name: '',
-    dhaRegistered: '',
+    dhaRegistered: false,
     orgType: '',
+    orgIntroduction: '',
     managerFullName: '',
     managerCid: '',
     managerPhone: '',
     managerEmail: '',
-    otp: '',
-    managerCidFront: null,
-    managerCidBack: null,
-    managerCidHolding: null,
+    managerCidFrontExtension: '',
+    managerCidBackExtension: '',
+    managerCidHoldingExtension: '',
+    otherEvidencesExtensions: '',
+    applicationReason: '',
+    // File upload helper fields
+    managerCidFront: null as File | null,
+    managerCidFrontPath: '',
+    managerCidBack: null as File | null,
+    managerCidBackPath: '',
+    managerCidHolding: null as File | null,
+    managerCidHoldingPath: '',
     otherEvidences: [],
-    applicationReason: ''
+    otherEvidencesPaths: [] as string[]
   });
 
   // Dropzone for CMND/CCCD images
@@ -34,13 +54,41 @@ export default function RegisterOrgPage() {
     useDropzone({
       accept: { 'image/*': [] },
       maxFiles: 1,
-      onDrop: (files) => setForm((f) => ({ ...f, managerCidFront: files[0] }))
+      onDrop: async (files) => {
+        const file = files[0];
+        if (!file) return;
+        const oldPath = form.managerCidFrontPath;
+        const result = await replaceFile(oldPath, file, 'org-register');
+        if (result.success) {
+          setForm((f) => ({
+            ...f,
+            managerCidFront: file,
+            managerCidFrontPath: result.supabasePath
+          }));
+        } else {
+          // TODO: handle error (show toast...)
+        }
+      }
     });
   const { getRootProps: getBackRootProps, getInputProps: getBackInputProps } =
     useDropzone({
       accept: { 'image/*': [] },
       maxFiles: 1,
-      onDrop: (files) => setForm((f) => ({ ...f, managerCidBack: files[0] }))
+      onDrop: async (files) => {
+        const file = files[0];
+        if (!file) return;
+        const oldPath = form.managerCidBackPath;
+        const result = await replaceFile(oldPath, file, 'org-register');
+        if (result.success) {
+          setForm((f) => ({
+            ...f,
+            managerCidBack: file,
+            managerCidBackPath: result.supabasePath
+          }));
+        } else {
+          // TODO: handle error (show toast...)
+        }
+      }
     });
   const {
     getRootProps: getHoldingRootProps,
@@ -48,19 +96,57 @@ export default function RegisterOrgPage() {
   } = useDropzone({
     accept: { 'image/*': [] },
     maxFiles: 1,
-    onDrop: (files) => setForm((f) => ({ ...f, managerCidHolding: files[0] }))
+    onDrop: async (files) => {
+      const file = files[0];
+      if (!file) return;
+      const oldPath = form.managerCidHoldingPath;
+      const result = await replaceFile(oldPath, file, 'org-register');
+      if (result.success) {
+        setForm((f) => ({
+          ...f,
+          managerCidHolding: file,
+          managerCidHoldingPath: result.supabasePath
+        }));
+      } else {
+        // TODO: handle error (show toast...)
+      }
+    }
   });
   // Dropzone for other evidences
   const { getRootProps: getOtherRootProps, getInputProps: getOtherInputProps } =
     useDropzone({
       accept: { 'image/*': [], 'application/pdf': [] },
       maxFiles: 5,
-      onDrop: (files) => setForm((f) => ({ ...f, otherEvidences: files }))
+      onDrop: async (files) => {
+        const uploadedFiles: File[] = [];
+        const supabasePaths: string[] = [];
+        // Get old file paths array, if not exist then create empty array
+        const oldPaths = Array.isArray(form.otherEvidencesPaths)
+          ? form.otherEvidencesPaths
+          : [];
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const oldPath = oldPaths[i] || '';
+          const result = await replaceFile(oldPath, file, 'org-register');
+          if (result.success && result.supabasePath) {
+            uploadedFiles.push(file);
+            supabasePaths.push(result.supabasePath);
+          } else {
+            supabasePaths.push(oldPath);
+          }
+        }
+        setForm((f) => ({
+          ...f,
+          otherEvidences: uploadedFiles,
+          otherEvidencesPaths: supabasePaths
+        }));
+      }
     });
 
   // Required fields validation
   const isFormValid =
     form.name &&
+    form.orgIntroduction &&
     form.managerFullName &&
     form.managerCid &&
     form.managerPhone &&
@@ -77,7 +163,38 @@ export default function RegisterOrgPage() {
         <h2 className="text-3xl font-bold mb-8 text-center text-slate-800 dark:text-white">
           Đăng ký tổ chức
         </h2>
-        <form className="space-y-6">
+        <form
+          className="space-y-6"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (!isFormValid) return;
+            try {
+              const bucket = 'org-register';
+              const prefix = (p: string) => p ? (p.startsWith(bucket + '/') ? p : `${bucket}/${p}`) : '';
+              await registerOrg({
+                otp: form.otp,
+                name: form.name,
+                dhaRegistered: form.dhaRegistered,
+                orgType: form.orgType,
+                orgIntroduction: form.orgIntroduction,
+                managerFullName: form.managerFullName,
+                managerCid: form.managerCid,
+                managerPhone: form.managerPhone,
+                managerEmail: form.managerEmail,
+                managerCidFrontExtension: prefix(form.managerCidFrontPath),
+                managerCidBackExtension: prefix(form.managerCidBackPath),
+                managerCidHoldingExtension: prefix(form.managerCidHoldingPath),
+                otherEvidencesExtensions: Array.isArray(form.otherEvidencesPaths)
+                  ? form.otherEvidencesPaths.map(prefix).join(',')
+                  : '',
+                applicationReason: form.applicationReason
+              });
+              // You can add feedback logic here
+            } catch (err) {
+              // Handle error feedback here
+            }
+          }}
+        >
           {/* Tên tổ chức */}
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
@@ -88,6 +205,22 @@ export default function RegisterOrgPage() {
               required
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+            />
+          </div>
+          {/* Giới thiệu về tổ chức */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+              Giới thiệu về tổ chức <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+              rows={3}
+              placeholder="Nhập giới thiệu về tổ chức"
+              required
+              value={form.orgIntroduction || ''}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, orgIntroduction: e.target.value }))
+              }
             />
           </div>
           {/* Họ tên quản trị viên */}
@@ -153,17 +286,28 @@ export default function RegisterOrgPage() {
               className="h-10 mt-6"
               disabled={sendingMail || !form.managerEmail}
               onClick={async () => {
+                setOtpFeedback(null);
                 if (form.managerEmail) {
-                  await sendVerifyMail(form.managerEmail);
+                  try {
+                    const res = await sendVerifyMail(form.managerEmail);
+                    setOtpFeedback('success');
+                  } catch (err: any) {
+                    setOtpFeedback(err?.message || 'Gửi mã thất bại');
+                  }
                 }
               }}
             >
               {sendingMail ? 'Đang gửi...' : 'Gửi mã'}
             </Button>
-            {sendMailError && (
-              <div className="text-xs text-red-500 mt-1">
-                {sendMailError.message}
+          </div>
+          <div className="w-full">
+            {otpFeedback === 'success' && (
+              <div className="text-xs text-green-600 mt-1">
+                Mã OTP đã được gửi thành công, vui lòng kiểm tra Email của bạn
               </div>
+            )}
+            {otpFeedback && otpFeedback !== 'success' && (
+              <div className="text-xs text-red-500 -mt-5">{otpFeedback}</div>
             )}
           </div>
           {/* Mã xác minh Email */}
@@ -310,7 +454,7 @@ export default function RegisterOrgPage() {
             />
           </div>
           <Button type="submit" className="w-full mt-6" disabled={!isFormValid}>
-            Đăng ký
+            {registering ? 'Đang đăng ký...' : 'Đăng ký'}
           </Button>
         </form>
       </Card>

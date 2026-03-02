@@ -253,7 +253,7 @@ export default function BulkCreateModal({ isOpen, onClose }: BulkCreateModalProp
 
           // Check for duplicate email even with 200 status
           const resultText = JSON.stringify(result).toLowerCase();
-          if (resultText.includes('duplicate') || resultText.includes('already exists') || resultText.includes('tồn tại')) {
+          if (resultText.includes('tồn tại')) {
             errors.push(`Hàng ${i + 1}: Email đã tồn tại`);
             errorCount++;
           } else {

@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       method: 'POST',
       headers,
       credentials: 'include',
-      body: JSON.stringify({ requests: [body] })
+      body: JSON.stringify(body)
     });
 
     // Check content type to determine how to parse response
@@ -50,37 +50,23 @@ export async function POST(request: NextRequest) {
       data 
     });
 
-    // Check if response contains error message (even with 200 status)
-    let errorMessage = '';
-    
-    // Check in raw text
-    if (rawText && rawText.includes('Email đã được sử dụng')) {
-      errorMessage = rawText;
-    }
-
-    // If error detected, return error response
-    if (errorMessage) {
-      console.log('Error detected in response:', errorMessage);
-      return NextResponse.json(
-        { error: errorMessage },
-        { status: 400 }
-      );
-    }
-
     // Check HTTP status
     if (!response.ok) {
-      let fallbackError = 'Failed to create host account';
+      let errorMessage = 'Failed to create host account';
       
-      if (data.message) {
-        fallbackError = data.message;
+      // Extract error message from response
+      if (rawText) {
+        errorMessage = rawText;
+      } else if (data.message) {
+        errorMessage = data.message;
       } else if (data.error) {
-        fallbackError = data.error;
+        errorMessage = data.error;
       } else if (typeof data === 'string') {
-        fallbackError = data;
+        errorMessage = data;
       }
       
       return NextResponse.json(
-        { error: fallbackError },
+        { error: errorMessage },
         { status: response.status }
       );
     }

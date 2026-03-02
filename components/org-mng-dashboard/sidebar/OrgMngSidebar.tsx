@@ -63,7 +63,7 @@ interface OrgMngSidebarProps {
 }
 
 export default function OrgMngSidebar({ user, profile }: OrgMngSidebarProps) {
-    const [isExpanded, setIsExpanded] = useState(true);
+    const [isExpanded, setIsExpanded] = useState(false);
     const pathname = usePathname();
     const router = useRouter();
     const supabase = createClient();

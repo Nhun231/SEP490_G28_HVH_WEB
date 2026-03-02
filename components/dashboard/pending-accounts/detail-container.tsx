@@ -3,6 +3,7 @@
 import DashboardLayout from '@/components/layout';
 import PendingAccountDetail from '@/components/dashboard/pending-accounts/detail';
 import { usePendingAccountDetail } from '@/hooks/features/uc044-identity-verification/usePendingAccountDetail';
+import { Card } from '@/components/ui/card';
 import { User } from '@supabase/supabase-js';
 
 interface Props {
@@ -22,6 +23,16 @@ export default function PendingAccountDetailContainer({
     baseUrl: apiBaseUrl
   });
 
+  const volunteer = (data as any)?.volunteer;
+  const defaultFullName =
+    volunteer && typeof volunteer === 'object'
+      ? ((volunteer as any).fullName ??
+        (volunteer as any).full_name ??
+        (volunteer as any).name ??
+        (volunteer as any).full_name_vi ??
+        null)
+      : null;
+
   if (isLoading) {
     return (
       <DashboardLayout
@@ -31,7 +42,9 @@ export default function PendingAccountDetailContainer({
         description="Thông tin chi tiết tài khoản chờ phê duyệt"
       >
         <div className="w-full">
-          <p className="text-gray-600">Đang tải dữ liệu...</p>
+          <Card className="border-zinc-200 bg-white p-6 text-zinc-900 shadow-sm">
+            <p className="text-zinc-600">Đang tải dữ liệu...</p>
+          </Card>
         </div>
       </DashboardLayout>
     );
@@ -46,7 +59,9 @@ export default function PendingAccountDetailContainer({
         description="Thông tin chi tiết tài khoản chờ phê duyệt"
       >
         <div className="w-full">
-          <p className="text-red-500">Không thể tải dữ liệu.</p>
+          <Card className="border-zinc-200 bg-white p-6 text-zinc-900 shadow-sm">
+            <p className="text-red-600">Không thể tải dữ liệu.</p>
+          </Card>
         </div>
       </DashboardLayout>
     );
@@ -76,6 +91,9 @@ export default function PendingAccountDetailContainer({
       user={user}
       userDetails={userDetails}
       verification={verification}
+      defaultFullName={
+        typeof defaultFullName === 'string' ? defaultFullName : null
+      }
     />
   );
 }

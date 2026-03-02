@@ -3,6 +3,7 @@
 import DashboardLayout from '@/components/layout';
 import PendingOrgDetail from '@/components/dashboard/pending-orgs/detail';
 import { useOrgRegistrationDetail } from '@/hooks/features/uc040-approve-reject-organization/useOrgRegistrationDetail';
+import { Card } from '@/components/ui/card';
 import { User } from '@supabase/supabase-js';
 
 interface Props {
@@ -31,7 +32,9 @@ export default function PendingOrgDetailContainer({
         description="Thông tin chi tiết tổ chức chờ phê duyệt"
       >
         <div className="w-full">
-          <p className="text-gray-600">Đang tải dữ liệu...</p>
+          <Card className="border-zinc-200 bg-white p-6 text-zinc-900 shadow-sm">
+            <p className="text-zinc-600">Đang tải dữ liệu...</p>
+          </Card>
         </div>
       </DashboardLayout>
     );
@@ -46,7 +49,9 @@ export default function PendingOrgDetailContainer({
         description="Thông tin chi tiết tổ chức chờ phê duyệt"
       >
         <div className="w-full">
-          <p className="text-red-500">Không thể tải dữ liệu.</p>
+          <Card className="border-zinc-200 bg-white p-6 text-zinc-900 shadow-sm">
+            <p className="text-red-600">Không thể tải dữ liệu.</p>
+          </Card>
         </div>
       </DashboardLayout>
     );

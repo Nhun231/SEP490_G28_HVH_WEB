@@ -1,3 +1,5 @@
+/* eslint-disable @next/next/no-img-element */
+
 'use client';
 
 import DashboardLayout from '@/components/layout';
@@ -126,13 +128,13 @@ export default function PendingEventDetail({
         <div className="w-full">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="mt-2 text-gray-600">
+              <p className="mt-2 text-zinc-500">
                 Thông tin chi tiết sự kiện chờ phê duyệt
               </p>
             </div>
             <Button
               variant="outline"
-              className="border-zinc-200 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-900"
+              className="bg-white border-zinc-300 text-zinc-900 hover:bg-zinc-50"
               onClick={() => router.push('/dashboard/pending-events')}
             >
               Quay lại
@@ -140,197 +142,191 @@ export default function PendingEventDetail({
           </div>
 
           {!event ? (
-            <Card className="border-zinc-200 bg-white p-6 dark:border-zinc-800">
-              <p className="text-gray-600">Không tìm thấy sự kiện.</p>
+            <Card className="border-zinc-200 bg-white p-6 text-zinc-900 shadow-sm">
+              <p className="text-zinc-600">Không tìm thấy sự kiện.</p>
             </Card>
           ) : (
-            <Card className="border-zinc-200 p-6 dark:border-zinc-800">
-              <div className="grid gap-6">
-                <div className="md:col-span-2">
-                  <p className="text-sm font-medium text-red-600">
-                    Ảnh minh họa sự kiện
-                  </p>
-                  <div className="mt-3">
-                    <Carousel opts={{ align: 'start' }}>
-                      <CarouselContent>
-                        {event.images?.map((src, index) => (
-                          <CarouselItem
-                            key={`${event.id}-img-${index}`}
-                            className="basis-full sm:basis-1/2 lg:basis-1/3"
+            <div className="grid gap-6">
+              <Card className="border-zinc-200 bg-white p-6 text-zinc-900 shadow-sm">
+                <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
+                  Ảnh minh họa sự kiện
+                </h2>
+                <div className="mt-4">
+                  <Carousel opts={{ align: 'start' }}>
+                    <CarouselContent>
+                      {event.images?.map((src, index) => (
+                        <CarouselItem
+                          key={`${event.id}-img-${index}`}
+                          className="basis-full sm:basis-1/2 lg:basis-1/3"
+                        >
+                          <button
+                            type="button"
+                            className="w-full"
+                            onClick={() => setPreviewImage(src)}
+                            aria-label={`Xem ảnh ${index + 1}`}
                           >
-                            <button
-                              type="button"
-                              className="w-full"
-                              onClick={() => setPreviewImage(src)}
-                              aria-label={`Xem ảnh ${index + 1}`}
-                            >
-                              <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
-                                <img
-                                  src={src}
-                                  alt={`${event.eventName} - ảnh ${index + 1}`}
-                                  className="h-56 w-full object-cover"
-                                  loading="lazy"
-                                />
-                              </div>
-                            </button>
-                          </CarouselItem>
-                        ))}
-                      </CarouselContent>
-                      <CarouselPrevious className="left-0" />
-                      <CarouselNext className="right-0" />
-                    </Carousel>
-                  </div>
+                            <div className="overflow-hidden rounded-lg border border-zinc-200">
+                              <img
+                                src={src}
+                                alt={`${event.eventName} - ảnh ${index + 1}`}
+                                className="h-56 w-full object-cover"
+                                loading="lazy"
+                              />
+                            </div>
+                          </button>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    <CarouselPrevious className="left-0" />
+                    <CarouselNext className="right-0" />
+                  </Carousel>
                 </div>
-                <div className="grid gap-4 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950 md:grid-cols-2">
-                  <div className="md:col-span-2">
-                    <p className="text-lg font-bold text-zinc-800 dark:text-zinc-200">
-                      Thông tin chung
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-red-600">
-                      Tên sự kiện
-                    </p>
-                    <p className="mt-1 text-gray-700">{event.eventName}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-red-600">Tổ chức</p>
-                    <p className="mt-1 text-gray-700">{event.organizer}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-red-600">
-                      Chế độ duyệt
-                    </p>
-                    <p className="mt-1 text-gray-700">{event.approvalMode}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-red-600">
-                      Trạng thái
-                    </p>
-                    <Badge className="mt-1 border-zinc-200 bg-blue-50 text-blue-700 dark:border-zinc-800">
-                      {event.status}
-                    </Badge>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-red-600">Địa điểm</p>
-                    <p className="mt-1 text-gray-700">{event.location}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-red-600">Khu vực</p>
-                    <p className="mt-1 text-gray-700">{event.region}</p>
-                  </div>
-                </div>
+              </Card>
 
-                <div className="grid gap-4 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950 md:grid-cols-2">
-                  <div className="md:col-span-2">
-                    <p className="text-lg font-bold text-zinc-800 dark:text-zinc-200">
-                      Thời gian
-                    </p>
+              <div className="grid gap-6 md:grid-cols-2">
+                <Card className="border-zinc-200 bg-white p-6 shadow-sm">
+                  <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
+                    Thông tin chung
+                  </h2>
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <div className="space-y-1">
+                      <p className="text-sm text-zinc-500">Tên sự kiện</p>
+                      <p className="text-sm text-zinc-700">{event.eventName}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-zinc-500">Tổ chức</p>
+                      <p className="text-sm text-zinc-700">{event.organizer}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-zinc-500">Chế độ duyệt</p>
+                      <p className="text-sm text-zinc-700">
+                        {event.approvalMode}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-zinc-500">Trạng thái</p>
+                      <Badge className="mt-1 border-zinc-200 bg-blue-50 text-blue-700">
+                        {event.status}
+                      </Badge>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-zinc-500">Địa điểm</p>
+                      <p className="text-sm text-zinc-700">{event.location}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-zinc-500">Khu vực</p>
+                      <p className="text-sm text-zinc-700">{event.region}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-red-600">
-                      Ngày diễn ra
-                    </p>
-                    <p className="mt-1 text-gray-700">{event.date}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-red-600">
-                      Ngày kết thúc
-                    </p>
-                    <p className="mt-1 text-gray-700">{event.endDate}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-red-600">
-                      Giờ bắt đầu
-                    </p>
-                    <p className="mt-1 text-gray-700">{event.startTime}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-red-600">
-                      Giờ kết thúc
-                    </p>
-                    <p className="mt-1 text-gray-700">{event.endTime}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-red-600">
-                      Hạn đăng ký
-                    </p>
-                    <p className="mt-1 text-gray-700">
-                      {event.registrationDeadline}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-red-600">Ngày nộp</p>
-                    <p className="mt-1 text-gray-700">{event.submittedDate}</p>
-                  </div>
-                </div>
+                </Card>
 
-                <div className="grid gap-4 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950 md:grid-cols-2">
-                  <div className="md:col-span-2">
-                    <p className="text-lg font-bold text-zinc-800 dark:text-zinc-200">
-                      Chỉ tiêu & lĩnh vực
-                    </p>
+                <Card className="border-zinc-200 bg-white p-6 shadow-sm">
+                  <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
+                    Thời gian
+                  </h2>
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <div className="space-y-1">
+                      <p className="text-sm text-zinc-500">Ngày diễn ra</p>
+                      <p className="text-sm text-zinc-700">{event.date}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-zinc-500">Ngày kết thúc</p>
+                      <p className="text-sm text-zinc-700">{event.endDate}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-zinc-500">Giờ bắt đầu</p>
+                      <p className="text-sm text-zinc-700">{event.startTime}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-zinc-500">Giờ kết thúc</p>
+                      <p className="text-sm text-zinc-700">{event.endTime}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-zinc-500">Hạn đăng ký</p>
+                      <p className="text-sm text-zinc-700">
+                        {event.registrationDeadline}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-zinc-500">Ngày nộp</p>
+                      <p className="text-sm text-zinc-700">
+                        {event.submittedDate}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-red-600">
-                      Tình nguyện viên
-                    </p>
-                    <p className="mt-1 text-gray-700">{event.volunteers}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-red-600">
-                      Số đối tượng phục vụ
-                    </p>
-                    <p className="mt-1 text-gray-700">
-                      {event.expectedBeneficiaries}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-red-600">
-                      Đối tượng phục vụ
-                    </p>
-                    <p className="mt-1 text-gray-700">{event.serviceTarget}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-red-600">
-                      Lĩnh vực hoạt động
-                    </p>
-                    <p className="mt-1 text-gray-700">{event.serviceField}</p>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950 md:grid-cols-2">
-                  <div className="md:col-span-2">
-                    <p className="text-lg font-bold text-zinc-800 dark:text-zinc-200">
-                      Điểm danh
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-red-600">
-                      Điểm check-in
-                    </p>
-                    <p className="mt-1 text-gray-700">
-                      {event.checkinPointName}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-red-600">
-                      Bán kính geofencing
-                    </p>
-                    <p className="mt-1 text-gray-700">
-                      {event.geofencingRadius}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
-                  <p className="text-lg font-bold text-zinc-800 dark:text-zinc-200">
-                    Mô tả
-                  </p>
-                  <p className="mt-2 text-gray-700">{event.description}</p>
-                </div>
+                </Card>
               </div>
-              <div className="mt-6 flex flex-wrap justify-end gap-2">
+
+              <div className="grid gap-6 md:grid-cols-2">
+                <Card className="border-zinc-200 bg-white p-6 shadow-sm">
+                  <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
+                    Chỉ tiêu & lĩnh vực
+                  </h2>
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <div className="space-y-1">
+                      <p className="text-sm text-zinc-500">Tình nguyện viên</p>
+                      <p className="text-sm text-zinc-700">
+                        {event.volunteers}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-zinc-500">
+                        Số đối tượng phục vụ
+                      </p>
+                      <p className="text-sm text-zinc-700">
+                        {event.expectedBeneficiaries}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-zinc-500">Đối tượng phục vụ</p>
+                      <p className="text-sm text-zinc-700">
+                        {event.serviceTarget}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-zinc-500">
+                        Lĩnh vực hoạt động
+                      </p>
+                      <p className="text-sm text-zinc-700">
+                        {event.serviceField}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+
+                <Card className="border-zinc-200 bg-white p-6 shadow-sm">
+                  <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
+                    Điểm danh
+                  </h2>
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <div className="space-y-1">
+                      <p className="text-sm text-zinc-500">Điểm check-in</p>
+                      <p className="text-sm text-zinc-700">
+                        {event.checkinPointName}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-zinc-500">
+                        Bán kính geofencing
+                      </p>
+                      <p className="text-sm text-zinc-700">
+                        {event.geofencingRadius}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
+              <Card className="border-zinc-200 bg-white p-6 shadow-sm">
+                <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
+                  Mô tả
+                </h2>
+                <p className="mt-3 text-sm text-zinc-700">
+                  {event.description}
+                </p>
+              </Card>
+
+              <div className="flex flex-wrap justify-end gap-2">
                 <Button
                   className="bg-red-600 text-white hover:bg-red-700"
                   onClick={() => {
@@ -340,7 +336,7 @@ export default function PendingEventDetail({
                   Hủy
                 </Button>
                 <Button
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="bg-blue-600 text-white hover:bg-blue-700"
                   onClick={() => {
                     // TODO: handle approve
                   }}
@@ -348,7 +344,7 @@ export default function PendingEventDetail({
                   Phê duyệt
                 </Button>
               </div>
-            </Card>
+            </div>
           )}
         </div>
       </DashboardLayout>

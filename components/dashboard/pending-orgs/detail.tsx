@@ -1,3 +1,5 @@
+/* eslint-disable @next/next/no-img-element */
+
 'use client';
 
 import DashboardLayout from '@/components/layout';
@@ -79,7 +81,7 @@ const renderValue = (value?: string | number | boolean | null) => {
 };
 
 const renderStatusBadge = (status?: string | null) => {
-  if (!status) return <span className="text-gray-500">-</span>;
+  if (!status) return <span className="text-zinc-500">-</span>;
   const normalized = status.toUpperCase();
   const className =
     normalized === 'PENDING'
@@ -190,13 +192,13 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
       <div className="w-full">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="mt-2 text-gray-600">
+            <p className="mt-2 text-zinc-500">
               Thông tin chi tiết tổ chức chờ phê duyệt
             </p>
           </div>
           <Button
             variant="outline"
-            className="border-zinc-200 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-900"
+            className="bg-white border-zinc-300 text-zinc-900 hover:bg-zinc-50"
             onClick={() => router.push('/dashboard/pending-orgs')}
           >
             Quay lại
@@ -204,190 +206,173 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
         </div>
 
         {!detail ? (
-          <Card className="border-zinc-200 bg-white p-6 dark:border-zinc-800">
-            <p className="text-gray-600">Không tìm thấy tổ chức.</p>
+          <Card className="border-zinc-200 bg-white p-6 text-zinc-900 shadow-sm">
+            <p className="text-zinc-600">Không tìm thấy tổ chức.</p>
           </Card>
         ) : (
-          <Card className="border-zinc-200 p-6 dark:border-zinc-800">
-            <div className="grid gap-6">
-              <div className="grid gap-4 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950 md:grid-cols-2">
-                <div className="md:col-span-2">
-                  <p className="text-lg font-bold text-zinc-800 dark:text-zinc-200">
-                    Thông tin tổ chức
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-red-600">
-                    Tên tổ chức
-                  </p>
-                  <p className="mt-1 text-gray-700">
+          <div className="grid gap-6">
+            <Card className="border-zinc-200 bg-white p-6 text-zinc-900 shadow-sm">
+              <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
+                Thông tin tổ chức
+              </h2>
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div className="space-y-1">
+                  <p className="text-sm text-zinc-500">Tên tổ chức</p>
+                  <p className="text-sm text-zinc-700">
                     {renderValue(detail.name)}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-red-600">
-                    Loại tổ chức
-                  </p>
-                  <p className="mt-1 text-gray-700">
+                <div className="space-y-1">
+                  <p className="text-sm text-zinc-500">Loại tổ chức</p>
+                  <p className="text-sm text-zinc-700">
                     {renderValue(detail.orgType)}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-red-600">DHA</p>
-                  <p className="mt-1 text-gray-700">
+                <div className="space-y-1">
+                  <p className="text-sm text-zinc-500">DHA</p>
+                  <p className="text-sm text-zinc-700">
                     {renderValue(detail.dhaRegistered)}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-red-600">Trạng thái</p>
+                <div className="space-y-1">
+                  <p className="text-sm text-zinc-500">Trạng thái</p>
                   <div className="mt-1">{renderStatusBadge(detail.status)}</div>
                 </div>
-                <div className="md:col-span-2">
-                  <p className="text-sm font-medium text-red-600">Giới thiệu</p>
-                  <p className="mt-1 text-gray-700">
+                <div className="md:col-span-2 space-y-1">
+                  <p className="text-sm text-zinc-500">Giới thiệu</p>
+                  <p className="text-sm text-zinc-700">
                     {renderValue(detail.orgIntroduction)}
                   </p>
                 </div>
-                <div className="md:col-span-2">
-                  <p className="text-sm font-medium text-red-600">
-                    Lý do đăng ký
-                  </p>
-                  <p className="mt-1 text-gray-700">
+                <div className="md:col-span-2 space-y-1">
+                  <p className="text-sm text-zinc-500">Lý do đăng ký</p>
+                  <p className="text-sm text-zinc-700">
                     {renderValue(detail.applicationReason)}
                   </p>
                 </div>
                 {detail.rejectionReason ? (
-                  <div className="md:col-span-2">
-                    <p className="text-sm font-medium text-red-600">
-                      Lý do từ chối
-                    </p>
-                    <p className="mt-1 text-gray-700">
+                  <div className="md:col-span-2 space-y-1">
+                    <p className="text-sm text-zinc-500">Lý do từ chối</p>
+                    <p className="text-sm text-zinc-700">
                       {renderValue(detail.rejectionReason)}
                     </p>
                   </div>
                 ) : null}
               </div>
+            </Card>
 
-              <div className="grid gap-4 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950 md:grid-cols-2">
-                <div className="md:col-span-2">
-                  <p className="text-lg font-bold text-zinc-800 dark:text-zinc-200">
-                    Thông tin quản lý
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-red-600">Họ tên</p>
-                  <p className="mt-1 text-gray-700">
+            <Card className="border-zinc-200 bg-white p-6 shadow-sm">
+              <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
+                Thông tin quản lý
+              </h2>
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div className="space-y-1">
+                  <p className="text-sm text-zinc-500">Họ tên</p>
+                  <p className="text-sm text-zinc-700">
                     {renderValue(detail.managerFullName)}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-red-600">CCCD</p>
-                  <p className="mt-1 text-gray-700">
+                <div className="space-y-1">
+                  <p className="text-sm text-zinc-500">CCCD</p>
+                  <p className="text-sm text-zinc-700">
                     {renderValue(detail.managerCid)}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-red-600">
-                    Số điện thoại
-                  </p>
-                  <p className="mt-1 text-gray-700">
+                <div className="space-y-1">
+                  <p className="text-sm text-zinc-500">Số điện thoại</p>
+                  <p className="text-sm text-zinc-700">
                     {renderValue(detail.managerPhone)}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-red-600">Email</p>
-                  <p className="mt-1 text-gray-700">
+                <div className="space-y-1">
+                  <p className="text-sm text-zinc-500">Email</p>
+                  <p className="text-sm text-zinc-700">
                     {renderValue(detail.managerEmail)}
                   </p>
                 </div>
-                <div className="md:col-span-2 grid gap-3 md:grid-cols-3">
-                  <div className="rounded-lg p-2">
-                    <p className="text-xs font-medium text-zinc-600">
-                      CCCD mặt trước
-                    </p>
-                    {renderCidImage(
-                      detail.managerCidFrontUrl,
-                      'CCCD mặt trước'
-                    )}
-                  </div>
-                  <div className="rounded-lg p-2">
-                    <p className="text-xs font-medium text-zinc-600">
-                      CCCD mặt sau
-                    </p>
-                    {renderCidImage(detail.managerCidBackUrl, 'CCCD mặt sau')}
-                  </div>
-                  <div className="rounded-lg p-2">
-                    <p className="text-xs font-medium text-zinc-600">
-                      Ảnh cầm CCCD
-                    </p>
-                    {renderCidImage(
-                      detail.managerCidHoldingUrl,
-                      'Ảnh cầm CCCD'
-                    )}
-                  </div>
-                </div>
               </div>
-
-              <div className="grid gap-4 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950 md:grid-cols-2">
-                <div className="md:col-span-2">
-                  <p className="text-lg font-bold text-zinc-800 dark:text-zinc-200">
-                    Thông tin duyệt
+              <div className="mt-5 grid gap-3 md:grid-cols-3">
+                <div>
+                  <p className="text-xs font-medium text-zinc-600">
+                    CCCD mặt trước
                   </p>
+                  {renderCidImage(detail.managerCidFrontUrl, 'CCCD mặt trước')}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-red-600">Ngày tạo</p>
-                  <p className="mt-1 text-gray-700">
+                  <p className="text-xs font-medium text-zinc-600">
+                    CCCD mặt sau
+                  </p>
+                  {renderCidImage(detail.managerCidBackUrl, 'CCCD mặt sau')}
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-zinc-600">
+                    Ảnh cầm CCCD
+                  </p>
+                  {renderCidImage(detail.managerCidHoldingUrl, 'Ảnh cầm CCCD')}
+                </div>
+              </div>
+            </Card>
+
+            <Card className="border-zinc-200 bg-white p-6 shadow-sm">
+              <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
+                Thông tin duyệt
+              </h2>
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div className="space-y-1">
+                  <p className="text-sm text-zinc-500">Ngày tạo</p>
+                  <p className="text-sm text-zinc-700">
                     {renderValue(detail.createdAt)}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-red-600">Ngày duyệt</p>
-                  <p className="mt-1 text-gray-700">
+                <div className="space-y-1">
+                  <p className="text-sm text-zinc-500">Ngày duyệt</p>
+                  <p className="text-sm text-zinc-700">
                     {renderValue(detail.reviewedAt)}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-red-600">
-                    Người duyệt
-                  </p>
-                  <p className="mt-1 text-gray-700">
+                <div className="space-y-1">
+                  <p className="text-sm text-zinc-500">Người duyệt</p>
+                  <p className="text-sm text-zinc-700">
                     {renderValue(
                       detail.reviewedBy?.email || detail.reviewedBy?.id
                     )}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-red-600">Ghi chú</p>
-                  <p className="mt-1 text-gray-700">
+                <div className="space-y-1">
+                  <p className="text-sm text-zinc-500">Ghi chú</p>
+                  <p className="text-sm text-zinc-700">
                     {renderValue(detail.note)}
                   </p>
                 </div>
               </div>
+            </Card>
 
-              <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
-                <p className="text-lg font-bold text-zinc-800 dark:text-zinc-200">
-                  Bằng chứng bổ sung
+            <Card className="border-zinc-200 bg-white p-6 shadow-sm">
+              <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
+                Bằng chứng bổ sung
+              </h2>
+              {mergedEvidenceUrls.length === 0 ? (
+                <p className="mt-3 text-sm text-zinc-700">
+                  Không có tệp đính kèm.
                 </p>
-                {mergedEvidenceUrls.length === 0 ? (
-                  <p className="mt-2 text-gray-700">Không có tệp đính kèm.</p>
-                ) : (
-                  <div className="mt-3 grid gap-2">
-                    {mergedEvidenceUrls.map((url) => (
-                      <a
-                        key={url}
-                        href={url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-sm text-blue-600 hover:underline"
-                      >
-                        {url}
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="mt-6 flex flex-wrap justify-end gap-2">
+              ) : (
+                <div className="mt-3 grid gap-2">
+                  {mergedEvidenceUrls.map((url) => (
+                    <a
+                      key={url}
+                      href={url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm text-blue-600 hover:underline"
+                    >
+                      {url}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </Card>
+
+            <div className="flex flex-wrap justify-end gap-2">
               <Button
                 className="bg-red-600 text-white hover:bg-red-700"
                 onClick={() => setOpenRejectModal(true)}
@@ -396,14 +381,14 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
                 Từ chối
               </Button>
               <Button
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
                 onClick={() => setOpenApproveModal(true)}
                 disabled={isVerifying || !detail?.id}
               >
                 Phê duyệt
               </Button>
             </div>
-          </Card>
+          </div>
         )}
       </div>
 

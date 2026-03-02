@@ -30,7 +30,8 @@ export interface SidebarProps extends PropsWithChildren {
 }
 
 function Sidebar(props: SidebarProps) {
-  const router = getRedirectMethod() === 'client' ? useRouter() : null;
+  const router = useRouter();
+  const redirectMethod = getRedirectMethod();
   const { routes } = props;
 
   const user = useContext(UserContext);
@@ -38,7 +39,11 @@ function Sidebar(props: SidebarProps) {
   const handleSignOut = async (e) => {
     e.preventDefault();
     supabase.auth.signOut();
-    router.push('/dashboard/signin');
+    if (redirectMethod === 'client') {
+      router.push('/dashboard/signin');
+    } else {
+      window.location.href = '/dashboard/signin';
+    }
   };
   // SIDEBAR
   return (

@@ -1,3 +1,5 @@
+/* eslint-disable @next/next/no-img-element */
+
 'use client';
 
 import { useState } from 'react';
@@ -110,7 +112,7 @@ export default function OrganizationDetailPage({
         <div className="mb-6 flex items-center justify-between">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
+            className="flex items-center gap-2 text-blue-400 hover:text-blue-300"
           >
             <ArrowLeft className="h-5 w-5" />
             <span>Chi tiết Tổ chức</span>
@@ -122,21 +124,24 @@ export default function OrganizationDetailPage({
         </div>
 
         {/* Organization Header Card */}
-        <Card className="mb-6 border-zinc-200 bg-card p-6 shadow-sm dark:border-zinc-800">
-          <div className="flex gap-6">
-            <img
-              src={org.imageUrl}
-              alt={org.name}
-              className="h-24 w-24 rounded-lg object-cover"
-            />
-            <div className="flex-1">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h1 className="text-2xl font-bold text-zinc-900">
+        <Card className="mb-6 border-zinc-200 bg-white p-6 text-zinc-900 shadow-sm">
+          <div className="flex flex-col gap-4 md:flex-row md:items-stretch md:gap-6">
+            <div className="w-24 md:w-48 md:shrink-0 md:self-stretch">
+              <img
+                src={org.imageUrl}
+                alt={org.name}
+                className="h-24 w-24 rounded-xl object-cover md:h-full md:w-full"
+              />
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h1 className="text-2xl font-bold leading-snug tracking-tight text-zinc-900 md:text-3xl">
                     {org.name}
                   </h1>
                   <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <Badge className="border-green-200 bg-green-50 text-green-700">
+                    <Badge className={statusBadgeClass(org.status)}>
                       {org.status}
                     </Badge>
                     <Badge className="border-blue-200 bg-blue-50 text-blue-700">
@@ -146,7 +151,6 @@ export default function OrganizationDetailPage({
                 </div>
               </div>
 
-              {/* Rating and Stats */}
               <div className="mt-4 flex items-center gap-2">
                 {renderStars(org.rating)}
                 <span className="ml-2 text-sm font-medium text-zinc-600">
@@ -157,21 +161,26 @@ export default function OrganizationDetailPage({
                 </span>
               </div>
             </div>
-          </div>
 
-          {/* Stats Row */}
-          <div className="mt-6 grid grid-cols-2 gap-4">
-            <div className="rounded-lg border border-green-300 bg-[#b6f2d6] p-4 text-center">
-              <p className="text-sm text-zinc-600">Số người ứng tuyển</p>
-              <p className="mt-2 text-3xl font-extrabold text-green-800">
-                {org.volunteers.toLocaleString('vi-VN')}
-              </p>
-            </div>
-            <div className="rounded-lg border border-blue-300 bg-[#b3d8fd] p-4 text-center">
-              <p className="text-sm text-zinc-600">Số giờ uy tín</p>
-              <p className="mt-2 text-3xl font-extrabold text-blue-800">
-                {org.donations.toLocaleString('vi-VN')}
-              </p>
+            <div className="w-full md:w-[260px] md:shrink-0 md:border-l md:border-zinc-200 md:pl-6 md:flex md:flex-col md:justify-center">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-1 md:gap-6">
+                <div className="text-center md:text-left">
+                  <p className="text-xs text-zinc-500 md:text-sm">
+                    Số người ứng tuyển
+                  </p>
+                  <p className="mt-1 text-2xl font-bold leading-none text-zinc-900 md:text-3xl">
+                    {org.volunteers.toLocaleString('vi-VN')}
+                  </p>
+                </div>
+                <div className="text-center md:text-left">
+                  <p className="text-xs text-zinc-500 md:text-sm">
+                    Số giờ uy tín
+                  </p>
+                  <p className="mt-1 text-2xl font-bold leading-none text-zinc-900 md:text-3xl">
+                    {org.donations.toLocaleString('vi-VN')}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </Card>
@@ -179,8 +188,8 @@ export default function OrganizationDetailPage({
         {/* Basic Info and Admin Info */}
         <div className="mb-6 grid gap-6 md:grid-cols-2">
           {/* Basic Info */}
-          <Card className="border-zinc-200 bg-card p-6 shadow-sm dark:border-zinc-800">
-            <h2 className="text-lg font-semibold text-zinc-900">
+          <Card className="border-zinc-200 bg-white p-6 shadow-sm">
+            <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
               Thông tin cơ bản
             </h2>
             <div className="mt-4 space-y-4">
@@ -220,8 +229,8 @@ export default function OrganizationDetailPage({
           </Card>
 
           {/* Admin Info */}
-          <Card className="border-zinc-200 bg-card p-6 shadow-sm dark:border-zinc-800">
-            <h2 className="text-lg font-semibold text-zinc-900">
+          <Card className="border-zinc-200 bg-white p-6 shadow-sm">
+            <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
               Thông tin quản trị viên
             </h2>
             <div className="mt-4 space-y-4">
@@ -262,8 +271,8 @@ export default function OrganizationDetailPage({
         </div>
 
         {/* Organization Introduction */}
-        <Card className="mb-6 border-zinc-200 bg-card p-6 shadow-sm dark:border-zinc-800">
-          <h2 className="text-lg font-semibold text-zinc-900">
+        <Card className="mb-6 border-zinc-200 bg-white p-6 shadow-sm">
+          <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
             Giới thiệu tổ chức
           </h2>
           <p className="mt-4 text-sm text-zinc-700 leading-relaxed">
@@ -272,8 +281,8 @@ export default function OrganizationDetailPage({
         </Card>
 
         {/* Application Reason */}
-        <Card className="mb-6 border-zinc-200 bg-card p-6 shadow-sm dark:border-zinc-800">
-          <h2 className="text-lg font-semibold text-zinc-900">
+        <Card className="mb-6 border-zinc-200 bg-white p-6 shadow-sm">
+          <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
             Lý do ứng tuyển
           </h2>
           <p className="mt-4 text-sm text-zinc-700 leading-relaxed">
@@ -282,8 +291,8 @@ export default function OrganizationDetailPage({
         </Card>
 
         {/* Registration Images */}
-        <Card className="mb-6 border-zinc-200 bg-card p-6 shadow-sm dark:border-zinc-800">
-          <h2 className="text-lg font-semibold text-zinc-900">
+        <Card className="mb-6 border-zinc-200 bg-white p-6 shadow-sm">
+          <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
             Mẫu đơn đăng ký tổ chức
           </h2>
           <div className="mt-4 relative">
@@ -317,8 +326,8 @@ export default function OrganizationDetailPage({
         </Card>
 
         {/* Supporting Documents */}
-        <Card className="border-zinc-200 bg-card p-6 shadow-sm dark:border-zinc-800">
-          <h2 className="text-lg font-semibold text-zinc-900">
+        <Card className="border-zinc-200 bg-white p-6 shadow-sm">
+          <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
             Tài liệu hỗ trợ
           </h2>
           <div className="mt-4 relative">

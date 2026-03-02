@@ -1,8 +1,11 @@
+/* eslint-disable @next/next/no-img-element */
+
 'use client';
 
 import DashboardLayout from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
@@ -15,13 +18,14 @@ import { useVerifyIdentity } from '@/hooks/features/uc044-identity-verification/
 import type { PendingAccountVerification } from '@/hooks/entity';
 import { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 interface Props {
   user: User | null | undefined;
   userDetails: { [x: string]: any } | null;
   verification: PendingAccountVerification | null;
+  defaultFullName?: string | null;
 }
 
 const renderValue = (value?: string | number | boolean | null) => {
@@ -30,18 +34,30 @@ const renderValue = (value?: string | number | boolean | null) => {
   return String(value);
 };
 
-const placeholderImages = {
-  front:
-    'https://images.unsplash.com/photo-1523287562758-66c7fc58967f?auto=format&fit=crop&w=600&q=80',
-  back: 'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=600&q=80',
-  holding:
-    'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&q=80'
+const renderCidImage = (src: string | null, label: string) => {
+  if (!src) {
+    return (
+      <div className="mt-2 flex h-40 w-full items-center justify-center rounded-md border border-dashed border-zinc-200 bg-zinc-50 text-xs text-zinc-500">
+        {label}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={label}
+      className="mt-2 h-40 w-full rounded-md border border-zinc-200 object-cover"
+      loading="lazy"
+    />
+  );
 };
 
 export default function PendingAccountDetail({
   user,
   userDetails,
-  verification
+  verification,
+  defaultFullName = null
 }: Props) {
   const router = useRouter();
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
@@ -49,8 +65,12 @@ export default function PendingAccountDetail({
   const [openRejectModal, setOpenRejectModal] = useState(false);
   const [openApproveModal, setOpenApproveModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
-  const [accountName, setAccountName] = useState('');
+  const [accountName, setAccountName] = useState(defaultFullName ?? '');
   const isApproveEnabled = accountName.trim().length > 0;
+
+  useEffect(() => {
+    setAccountName(defaultFullName ?? '');
+  }, [defaultFullName, verification?.id]);
 
   const { trigger: verify, isMutating: isVerifying } = useVerifyIdentity({
     id: verification?.id || '',
@@ -116,13 +136,13 @@ export default function PendingAccountDetail({
       <div className="w-full">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="mt-2 text-gray-600">
+            <p className="mt-2 text-zinc-500">
               Thông tin chi tiết tài khoản chờ phê duyệt
             </p>
           </div>
           <Button
             variant="outline"
-            className="border-zinc-200 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-900"
+            className="bg-white border-zinc-300 text-zinc-900 hover:bg-zinc-50"
             onClick={() => router.push('/dashboard/pending-accounts')}
           >
             Quay lại
@@ -130,119 +150,112 @@ export default function PendingAccountDetail({
         </div>
 
         {!verification ? (
-          <Card className="border-zinc-200 bg-white p-6 dark:border-zinc-800">
-            <p className="text-gray-600">Không tìm thấy tài khoản.</p>
+          <Card className="border-zinc-200 bg-white p-6 text-zinc-900 shadow-sm">
+            <p className="text-zinc-600">Không tìm thấy tài khoản.</p>
           </Card>
         ) : (
-          <Card className="border-zinc-200 p-6 dark:border-zinc-800">
-            <div className="grid gap-6">
-              <div className="grid gap-4 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950 md:grid-cols-2">
-                <div className="md:col-span-2">
-                  <p className="text-lg font-bold text-zinc-800 dark:text-zinc-200">
-                    Thông tin chi tiết
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-red-600">
-                    Số căn cước công dân
-                  </p>
-                  <p className="mt-1 text-gray-700">
+          <div className="grid gap-6">
+            <Card className="border-zinc-200 bg-white p-6 text-zinc-900 shadow-sm">
+              <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
+                Thông tin tài khoản
+              </h2>
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div className="space-y-1">
+                  <p className="text-sm text-zinc-500">Số căn cước công dân</p>
+                  <p className="text-sm text-zinc-700">
                     {renderValue(verification.cid)}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-red-600">
-                    Số điện thoại
-                  </p>
-                  <p className="mt-1 text-gray-700">
+                <div className="space-y-1">
+                  <p className="text-sm text-zinc-500">Số điện thoại</p>
+                  <p className="text-sm text-zinc-700">
                     {renderValue(verification.phone)}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-red-600">Email</p>
-                  <p className="mt-1 text-gray-700">
+                <div className="space-y-1">
+                  <p className="text-sm text-zinc-500">Email</p>
+                  <p className="text-sm text-zinc-700">
                     {renderValue(verification.email)}
                   </p>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-red-600">
+                <div className="space-y-1">
+                  <p className="text-sm text-zinc-500">Trạng thái</p>
+                  <p className="text-sm text-zinc-700">Chờ phê duyệt</p>
+                </div>
+
+                <div className="space-y-1 md:col-span-2">
+                  <p className="text-sm font-medium text-zinc-700">
                     Tên tài khoản
-                  </label>
-                  <input
+                  </p>
+                  <Input
                     value={accountName}
                     onChange={(e) => setAccountName(e.target.value)}
                     placeholder="Nhập tên tài khoản"
-                    className="mt-1 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none"
+                    className="bg-white border-primary/40 text-zinc-900 placeholder:text-zinc-500 focus-visible:ring-0 focus-visible:ring-offset-0"
                   />
                 </div>
-                <div className="md:col-span-2 grid gap-3 md:grid-cols-3">
-                  <div className="rounded-lg p-2">
-                    <p className="text-xs font-medium text-zinc-600">
-                      CCCD mặt trước
-                    </p>
-                    <img
-                      src={verification.cid_front || placeholderImages.front}
-                      alt="CCCD mặt trước"
-                      className="mt-2 h-40 w-full rounded-md object-cover"
-                    />
-                  </div>
-                  <div className="rounded-lg p-2">
-                    <p className="text-xs font-medium text-zinc-600">
-                      CCCD mặt sau
-                    </p>
-                    <img
-                      src={verification.cid_back || placeholderImages.back}
-                      alt="CCCD mặt sau"
-                      className="mt-2 h-40 w-full rounded-md object-cover"
-                    />
-                  </div>
-                  <div className="rounded-lg p-2">
-                    <p className="text-xs font-medium text-zinc-600">
-                      Ảnh cầm CCCD
-                    </p>
-                    <img
-                      src={
-                        verification.cid_holding || placeholderImages.holding
-                      }
-                      alt="Ảnh cầm CCCD"
-                      className="mt-2 h-40 w-full rounded-md object-cover"
-                    />
-                  </div>
+              </div>
+            </Card>
+
+            <Card className="border-zinc-200 bg-white p-6 shadow-sm">
+              <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
+                Ảnh CCCD
+              </h2>
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                <div>
+                  <p className="text-xs font-medium text-zinc-600">
+                    CCCD mặt trước
+                  </p>
+                  {renderCidImage(verification.cid_front, 'CCCD mặt trước')}
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-zinc-600">
+                    CCCD mặt sau
+                  </p>
+                  {renderCidImage(verification.cid_back, 'CCCD mặt sau')}
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-zinc-600">
+                    Ảnh cầm CCCD
+                  </p>
+                  {renderCidImage(verification.cid_holding, 'Ảnh cầm CCCD')}
                 </div>
               </div>
+            </Card>
 
-              {verification.note ? (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 shadow-sm dark:border-amber-700/60 dark:bg-amber-950/20">
-                  <p className="text-lg font-bold text-amber-900 dark:text-amber-200">
-                    Ghi chú
-                  </p>
-                  <p className="mt-3 whitespace-pre-wrap text-amber-900/90 dark:text-amber-100">
-                    {verification.note}
-                  </p>
-                </div>
-              ) : null}
+            {verification.note ? (
+              <div className="relative overflow-hidden rounded-md border border-amber-200 bg-amber-50 p-6 pt-10 text-amber-950">
+                <div className="pointer-events-none absolute left-1/2 top-0 h-6 w-20 -translate-x-1/2 -translate-y-1/2 -rotate-2 rounded-sm border border-amber-400/30 bg-amber-300/70 shadow-sm" />
 
-              <div className="flex flex-wrap justify-end gap-2">
-                <Button
-                  className="bg-red-600 text-white hover:bg-red-700"
-                  onClick={() => setOpenRejectModal(true)}
-                  disabled={isVerifying}
-                >
-                  Từ chối
-                </Button>
-                <Button
-                  className="bg-blue-600 hover:bg-blue-700"
-                  onClick={() => setOpenApproveModal(true)}
-                  disabled={!isApproveEnabled || isVerifying}
-                  title={
-                    isApproveEnabled ? undefined : 'Vui lòng nhập tên tài khoản'
-                  }
-                >
-                  Phê duyệt
-                </Button>
+                <h2 className="text-xl font-semibold leading-snug tracking-tight text-amber-950 md:text-3xl">
+                  Ghi chú
+                </h2>
+                <p className="mt-3 whitespace-pre-wrap text-lg leading-relaxed text-amber-950/90">
+                  {verification.note}
+                </p>
               </div>
+            ) : null}
+
+            <div className="flex flex-wrap justify-end gap-2">
+              <Button
+                className="bg-red-600 text-white hover:bg-red-700"
+                onClick={() => setOpenRejectModal(true)}
+                disabled={isVerifying}
+              >
+                Từ chối
+              </Button>
+              <Button
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={() => setOpenApproveModal(true)}
+                disabled={!isApproveEnabled || isVerifying}
+                title={
+                  isApproveEnabled ? undefined : 'Vui lòng nhập tên tài khoản'
+                }
+              >
+                Phê duyệt
+              </Button>
             </div>
-          </Card>
+          </div>
         )}
       </div>
 

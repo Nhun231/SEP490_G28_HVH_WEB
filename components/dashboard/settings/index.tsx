@@ -101,17 +101,19 @@ export default function Settings(props: Props) {
         <div className="maw-w-full mx-auto w-full flex-col justify-center md:w-full md:flex-row xl:w-full">
           <Card
             className={
-              'mb-5 h-min flex items-center aligh-center max-w-full py-8 px-4 dark:border-zinc-800'
+              'mb-5 h-min flex items-center aligh-center max-w-full py-8 px-4 bg-white border-zinc-200 shadow-sm dark:border-zinc-800'
             }
           >
             <Avatar className="min-h-[68px] min-w-[68px]">
               <AvatarImage src={props.user?.user_metadata.avatar_url} />
               <AvatarFallback className="text-2xl font-bold dark:text-zinc-950">
-                {props.user.user_metadata.full_name && props.user.user_metadata.full_name.length > 0
+                {props.user.user_metadata.full_name &&
+                props.user.user_metadata.full_name.length > 0
                   ? `${props.user.user_metadata.full_name[0]}`
-                  : (props.user?.user_metadata.email && props.user.user_metadata.email.length > 0
-                      ? `${props.user.user_metadata.email[0].toUpperCase()}`
-                      : '?')}
+                  : props.user?.user_metadata.email &&
+                      props.user.user_metadata.email.length > 0
+                    ? `${props.user.user_metadata.email[0].toUpperCase()}`
+                    : '?'}
               </AvatarFallback>
             </Avatar>
             <div>
@@ -125,7 +127,7 @@ export default function Settings(props: Props) {
           </Card>
           <Card
             className={
-              'mb-5 h-min max-w-full pt-8 pb-6 px-6 dark:border-zinc-800'
+              'mb-5 h-min max-w-full pt-8 pb-6 px-6 bg-white border-zinc-200 shadow-sm dark:border-zinc-800'
             }
           >
             <p className="text-xl font-extrabold text-zinc-950 dark:text-white md:text-3xl">
@@ -155,7 +157,7 @@ export default function Settings(props: Props) {
                   // defaultValue={props.user?.user_metadata.full_name ?? ''}
                   defaultValue={props.userDetails?.full_name ?? ''}
                   placeholder="Vui lòng nhập họ và tên"
-                  className={`mb-2 mr-4 flex h-full w-full px-4 py-4 outline-none md:mb-0`}
+                  className={`mb-2 mr-4 flex h-full w-full px-4 py-4 outline-none md:mb-0 bg-white border-zinc-300 focus:border-zinc-400`}
                 />
               </form>
               <Button
@@ -195,7 +197,7 @@ export default function Settings(props: Props) {
                   defaultValue={props.user.email ?? ''}
                   type="text"
                   name="newEmail"
-                  className={`mr-4 flex h-full max-w-full w-full items-center justify-center px-4 py-4 outline-none`}
+                  className={`mr-4 flex h-full max-w-full w-full items-center justify-center px-4 py-4 outline-none bg-white border-zinc-300 focus:border-zinc-400`}
                 />
               </form>
               <Button

@@ -21,7 +21,7 @@ export default function Settings(props: Props) {
   return (
     <Card
       className={
-        'mb-5 mr-0 h-min max-w-full pt-8 pb-6 px-6 dark:border-zinc-800 md:mb-0'
+        'mb-5 mr-0 h-min max-w-full pt-8 pb-6 px-6 bg-white border-zinc-200 shadow-sm dark:border-zinc-800 md:mb-0'
       }
     >
       <div>
@@ -34,7 +34,7 @@ export default function Settings(props: Props) {
       </div>
       <Card
         className={
-          'mb-5 h-min flex items-center max-w-full py-4 px-4 dark:border-zinc-800'
+          'mb-5 h-min flex items-center max-w-full py-4 px-4 bg-white border-zinc-200 shadow-sm dark:border-zinc-800'
         }
       >
         <HiOutlineBellAlert className="w-6 h-6 me-4" />

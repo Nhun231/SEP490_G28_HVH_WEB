@@ -390,13 +390,15 @@ export default function VolunteersList(props: Props) {
     );
     const applied = columnValueFilters[columnKey] ?? [];
     const hasActiveFilter = applied.length > 0;
-    const isSearchFilteringThisColumn = Boolean(searchQuery.trim()) &&
+    const isSearchFilteringThisColumn =
+      Boolean(searchQuery.trim()) &&
       ((searchField === 'name' && columnKey === 'fullName') ||
         (searchField === 'cccd' && columnKey === 'cccd') ||
         (searchField === 'phone' && columnKey === 'phone') ||
         (searchField === 'email' && columnKey === 'email'));
     const isSortActive = sortCriteria.some((c) => c.key === columnKey);
-    const isActive = hasActiveFilter || isSearchFilteringThisColumn || isSortActive;
+    const isActive =
+      hasActiveFilter || isSearchFilteringThisColumn || isSortActive;
 
     const [open, setOpen] = useState(false);
     const [search, setSearch] = useState('');
@@ -481,7 +483,7 @@ export default function VolunteersList(props: Props) {
                   e.preventDefault();
                   clearSortForKey(columnKey);
                 }}
-                className="gap-2 text-zinc-600"
+                className="gap-2 text-zinc-600 data-[highlighted]:bg-zinc-50 data-[highlighted]:text-zinc-900"
               >
                 <X className="h-4 w-4" />
                 Xóa sắp xếp
@@ -588,7 +590,7 @@ export default function VolunteersList(props: Props) {
                 <Button
                   type="button"
                   variant="ghost"
-                  className="h-8 w-full justify-start gap-2 text-zinc-600"
+                  className="h-8 w-full justify-start gap-2 text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
                   onClick={() => {
                     setApplied([]);
                     setOpen(false);
@@ -671,7 +673,7 @@ export default function VolunteersList(props: Props) {
                   e.preventDefault();
                   clearSortForKey('dob');
                 }}
-                className="gap-2 text-zinc-600"
+                className="gap-2 text-zinc-600 data-[highlighted]:bg-zinc-50 data-[highlighted]:text-zinc-900"
               >
                 <X className="h-4 w-4" />
                 Xóa sắp xếp
@@ -732,7 +734,7 @@ export default function VolunteersList(props: Props) {
                 <Button
                   type="button"
                   variant="ghost"
-                  className="h-8 w-full justify-start gap-2 text-zinc-600"
+                  className="h-8 w-full justify-start gap-2 text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
                   onClick={() => {
                     setDobFrom('');
                     setDobTo('');
@@ -766,9 +768,7 @@ export default function VolunteersList(props: Props) {
             variant="ghost"
             size="icon"
             className={`h-7 w-7 p-0 ${
-              isApplied
-                ? 'text-primary'
-                : 'text-zinc-500'
+              isApplied ? 'text-primary' : 'text-zinc-500'
             }`}
             aria-label={`Sắp xếp cột ${label}`}
           >
@@ -811,7 +811,7 @@ export default function VolunteersList(props: Props) {
                   e.preventDefault();
                   clearSortForKey(sortKey);
                 }}
-                className="gap-2 text-zinc-600"
+                className="gap-2 text-zinc-600 data-[highlighted]:bg-zinc-50 data-[highlighted]:text-zinc-900"
               >
                 <X className="h-4 w-4" />
                 Xóa sắp xếp
@@ -829,8 +829,18 @@ export default function VolunteersList(props: Props) {
       return new Date(year, month - 1, day);
     };
 
-    const fromDate = dobFrom ? new Date(dobFrom) : null;
-    const toDate = dobTo ? new Date(dobTo) : null;
+    const parseYmdStartOfDay = (ymd: string) => {
+      const [year, month, day] = ymd.split('-').map(Number);
+      return new Date(year, month - 1, day, 0, 0, 0, 0);
+    };
+
+    const parseYmdEndOfDay = (ymd: string) => {
+      const [year, month, day] = ymd.split('-').map(Number);
+      return new Date(year, month - 1, day, 23, 59, 59, 999);
+    };
+
+    const fromDate = dobFrom ? parseYmdStartOfDay(dobFrom) : null;
+    const toDate = dobTo ? parseYmdEndOfDay(dobTo) : null;
 
     let result = users.filter((user) => {
       const query = searchQuery.trim().toLowerCase();
@@ -932,6 +942,7 @@ export default function VolunteersList(props: Props) {
     }
 
     return result;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     users,
     searchField,

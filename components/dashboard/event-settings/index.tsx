@@ -487,7 +487,7 @@ export default function EventSettings(props: Props) {
     >
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Activity Domains */}
-        <Card className="p-6 border-zinc-300 dark:border-zinc-700">
+        <Card className="bg-white dark:bg-zinc-950 p-6 border-zinc-300 dark:border-zinc-700">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
               Lĩnh vực hoạt động
@@ -530,7 +530,7 @@ export default function EventSettings(props: Props) {
         </Card>
 
         {/* Sub Activity Domains & Domain Details */}
-        <Card className="p-6 border-zinc-300 dark:border-zinc-700">
+        <Card className="bg-white dark:bg-zinc-950 p-6 border-zinc-300 dark:border-zinc-700">
           <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
             Chi tiết lĩnh vực
           </h3>
@@ -662,7 +662,7 @@ export default function EventSettings(props: Props) {
                   onKeyPress={(e) => {
                     if (e.key === 'Enter') handleAddDomain();
                   }}
-                  className="mt-1 bg-blue-50 border-blue-200 focus:border-blue-500"
+                  className="mt-1 bg-white border-zinc-300 focus:border-zinc-400"
                 />
               </div>
             </div>
@@ -724,7 +724,7 @@ export default function EventSettings(props: Props) {
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
-                    className="bg-blue-50 border-blue-200 focus:border-blue-500 focus-visible:outline-none text-zinc-900 placeholder:text-zinc-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-white border-zinc-300 focus:border-zinc-400 focus-visible:outline-none text-zinc-900 placeholder:text-zinc-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
               </div>
@@ -766,7 +766,7 @@ export default function EventSettings(props: Props) {
               <h4 className="font-medium text-sm text-zinc-900 mb-3">
                 Lĩnh vực con
               </h4>
-              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+              <div className="bg-white rounded-lg p-4 border border-zinc-200">
                 <div className="space-y-3">
                   <label className="text-sm font-medium text-zinc-700">
                     Thêm lĩnh vực con
@@ -878,7 +878,7 @@ export default function EventSettings(props: Props) {
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') handleAddSubDomain();
                 }}
-                className="mt-1 bg-blue-50 border-blue-200 focus:border-blue-500 focus-visible:outline-none text-zinc-900 placeholder:text-zinc-500"
+                className="mt-1 bg-white border-zinc-300 focus:border-zinc-400 focus-visible:outline-none text-zinc-900 placeholder:text-zinc-500"
               />
             </div>
             <div className="flex justify-end gap-2 pt-4">

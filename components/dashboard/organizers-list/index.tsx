@@ -424,13 +424,15 @@ export default function OrganizersList(props: Props) {
     );
     const applied = columnValueFilters[columnKey] ?? [];
     const hasActiveFilter = applied.length > 0;
-    const isSearchFilteringThisColumn = Boolean(searchQuery.trim()) &&
+    const isSearchFilteringThisColumn =
+      Boolean(searchQuery.trim()) &&
       ((searchField === 'name' && columnKey === 'fullName') ||
         (searchField === 'cccd' && columnKey === 'cccd') ||
         (searchField === 'phone' && columnKey === 'phone') ||
         (searchField === 'email' && columnKey === 'email'));
     const isSortActive = sortField === columnKey;
-    const isApplied = hasActiveFilter || isSearchFilteringThisColumn || isSortActive;
+    const isApplied =
+      hasActiveFilter || isSearchFilteringThisColumn || isSortActive;
 
     const [open, setOpen] = useState(false);
     const [search, setSearch] = useState('');
@@ -609,7 +611,7 @@ export default function OrganizersList(props: Props) {
                 <Button
                   type="button"
                   variant="ghost"
-                  className="h-8 w-full justify-start gap-2 text-zinc-600"
+                  className="h-8 w-full justify-start gap-2 text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
                   onClick={() => {
                     setApplied([]);
                     setOpen(false);
@@ -739,7 +741,7 @@ export default function OrganizersList(props: Props) {
                 <Button
                   type="button"
                   variant="ghost"
-                  className="h-8 w-full justify-start gap-2 text-zinc-600"
+                  className="h-8 w-full justify-start gap-2 text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
                   onClick={() => {
                     setDobFrom('');
                     setDobTo('');
@@ -818,7 +820,7 @@ export default function OrganizersList(props: Props) {
                   setSortField('none');
                   setCurrentPage(1);
                 }}
-                className="gap-2 text-zinc-600"
+                className="gap-2 text-zinc-600 data-[highlighted]:bg-zinc-50 data-[highlighted]:text-zinc-900"
               >
                 <X className="h-4 w-4" />
                 Xóa sắp xếp
@@ -836,8 +838,18 @@ export default function OrganizersList(props: Props) {
       return new Date(year, month - 1, day);
     };
 
-    const fromDate = dobFrom ? new Date(dobFrom) : null;
-    const toDate = dobTo ? new Date(dobTo) : null;
+    const parseYmdStartOfDay = (ymd: string) => {
+      const [year, month, day] = ymd.split('-').map(Number);
+      return new Date(year, month - 1, day, 0, 0, 0, 0);
+    };
+
+    const parseYmdEndOfDay = (ymd: string) => {
+      const [year, month, day] = ymd.split('-').map(Number);
+      return new Date(year, month - 1, day, 23, 59, 59, 999);
+    };
+
+    const fromDate = dobFrom ? parseYmdStartOfDay(dobFrom) : null;
+    const toDate = dobTo ? parseYmdEndOfDay(dobTo) : null;
 
     let result = organizers.filter((org) => {
       const query = searchQuery.trim().toLowerCase();
@@ -910,6 +922,7 @@ export default function OrganizersList(props: Props) {
     }
 
     return result;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     organizers,
     searchField,

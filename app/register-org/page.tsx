@@ -1,3 +1,5 @@
+/* eslint-disable @next/next/no-img-element */
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -45,6 +47,8 @@ export default function RegisterOrgPage() {
     managerCidBackPath: '',
     managerCidHolding: null as File | null,
     managerCidHoldingPath: '',
+    activityLicense: null as File | null,
+    activityLicensePath: '',
     otherEvidences: [],
     otherEvidencesPaths: [] as string[]
   });
@@ -112,6 +116,30 @@ export default function RegisterOrgPage() {
       }
     }
   });
+
+  // Dropzone for operating license
+  const {
+    getRootProps: getLicenseRootProps,
+    getInputProps: getLicenseInputProps
+  } = useDropzone({
+    accept: { 'image/*': [], 'application/pdf': [] },
+    maxFiles: 1,
+    onDrop: async (files) => {
+      const file = files[0];
+      if (!file) return;
+      const oldPath = form.activityLicensePath;
+      const result = await replaceFile(oldPath, file, 'org-register');
+      if (result.success) {
+        setForm((f) => ({
+          ...f,
+          activityLicense: file,
+          activityLicensePath: result.supabasePath
+        }));
+      } else {
+        // TODO: handle error (show toast...)
+      }
+    }
+  });
   // Dropzone for other evidences
   const { getRootProps: getOtherRootProps, getInputProps: getOtherInputProps } =
     useDropzone({
@@ -155,6 +183,7 @@ export default function RegisterOrgPage() {
     form.managerCidFront &&
     form.managerCidBack &&
     form.managerCidHolding &&
+    form.activityLicense &&
     form.applicationReason;
 
   return (
@@ -170,7 +199,17 @@ export default function RegisterOrgPage() {
             if (!isFormValid) return;
             try {
               const bucket = 'org-register';
-              const prefix = (p: string) => p ? (p.startsWith(bucket + '/') ? p : `${bucket}/${p}`) : '';
+              const prefix = (p: string) =>
+                p ? (p.startsWith(bucket + '/') ? p : `${bucket}/${p}`) : '';
+              const otherEvidencePaths = Array.isArray(form.otherEvidencesPaths)
+                ? form.otherEvidencesPaths.map(prefix)
+                : [];
+              const mergedEvidencePaths = [
+                form.activityLicensePath
+                  ? prefix(form.activityLicensePath)
+                  : '',
+                ...otherEvidencePaths
+              ].filter(Boolean);
               await registerOrg({
                 otp: form.otp,
                 name: form.name,
@@ -184,9 +223,7 @@ export default function RegisterOrgPage() {
                 managerCidFrontExtension: prefix(form.managerCidFrontPath),
                 managerCidBackExtension: prefix(form.managerCidBackPath),
                 managerCidHoldingExtension: prefix(form.managerCidHoldingPath),
-                otherEvidencesExtensions: Array.isArray(form.otherEvidencesPaths)
-                  ? form.otherEvidencesPaths.map(prefix).join(',')
-                  : '',
+                otherEvidencesExtensions: mergedEvidencePaths.join(','),
                 applicationReason: form.applicationReason
               });
               // You can add feedback logic here
@@ -403,6 +440,37 @@ export default function RegisterOrgPage() {
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Giấy phép hoạt động */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+              Giấy phép hoạt động <span className="text-red-500">*</span>
+            </label>
+            <div
+              {...getLicenseRootProps()}
+              className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer bg-slate-50 dark:bg-slate-800 min-h-[120px] flex flex-col items-center justify-center"
+            >
+              <input {...getLicenseInputProps()} />
+              {form.activityLicense ? (
+                <>
+                  {form.activityLicense.type.startsWith('image') ? (
+                    <img
+                      src={URL.createObjectURL(form.activityLicense)}
+                      alt="Giấy phép hoạt động"
+                      className="mx-auto mb-2 w-full max-h-48 object-contain rounded"
+                    />
+                  ) : null}
+                  <span className="block text-xs text-green-600">
+                    {form.activityLicense.name}
+                  </span>
+                </>
+              ) : (
+                <span className="text-xs text-slate-500">
+                  Chọn file ảnh/pdf
+                </span>
+              )}
             </div>
           </div>
           {/* Tài liệu khác */}

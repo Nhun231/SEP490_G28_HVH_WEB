@@ -1,3 +1,5 @@
+/* eslint-disable @next/next/no-img-element */
+
 'use client';
 
 import { useState } from 'react';
@@ -157,19 +159,29 @@ export default function OrganizationsPage({ user, userDetails }: Props) {
                 setSearchType(value as 'name' | 'taxCode')
               }
             >
-              <SelectTrigger className="h-10 w-40 border-blue-200 bg-blue-50">
+              <SelectTrigger className="h-10 w-40 !bg-white !border-zinc-200 !text-zinc-900">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="name">Tên tổ chức</SelectItem>
-                <SelectItem value="taxCode">Mã số thuế</SelectItem>
+              <SelectContent className="bg-white text-zinc-900 border border-zinc-200 shadow-lg">
+                <SelectItem
+                  value="name"
+                  className="data-[highlighted]:bg-zinc-50 data-[state=checked]:bg-zinc-50"
+                >
+                  Tên tổ chức
+                </SelectItem>
+                <SelectItem
+                  value="taxCode"
+                  className="data-[highlighted]:bg-zinc-50 data-[state=checked]:bg-zinc-50"
+                >
+                  Mã số thuế
+                </SelectItem>
               </SelectContent>
             </Select>
             <Input
               placeholder={searchPlaceholders[searchType]}
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
-              className="h-10 flex-1 border-blue-200 bg-blue-50"
+              className="h-10 flex-1 bg-white border-zinc-200 text-zinc-900 placeholder:text-zinc-400"
             />
           </div>
           <Button className="bg-blue-600 hover:bg-blue-700">
@@ -180,47 +192,127 @@ export default function OrganizationsPage({ user, userDetails }: Props) {
 
         <div className="mt-4 grid gap-3 md:grid-cols-4">
           <Select>
-            <SelectTrigger className="h-9">
+            <SelectTrigger className="h-9 !bg-white !border-zinc-200 !text-zinc-900">
               <SelectValue placeholder="Loại hình tổ chức" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả</SelectItem>
-              <SelectItem value="gov">Nhà nước</SelectItem>
-              <SelectItem value="ngo">Phi lợi nhuận</SelectItem>
-              <SelectItem value="community">Cộng đồng</SelectItem>
+            <SelectContent className="bg-white text-zinc-900 border border-zinc-200 shadow-lg">
+              <SelectItem
+                value="all"
+                className="data-[highlighted]:bg-zinc-50 data-[state=checked]:bg-zinc-50"
+              >
+                Tất cả
+              </SelectItem>
+              <SelectItem
+                value="gov"
+                className="data-[highlighted]:bg-zinc-50 data-[state=checked]:bg-zinc-50"
+              >
+                Nhà nước
+              </SelectItem>
+              <SelectItem
+                value="ngo"
+                className="data-[highlighted]:bg-zinc-50 data-[state=checked]:bg-zinc-50"
+              >
+                Phi lợi nhuận
+              </SelectItem>
+              <SelectItem
+                value="community"
+                className="data-[highlighted]:bg-zinc-50 data-[state=checked]:bg-zinc-50"
+              >
+                Cộng đồng
+              </SelectItem>
             </SelectContent>
           </Select>
           <Select>
-            <SelectTrigger className="h-9">
+            <SelectTrigger className="h-9 !bg-white !border-zinc-200 !text-zinc-900">
               <SelectValue placeholder="Lĩnh vực hoạt động" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả</SelectItem>
-              <SelectItem value="education">Giáo dục</SelectItem>
-              <SelectItem value="health">Y tế</SelectItem>
-              <SelectItem value="environment">Môi trường</SelectItem>
+            <SelectContent className="bg-white text-zinc-900 border border-zinc-200 shadow-lg">
+              <SelectItem
+                value="all"
+                className="data-[highlighted]:bg-zinc-50 data-[state=checked]:bg-zinc-50"
+              >
+                Tất cả
+              </SelectItem>
+              <SelectItem
+                value="education"
+                className="data-[highlighted]:bg-zinc-50 data-[state=checked]:bg-zinc-50"
+              >
+                Giáo dục
+              </SelectItem>
+              <SelectItem
+                value="health"
+                className="data-[highlighted]:bg-zinc-50 data-[state=checked]:bg-zinc-50"
+              >
+                Y tế
+              </SelectItem>
+              <SelectItem
+                value="environment"
+                className="data-[highlighted]:bg-zinc-50 data-[state=checked]:bg-zinc-50"
+              >
+                Môi trường
+              </SelectItem>
             </SelectContent>
           </Select>
           <Select>
-            <SelectTrigger className="h-9">
+            <SelectTrigger className="h-9 !bg-white !border-zinc-200 !text-zinc-900">
               <SelectValue placeholder="Khu vực" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả</SelectItem>
-              <SelectItem value="hcm">TPHCM</SelectItem>
-              <SelectItem value="hn">Hà Nội</SelectItem>
-              <SelectItem value="dn">Đà Nẵng</SelectItem>
+            <SelectContent className="bg-white text-zinc-900 border border-zinc-200 shadow-lg">
+              <SelectItem
+                value="all"
+                className="data-[highlighted]:bg-zinc-50 data-[state=checked]:bg-zinc-50"
+              >
+                Tất cả
+              </SelectItem>
+              <SelectItem
+                value="hcm"
+                className="data-[highlighted]:bg-zinc-50 data-[state=checked]:bg-zinc-50"
+              >
+                TPHCM
+              </SelectItem>
+              <SelectItem
+                value="hn"
+                className="data-[highlighted]:bg-zinc-50 data-[state=checked]:bg-zinc-50"
+              >
+                Hà Nội
+              </SelectItem>
+              <SelectItem
+                value="dn"
+                className="data-[highlighted]:bg-zinc-50 data-[state=checked]:bg-zinc-50"
+              >
+                Đà Nẵng
+              </SelectItem>
             </SelectContent>
           </Select>
           <Select>
-            <SelectTrigger className="h-9">
+            <SelectTrigger className="h-9 !bg-white !border-zinc-200 !text-zinc-900">
               <SelectValue placeholder="Trạng thái" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả</SelectItem>
-              <SelectItem value="active">Hoạt động</SelectItem>
-              <SelectItem value="pending">Chờ duyệt</SelectItem>
-              <SelectItem value="paused">Tạm ngưng</SelectItem>
+            <SelectContent className="bg-white text-zinc-900 border border-zinc-200 shadow-lg">
+              <SelectItem
+                value="all"
+                className="data-[highlighted]:bg-zinc-50 data-[state=checked]:bg-zinc-50"
+              >
+                Tất cả
+              </SelectItem>
+              <SelectItem
+                value="active"
+                className="data-[highlighted]:bg-zinc-50 data-[state=checked]:bg-zinc-50"
+              >
+                Hoạt động
+              </SelectItem>
+              <SelectItem
+                value="pending"
+                className="data-[highlighted]:bg-zinc-50 data-[state=checked]:bg-zinc-50"
+              >
+                Chờ duyệt
+              </SelectItem>
+              <SelectItem
+                value="paused"
+                className="data-[highlighted]:bg-zinc-50 data-[state=checked]:bg-zinc-50"
+              >
+                Tạm ngưng
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -229,19 +321,22 @@ export default function OrganizationsPage({ user, userDetails }: Props) {
           {mockOrganizations.map((org) => (
             <Card
               key={org.id}
-              className="cursor-pointer border-zinc-200 bg-card p-5 shadow-sm transition-all hover:bg-[#d3e7fa] hover:shadow-md dark:border-zinc-800"
+              className="cursor-pointer border-zinc-200 bg-white p-5 text-zinc-900 shadow-sm transition-all hover:bg-zinc-50 hover:shadow-md"
               onClick={() => router.push(`/dashboard/organizations/${org.id}`)}
             >
-              <div className="flex flex-wrap gap-4">
-                <img
-                  src={org.imageUrl}
-                  alt={org.name}
-                  className="h-16 w-16 rounded-xl object-cover"
-                />
-                <div className="flex-1">
+              <div className="flex flex-col gap-4 md:flex-row md:items-stretch md:gap-6">
+                <div className="w-20 md:w-40 md:shrink-0 md:self-stretch">
+                  <img
+                    src={org.imageUrl}
+                    alt={org.name}
+                    className="h-20 w-20 rounded-xl object-cover md:h-full md:w-full"
+                  />
+                </div>
+
+                <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="text-lg font-semibold text-zinc-900">
+                    <div className="min-w-0">
+                      <p className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
                         {org.name}
                       </p>
                       <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -282,17 +377,23 @@ export default function OrganizationsPage({ user, userDetails }: Props) {
                       </Badge>
                     ))}
                   </div>
+                </div>
 
-                  <div className="mt-4 grid gap-3 md:grid-cols-2">
-                    <div className="rounded-lg border border-green-300 bg-[#b6f2d6] p-3 text-center">
-                      <p className="text-xs text-zinc-500">Số thành viên</p>
-                      <p className="mt-2 text-2xl font-extrabold text-green-800">
+                <div className="w-full md:w-[260px] md:shrink-0 md:border-l md:border-zinc-200 md:pl-6 md:flex md:flex-col md:justify-center">
+                  <div className="grid grid-cols-2 gap-4 md:grid-cols-1 md:gap-6">
+                    <div className="text-center md:text-left">
+                      <p className="text-xs text-zinc-500 md:text-sm">
+                        Số thành viên
+                      </p>
+                      <p className="mt-1 text-2xl font-bold leading-none text-zinc-900 md:text-3xl">
                         {org.volunteers.toLocaleString('vi-VN')}
                       </p>
                     </div>
-                    <div className="rounded-lg border border-blue-300 bg-[#b3d8fd] p-3 text-center">
-                      <p className="text-xs text-zinc-500">Số giờ uy tín</p>
-                      <p className="mt-2 text-2xl font-extrabold text-blue-800">
+                    <div className="text-center md:text-left">
+                      <p className="text-xs text-zinc-500 md:text-sm">
+                        Số giờ uy tín
+                      </p>
+                      <p className="mt-1 text-2xl font-bold leading-none text-zinc-900 md:text-3xl">
                         {org.donations.toLocaleString('vi-VN')}
                       </p>
                     </div>

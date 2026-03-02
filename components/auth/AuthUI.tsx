@@ -21,6 +21,7 @@ export default function AuthUI(props: any) {
     'Sign in failed.': 'Đăng nhập thất bại.',
     'Sign up failed.': 'Đăng ký thất bại.',
     'Invalid email address.': 'Email không hợp lệ.',
+    'Invalid login credentials': 'Thông tin đăng nhập không đúng.',
     'Please try again.': 'Vui lòng thử lại.',
     'Unable to validate email address: invalid format':
       'Không thể xác thực địa chỉ email: định dạng không hợp lệ.',
@@ -33,6 +34,14 @@ export default function AuthUI(props: any) {
   const translate = (value: string | undefined) => {
     if (!value) return value;
     if (viMap[value]) return viMap[value];
+
+    if (value.trim().toLowerCase() === 'missing email or phone') {
+      return 'Vui lòng nhập email hoặc số điện thoại.';
+    }
+
+    if (value.trim().toLowerCase() === 'invalid login credentials') {
+      return 'Thông tin đăng nhập không đúng.';
+    }
 
     const passwordPolicyMatch = value.match(
       /^Password should be at least 8 characters\.\s*Password should contain at least one character of each:\s*[\s\S]*$/

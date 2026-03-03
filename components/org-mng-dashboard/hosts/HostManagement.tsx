@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { MdSearch, MdAdd, MdEmail, MdPhone, MdChevronRight } from 'react-icons/md';
 import { cn } from '@/lib/utils';
 
@@ -435,9 +436,12 @@ export default function HostManagement() {
 
                   {/* Actions */}
                   <td className="px-6 py-4 text-center">
-                    <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors">
+                    <Link
+                      href={`/org-mng-dashboard/hosts/${host.id}`}
+                      className="inline-flex p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                    >
                       <MdChevronRight className="text-xl text-gray-400" />
-                    </button>
+                    </Link>
                   </td>
                 </tr>
                 );

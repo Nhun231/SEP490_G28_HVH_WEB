@@ -98,6 +98,17 @@ const config = {
           'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))'
+        },
+        organizer: {
+          primary: 'rgb(66 164 245 / <alpha-value>)',
+          secondary: {
+            50: 'rgb(100 181 246 / <alpha-value>)',
+            100: 'rgb(144 202 249 / <alpha-value>)'
+          },
+          light: {
+            50: 'rgb(187 222 251 / <alpha-value>)',
+            100: 'rgb(227 242 253 / <alpha-value>)'
+          }
         }
       },
       borderRadius: {

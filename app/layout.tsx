@@ -95,7 +95,7 @@ export default function RootLayout({
       </head>
       <body
         id={'root'}
-        className={`loading bg-white ${roboto.className}`}
+        className={`loading bg-white overflow-y-scroll ${roboto.className}`}
         suppressHydrationWarning
       >
         <SupabaseProvider>

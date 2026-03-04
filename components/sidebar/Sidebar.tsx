@@ -26,6 +26,8 @@ const supabase = createClient();
 
 export interface SidebarProps extends PropsWithChildren {
   routes: IRoute[];
+  colorVariant?: 'admin' | 'organizer';
+  signInPath?: string;
   [x: string]: any;
 }
 
@@ -33,6 +35,8 @@ function Sidebar(props: SidebarProps) {
   const router = useRouter();
   const redirectMethod = getRedirectMethod();
   const { routes } = props;
+  const colorVariant = props.colorVariant ?? 'admin';
+  const signInPath = props.signInPath ?? '/dashboard/signin';
 
   const user = useContext(UserContext);
   const userDetails = useContext(UserDetailsContext);
@@ -40,15 +44,22 @@ function Sidebar(props: SidebarProps) {
     e.preventDefault();
     supabase.auth.signOut();
     if (redirectMethod === 'client') {
-      router.push('/dashboard/signin');
+      router.push(signInPath);
     } else {
-      window.location.href = '/dashboard/signin';
+      window.location.href = signInPath;
     }
   };
   // SIDEBAR
+  const sidebarBgClass =
+    colorVariant === 'organizer'
+      ? 'bg-gradient-to-b from-organizer-primary to-organizer-secondary-50'
+      : 'bg-gradient-to-b from-slate-900 to-slate-950';
+  const dividerClass =
+    colorVariant === 'organizer' ? 'bg-white/20' : 'bg-slate-700';
+
   return (
     <div
-      className={`lg:!z-99 fixed !z-[99] min-h-screen w-[300px] bg-gradient-to-b from-slate-900 to-slate-950 transition-all md:!z-[99] xl:!z-0 ${
+      className={`lg:!z-99 fixed !z-[99] min-h-screen w-[300px] ${sidebarBgClass} transition-all md:!z-[99] xl:!z-0 ${
         props.variant === 'auth' ? 'xl:hidden' : 'xl:block'
       } ${props.open ? '' : '-translate-x-[120%] xl:translate-x-[unset]'}`}
     >
@@ -81,10 +92,10 @@ function Sidebar(props: SidebarProps) {
                   <span className="mt-2   block">Thiện Nguyện</span>
                 </h5>
               </div>
-              <div className="mb-8 mt-8 h-px bg-slate-700" />
+              <div className={`mb-8 mt-8 h-px ${dividerClass}`} />
               {/* Nav item */}
               <ul>
-                <Links routes={routes} />
+                <Links routes={routes} colorVariant={colorVariant} />
               </ul>
             </div>
           </div>

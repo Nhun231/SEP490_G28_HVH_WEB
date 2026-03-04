@@ -659,7 +659,7 @@ export default function PendingAccounts({ user, userDetails }: Props) {
     }
 
     return result;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     filteredAccounts,
     createdDateFrom,
@@ -791,7 +791,7 @@ export default function PendingAccounts({ user, userDetails }: Props) {
                       {formatDate(account.createdAt)}
                     </TableCell>
                     <TableCell className="w-44 align-middle">
-                      <Badge className="inline-block rounded-full bg-gray-500 text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150 hover:bg-gray-600">
+                      <Badge className="inline-block rounded-full bg-gray-500 text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150 hover:bg-gray-400">
                         Chờ phê duyệt
                       </Badge>
                     </TableCell>

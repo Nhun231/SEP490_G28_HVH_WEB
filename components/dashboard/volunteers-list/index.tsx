@@ -942,7 +942,7 @@ export default function VolunteersList(props: Props) {
     }
 
     return result;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     users,
     searchField,

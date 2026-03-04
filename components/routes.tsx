@@ -1,7 +1,6 @@
 // Auth Imports
 import { IRoute } from '@/types/types';
-import { Settings } from 'lucide-react';
-import { Building } from 'lucide-react';
+import { Building, CircleCheckBig, Loader, Settings } from 'lucide-react';
 import {
   HiOutlineCpuChip,
   HiOutlineDocumentText,
@@ -85,6 +84,30 @@ export const routes: IRoute[] = [
     path: '/about-us',
     icon: (
       <HiOutlineDocumentText className="-mt-[7px] h-4 w-4 stroke-2 text-inherit" />
+    ),
+    collapse: false
+  }
+];
+
+export const organizerRoutes: IRoute[] = [
+  {
+    name: 'Bảng điều khiển',
+    path: '/organizer/main',
+    icon: <HiOutlineHome className="-mt-[7px] h-4 w-4 stroke-2 text-inherit" />,
+    collapse: false,
+    invisible: true
+  },
+  {
+    name: 'Sự kiện chờ phê duyệt',
+    path: '/organizer/pending-events',
+    icon: <Loader className="-mt-[7px] h-4 w-4 stroke-2 text-inherit" />,
+    collapse: false
+  },
+  {
+    name: 'Sự kiện đã phê duyệt',
+    path: '/organizer/approved-events',
+    icon: (
+      <CircleCheckBig className="-mt-[7px] h-4 w-4 stroke-2 text-inherit" />
     ),
     collapse: false
   }

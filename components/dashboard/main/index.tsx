@@ -6,9 +6,15 @@ import MainDashboardTable from '@/components/dashboard/main/cards/MainDashboardT
 import DashboardLayout from '@/components/layout';
 import tableDataUserReports from '@/variables/tableDataUserReports';
 import { User } from '@supabase/supabase-js';
+import type { IRoute } from '@/types/types';
 interface Props {
   user: User | null | undefined;
   userDetails: { [x: string]: any } | null | any;
+  title?: string;
+  description?: string;
+  routes?: IRoute[];
+  colorVariant?: 'admin' | 'organizer';
+  signInPath?: string;
 }
 
 export default function Settings(props: Props) {
@@ -16,8 +22,11 @@ export default function Settings(props: Props) {
     <DashboardLayout
       user={props.user}
       userDetails={props.userDetails}
-      title="Trang đăng ký"
-      description="Quản lý gói đăng ký"
+      title={props.title ?? 'Trang đăng ký'}
+      description={props.description ?? 'Quản lý gói đăng ký'}
+      routes={props.routes}
+      colorVariant={props.colorVariant}
+      signInPath={props.signInPath}
     >
       <div className="h-full w-full">
         <div className="mb-5 flex gap-5 flex-col xl:flex-row w-full">

@@ -10,6 +10,7 @@ import { HiChevronDown } from 'react-icons/hi2';
 
 interface SidebarLinksProps extends PropsWithChildren {
   routes: IRoute[];
+  colorVariant?: 'admin' | 'organizer';
   [x: string]: any;
 }
 
@@ -20,6 +21,7 @@ export function SidebarLinks(props: SidebarLinksProps) {
   );
 
   const { routes } = props;
+  const colorVariant = props.colorVariant ?? 'admin';
 
   // Auto-open parent collapse if a child is active
   React.useEffect(() => {
@@ -62,6 +64,10 @@ export function SidebarLinks(props: SidebarLinksProps) {
     return routes.map((route, key) => {
       const routeKey = `${level}-${key}`;
       const isOpen = openCollapse[routeKey] || false;
+
+      if (route.invisible) {
+        return null;
+      }
 
       if (route.disabled) {
         return (
@@ -111,18 +117,44 @@ export function SidebarLinks(props: SidebarLinksProps) {
           </div>
         );
       } else {
+        const isActive =
+          route.path &&
+          typeof route.path === 'string' &&
+          activeRoute(route.path.toLowerCase());
+
+        const itemBase =
+          colorVariant === 'organizer'
+            ? isActive
+              ? 'bg-organizer-light-100/35 font-semibold text-white border-l-4 border-organizer-light-100'
+              : 'font-medium text-white/90 hover:text-white hover:bg-organizer-light-50/20'
+            : isActive
+              ? 'bg-gradient-to-r from-blue-950 to-slate-800 font-semibold text-white border-l-4 border-blue-500'
+              : 'font-medium text-slate-300 hover:text-white hover:bg-slate-800/50';
+
+        const iconClass =
+          colorVariant === 'organizer'
+            ? isActive
+              ? 'font-semibold text-white'
+              : 'text-white/80'
+            : isActive
+              ? 'font-semibold text-white'
+              : 'text-slate-300';
+
+        const textClass =
+          colorVariant === 'organizer'
+            ? isActive
+              ? 'font-semibold text-white'
+              : 'font-medium text-white/90'
+            : isActive
+              ? 'font-semibold text-white'
+              : 'font-medium text-slate-300';
+
         return (
           <div key={key}>
             <div
               className={`flex w-full max-w-full items-center justify-between rounded-lg py-3 pl-${
                 level > 0 ? '12' : '8'
-              } ${
-                route.path &&
-                typeof route.path === 'string' &&
-                activeRoute(route.path.toLowerCase())
-                  ? 'bg-gradient-to-r from-blue-950 to-slate-800 font-semibold text-white border-l-4 border-blue-500'
-                  : 'font-medium text-slate-300 hover:text-white hover:bg-slate-800/50'
-              }`}
+              } ${itemBase}`}
             >
               <NavLink
                 href={route.layout ? route.layout + route.path : route.path}
@@ -131,22 +163,10 @@ export function SidebarLinks(props: SidebarLinksProps) {
               >
                 <div className="w-full items-center justify-center">
                   <div className="flex w-full items-center justify-center">
-                    <div
-                      className={`text mr-3 mt-1.5 ${
-                        activeRoute(route.path.toLowerCase())
-                          ? 'font-semibold text-white'
-                          : 'text-slate-300'
-                      } `}
-                    >
+                    <div className={`text mr-3 mt-1.5 ${iconClass}`}>
                       {route.icon}
                     </div>
-                    <p
-                      className={`mr-auto text-sm ${
-                        activeRoute(route.path.toLowerCase())
-                          ? 'font-semibold text-white'
-                          : 'font-medium text-slate-300'
-                      }`}
-                    >
+                    <p className={`mr-auto text-sm ${textClass}`}>
                       {route.name}
                     </p>
                   </div>

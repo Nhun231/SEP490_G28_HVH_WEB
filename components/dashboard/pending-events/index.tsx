@@ -30,10 +30,25 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/cn';
+import type { IRoute } from '@/types/types';
 
 interface Props {
   user: User | null | undefined;
   userDetails: { [x: string]: any } | null;
+  detailBasePath?: string;
+  routes?: IRoute[];
+  colorVariant?: 'admin' | 'organizer';
+  signInPath?: string;
+  shellClassName?: string;
+  statusFilter?: string;
+  statusFilters?: string[];
+  pageTitle?: string;
+  pageDescription?: string;
+  emptyStateText?: string;
+  badgeText?: string;
+  badgeFromStatus?: boolean;
+  badgeClassName?: string;
+  badgeClassNameByStatus?: Partial<Record<string, string>>;
 }
 
 const mockPendingEvents = [
@@ -66,10 +81,67 @@ const mockPendingEvents = [
     volunteers: 60,
     submittedDate: '01/02/2026',
     status: 'Chờ phê duyệt'
+  },
+  {
+    id: 4,
+    eventName: 'Hiến máu nhân đạo mùa xuân',
+    organizer: 'Hội chữ Thập Đỏ',
+    date: '05/01/2026',
+    location: 'Quận Đống Đa, Hà Nội',
+    volunteers: 80,
+    submittedDate: '15/12/2025',
+    status: 'Đang tuyển quân'
+  },
+  {
+    id: 5,
+    eventName: 'Trồng cây gây rừng ven đô',
+    organizer: 'Tổ chức Xanh Việt',
+    date: '10/02/2026',
+    location: 'Sóc Sơn, Hà Nội',
+    volunteers: 120,
+    submittedDate: '20/12/2025',
+    status: 'Đã đóng đơn'
+  },
+  {
+    id: 6,
+    eventName: 'Khám sức khỏe cộng đồng',
+    organizer: 'Hội chữ Thập Đỏ',
+    date: '04/03/2026',
+    location: 'Quận Hai Bà Trưng, Hà Nội',
+    volunteers: 35,
+    submittedDate: '10/01/2026',
+    status: 'Đang diễn ra'
+  },
+  {
+    id: 7,
+    eventName: 'Tủ sách cho em',
+    organizer: 'Quỹ Phúc Lợi Xã Hội',
+    date: '15/01/2026',
+    location: 'Tỉnh Yên Bái',
+    volunteers: 25,
+    submittedDate: '20/12/2025',
+    status: 'Đã kết thúc'
   }
 ];
 
-export default function PendingEvents({ user, userDetails }: Props) {
+export default function PendingEvents({
+  user,
+  userDetails,
+  detailBasePath = '/dashboard/pending-events',
+  routes,
+  colorVariant,
+  signInPath,
+  shellClassName,
+  statusFilter = 'Chờ phê duyệt',
+  statusFilters,
+  pageTitle = 'Sự kiện chờ phê duyệt',
+  pageDescription = 'Danh sách các sự kiện đang chờ phê duyệt',
+  emptyStateText = 'Không có sự kiện chờ phê duyệt',
+  badgeText = 'Chờ phê duyệt',
+  badgeFromStatus = false,
+  badgeClassName = 'rounded-full bg-gray-500 text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150 hover:bg-gray-400',
+  badgeClassNameByStatus
+}: Props) {
   type PendingEvent = (typeof mockPendingEvents)[0];
   type SortKey =
     | 'eventName'
@@ -540,8 +612,13 @@ export default function PendingEvents({ user, userDetails }: Props) {
   };
 
   const filteredEvents = useMemo(() => {
-    let result = mockPendingEvents.filter(
-      (event) => event.status === 'Chờ phê duyệt'
+    const allowedStatuses =
+      statusFilters && statusFilters.length > 0
+        ? statusFilters
+        : [statusFilter];
+
+    let result = mockPendingEvents.filter((event) =>
+      allowedStatuses.includes(event.status)
     );
 
     const q = normalizeText(searchQuery.trim());
@@ -613,7 +690,6 @@ export default function PendingEvents({ user, userDetails }: Props) {
     }
 
     return result;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     searchQuery,
     columnValueFilters,
@@ -621,7 +697,9 @@ export default function PendingEvents({ user, userDetails }: Props) {
     eventDateTo,
     submittedDateFrom,
     submittedDateTo,
-    sortCriteria
+    sortCriteria,
+    statusFilter,
+    statusFilters
   ]);
 
   const totalPages = Math.max(1, Math.ceil(filteredEvents.length / pageSize));
@@ -646,8 +724,12 @@ export default function PendingEvents({ user, userDetails }: Props) {
     <DashboardLayout
       user={user}
       userDetails={userDetails}
-      title="Sự kiện chờ phê duyệt"
-      description="Danh sách các sự kiện đang chờ phê duyệt"
+      title={pageTitle}
+      description={pageDescription}
+      routes={routes}
+      colorVariant={colorVariant}
+      signInPath={signInPath}
+      shellClassName={shellClassName}
     >
       <div className="w-full max-w-none">
         <div className="mb-6"></div>
@@ -741,7 +823,7 @@ export default function PendingEvents({ user, userDetails }: Props) {
                     )}
                     onClick={() => {
                       setSelectedEventId(event.id);
-                      router.push(`/dashboard/pending-events/${event.id}`);
+                      router.push(`${detailBasePath}/${event.id}`);
                     }}
                   >
                     <TableCell className="font-medium text-zinc-900">
@@ -760,9 +842,16 @@ export default function PendingEvents({ user, userDetails }: Props) {
                       {event.submittedDate}
                     </TableCell>
                     <TableCell>
-                      <Badge className="rounded-full bg-gray-500 text-white font-semibold px-3 py-0.5 text-xs">
-                        Chờ phê duyệt
-                      </Badge>
+                      {(() => {
+                        const text = badgeFromStatus ? event.status : badgeText;
+                        const className =
+                          badgeFromStatus &&
+                          badgeClassNameByStatus?.[event.status]
+                            ? badgeClassNameByStatus[event.status]
+                            : badgeClassName;
+
+                        return <Badge className={className}>{text}</Badge>;
+                      })()}
                     </TableCell>
                   </TableRow>
                 ))
@@ -772,7 +861,7 @@ export default function PendingEvents({ user, userDetails }: Props) {
                     colSpan={6}
                     className="py-8 text-center text-zinc-500"
                   >
-                    Không có sự kiện chờ phê duyệt
+                    {emptyStateText}
                   </TableCell>
                 </TableRow>
               )}

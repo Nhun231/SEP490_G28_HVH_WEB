@@ -4,15 +4,27 @@
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { useReplaceFiles } from '@/hooks/features/commons/bucket/useReplaceFiles';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { useRegisterOrg } from '@/hooks/features/uc016-register-organization/useRegisterOrg';
 import { useSendRegisterOrgVerifyMail } from '@/hooks/features/uc016-register-organization/useSendRegisterOrgVerifyMail';
 import { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 
 export default function RegisterOrgPage() {
-  const { replaceFile } = useReplaceFiles();
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL!;
   const {
     trigger: registerOrg,
@@ -25,6 +37,8 @@ export default function RegisterOrgPage() {
     error: sendMailError
   } = useSendRegisterOrgVerifyMail(apiBase);
   const [otpFeedback, setOtpFeedback] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [openRegistrationHelp, setOpenRegistrationHelp] = useState(false);
   const [form, setForm] = useState({
     otp: '',
     name: '',
@@ -35,63 +49,107 @@ export default function RegisterOrgPage() {
     managerCid: '',
     managerPhone: '',
     managerEmail: '',
-    managerCidFrontExtension: '',
-    managerCidBackExtension: '',
-    managerCidHoldingExtension: '',
-    otherEvidencesExtensions: '',
     applicationReason: '',
-    // File upload helper fields
+    // File selection (upload happens AFTER BE returns URLs)
     managerCidFront: null as File | null,
-    managerCidFrontPath: '',
     managerCidBack: null as File | null,
-    managerCidBackPath: '',
     managerCidHolding: null as File | null,
-    managerCidHoldingPath: '',
     activityLicense: null as File | null,
-    activityLicensePath: '',
-    otherEvidences: [],
-    otherEvidencesPaths: [] as string[]
+    otherEvidences: [] as File[]
   });
+
+  const REGISTERED_TYPES = [
+    'Quỹ xã hội',
+    'Quỹ từ thiện',
+    'Tổ chức phi chính phủ',
+    'Tổ chức xã hội'
+  ];
+
+  const UNREGISTERED_TYPES = [
+    'Được thành lập trong cơ quan chính quyền',
+    'Được thành lập trong đơn vị sự nghiệp công lập',
+    'Tổ chức quần chúng (phường, xã, làng)',
+    'Được thành lập trong trường đại học',
+    'Được thành lập trong cơ sở giáo dục phổ thông',
+    'Được thành lập trong doanh nghiệp nhà nước',
+    'Được thành lập trong doanh nghiệp tư nhân',
+    'Tổ chức xã hội tự quản',
+    'Khác'
+  ];
+
+  const orgTypeOptions = form.dhaRegistered
+    ? REGISTERED_TYPES
+    : UNREGISTERED_TYPES;
+
+  const normalizeExtension = (raw: string) => {
+    const ext = raw.trim().replace(/^\./, '').toLowerCase();
+    return ext ? `.${ext}` : '';
+  };
+
+  const getFileExtension = (file: File | null) => {
+    if (!file) return '';
+    const nameParts = file.name.split('.');
+    if (nameParts.length > 1) {
+      return normalizeExtension(nameParts[nameParts.length - 1] || '');
+    }
+    switch (file.type) {
+      case 'image/jpeg':
+        return '.jpeg';
+      case 'image/jpg':
+        return '.jpg';
+      case 'image/png':
+        return '.png';
+      case 'application/pdf':
+        return '.pdf';
+      default:
+        return '';
+    }
+  };
+
+  const uploadToUrl = async (url: string, file: File) => {
+    const res = await fetch(url, {
+      method: 'PUT',
+      body: file
+    });
+
+    if (!res.ok) {
+      let bodyText = '';
+      try {
+        bodyText = await res.text();
+      } catch {
+        bodyText = '';
+      }
+      throw new Error(
+        `Upload failed (${res.status})${bodyText ? `: ${bodyText}` : ''}`
+      );
+    }
+  };
 
   // Dropzone for CMND/CCCD images
   const { getRootProps: getFrontRootProps, getInputProps: getFrontInputProps } =
     useDropzone({
       accept: { 'image/*': [] },
       maxFiles: 1,
-      onDrop: async (files) => {
+      onDrop: (files) => {
         const file = files[0];
         if (!file) return;
-        const oldPath = form.managerCidFrontPath;
-        const result = await replaceFile(oldPath, file, 'org-register');
-        if (result.success) {
-          setForm((f) => ({
-            ...f,
-            managerCidFront: file,
-            managerCidFrontPath: result.supabasePath
-          }));
-        } else {
-          // TODO: handle error (show toast...)
-        }
+        setForm((f) => ({
+          ...f,
+          managerCidFront: file
+        }));
       }
     });
   const { getRootProps: getBackRootProps, getInputProps: getBackInputProps } =
     useDropzone({
       accept: { 'image/*': [] },
       maxFiles: 1,
-      onDrop: async (files) => {
+      onDrop: (files) => {
         const file = files[0];
         if (!file) return;
-        const oldPath = form.managerCidBackPath;
-        const result = await replaceFile(oldPath, file, 'org-register');
-        if (result.success) {
-          setForm((f) => ({
-            ...f,
-            managerCidBack: file,
-            managerCidBackPath: result.supabasePath
-          }));
-        } else {
-          // TODO: handle error (show toast...)
-        }
+        setForm((f) => ({
+          ...f,
+          managerCidBack: file
+        }));
       }
     });
   const {
@@ -100,20 +158,13 @@ export default function RegisterOrgPage() {
   } = useDropzone({
     accept: { 'image/*': [] },
     maxFiles: 1,
-    onDrop: async (files) => {
+    onDrop: (files) => {
       const file = files[0];
       if (!file) return;
-      const oldPath = form.managerCidHoldingPath;
-      const result = await replaceFile(oldPath, file, 'org-register');
-      if (result.success) {
-        setForm((f) => ({
-          ...f,
-          managerCidHolding: file,
-          managerCidHoldingPath: result.supabasePath
-        }));
-      } else {
-        // TODO: handle error (show toast...)
-      }
+      setForm((f) => ({
+        ...f,
+        managerCidHolding: file
+      }));
     }
   });
 
@@ -124,20 +175,13 @@ export default function RegisterOrgPage() {
   } = useDropzone({
     accept: { 'image/*': [], 'application/pdf': [] },
     maxFiles: 1,
-    onDrop: async (files) => {
+    onDrop: (files) => {
       const file = files[0];
       if (!file) return;
-      const oldPath = form.activityLicensePath;
-      const result = await replaceFile(oldPath, file, 'org-register');
-      if (result.success) {
-        setForm((f) => ({
-          ...f,
-          activityLicense: file,
-          activityLicensePath: result.supabasePath
-        }));
-      } else {
-        // TODO: handle error (show toast...)
-      }
+      setForm((f) => ({
+        ...f,
+        activityLicense: file
+      }));
     }
   });
   // Dropzone for other evidences
@@ -145,35 +189,22 @@ export default function RegisterOrgPage() {
     useDropzone({
       accept: { 'image/*': [], 'application/pdf': [] },
       maxFiles: 5,
-      onDrop: async (files) => {
-        const uploadedFiles: File[] = [];
-        const supabasePaths: string[] = [];
-        // Get old file paths array, if not exist then create empty array
-        const oldPaths = Array.isArray(form.otherEvidencesPaths)
-          ? form.otherEvidencesPaths
-          : [];
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          const oldPath = oldPaths[i] || '';
-          const result = await replaceFile(oldPath, file, 'org-register');
-          if (result.success && result.supabasePath) {
-            uploadedFiles.push(file);
-            supabasePaths.push(result.supabasePath);
-          } else {
-            supabasePaths.push(oldPath);
-          }
-        }
-        setForm((f) => ({
-          ...f,
-          otherEvidences: uploadedFiles,
-          otherEvidencesPaths: supabasePaths
-        }));
+      onDrop: (files) => {
+        if (!files || files.length === 0) return;
+        setForm((f) => {
+          const next = [...(f.otherEvidences || []), ...files].slice(0, 5);
+          return {
+            ...f,
+            otherEvidences: next
+          };
+        });
       }
     });
 
   // Required fields validation
   const isFormValid =
     form.name &&
+    form.orgType &&
     form.orgIntroduction &&
     form.managerFullName &&
     form.managerCid &&
@@ -187,7 +218,13 @@ export default function RegisterOrgPage() {
     form.applicationReason;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-950 py-12">
+    <div
+      className="min-h-screen flex items-center justify-center bg-slate-100 py-12 bg-cover bg-center bg-no-repeat"
+      style={{
+        backgroundImage: "url('/img/bg1.png')",
+        backgroundSize: '200%'
+      }}
+    >
       <Card className="w-full max-w-2xl p-8 border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-xl rounded-xl">
         <h2 className="text-3xl font-bold mb-8 text-center text-slate-800 dark:text-white">
           Đăng ký tổ chức
@@ -198,19 +235,25 @@ export default function RegisterOrgPage() {
             e.preventDefault();
             if (!isFormValid) return;
             try {
-              const bucket = 'org-register';
-              const prefix = (p: string) =>
-                p ? (p.startsWith(bucket + '/') ? p : `${bucket}/${p}`) : '';
-              const otherEvidencePaths = Array.isArray(form.otherEvidencesPaths)
-                ? form.otherEvidencesPaths.map(prefix)
-                : [];
-              const mergedEvidencePaths = [
-                form.activityLicensePath
-                  ? prefix(form.activityLicensePath)
-                  : '',
-                ...otherEvidencePaths
+              const managerCidFrontExtension = getFileExtension(
+                form.managerCidFront
+              );
+              const managerCidBackExtension = getFileExtension(
+                form.managerCidBack
+              );
+              const managerCidHoldingExtension = getFileExtension(
+                form.managerCidHolding
+              );
+
+              // Keep backwards-compat with existing backend DTO:
+              // we send operating license as the first item of other evidences.
+              const otherExtensions = [
+                getFileExtension(form.activityLicense),
+                ...(form.otherEvidences || []).map((f) => getFileExtension(f))
               ].filter(Boolean);
-              await registerOrg({
+
+              setUploading(true);
+              const registerRes = await registerOrg({
                 otp: form.otp,
                 name: form.name,
                 dhaRegistered: form.dhaRegistered,
@@ -220,18 +263,198 @@ export default function RegisterOrgPage() {
                 managerCid: form.managerCid,
                 managerPhone: form.managerPhone,
                 managerEmail: form.managerEmail,
-                managerCidFrontExtension: prefix(form.managerCidFrontPath),
-                managerCidBackExtension: prefix(form.managerCidBackPath),
-                managerCidHoldingExtension: prefix(form.managerCidHoldingPath),
-                otherEvidencesExtensions: mergedEvidencePaths.join(','),
+                managerCidFrontExtension,
+                managerCidBackExtension,
+                managerCidHoldingExtension,
+                otherEvidencesExtensions: otherExtensions.join(','),
                 applicationReason: form.applicationReason
               });
+
+              // After BE stores metadata and returns upload URLs, FE uploads files.
+              const uploadInfo: any =
+                registerRes && typeof registerRes === 'object'
+                  ? (registerRes as any).uploadUrls || registerRes
+                  : {};
+
+              const frontUrl =
+                uploadInfo.managerCidFrontUrl ||
+                uploadInfo.managerCidFrontUploadUrl;
+              const backUrl =
+                uploadInfo.managerCidBackUrl ||
+                uploadInfo.managerCidBackUploadUrl;
+              const holdingUrl =
+                uploadInfo.managerCidHoldingUrl ||
+                uploadInfo.managerCidHoldingUploadUrl;
+
+              const rawOtherUrls =
+                uploadInfo.otherEvidencesUrls ||
+                uploadInfo.otherEvidencesUploadUrls ||
+                uploadInfo.otherEvidenceUrls ||
+                uploadInfo.otherEvidenceUploadUrls ||
+                [];
+              const otherUrls: string[] = Array.isArray(rawOtherUrls)
+                ? rawOtherUrls
+                : typeof rawOtherUrls === 'string'
+                  ? rawOtherUrls
+                      .split(',')
+                      .map((s: string) => s.trim())
+                      .filter(Boolean)
+                  : [];
+
+              const explicitLicenseUrl =
+                uploadInfo.activityLicenseUrl ||
+                uploadInfo.activityLicenseUploadUrl;
+
+              const expectedOtherFiles = form.otherEvidences || [];
+              const licenseFile = form.activityLicense;
+
+              const licenseUrl =
+                explicitLicenseUrl || (licenseFile ? otherUrls[0] : undefined);
+              const otherStartIndex =
+                licenseFile && !explicitLicenseUrl ? 1 : 0;
+
+              const uploads: Array<Promise<void>> = [];
+
+              if (form.managerCidFront) {
+                if (!frontUrl)
+                  throw new Error('Thiếu URL upload CCCD mặt trước');
+                uploads.push(uploadToUrl(frontUrl, form.managerCidFront));
+              }
+              if (form.managerCidBack) {
+                if (!backUrl) throw new Error('Thiếu URL upload CCCD mặt sau');
+                uploads.push(uploadToUrl(backUrl, form.managerCidBack));
+              }
+              if (form.managerCidHolding) {
+                if (!holdingUrl)
+                  throw new Error('Thiếu URL upload ảnh cầm CCCD');
+                uploads.push(uploadToUrl(holdingUrl, form.managerCidHolding));
+              }
+
+              if (licenseFile) {
+                if (!licenseUrl)
+                  throw new Error('Thiếu URL upload giấy phép hoạt động');
+                uploads.push(uploadToUrl(licenseUrl, licenseFile));
+              }
+
+              for (let i = 0; i < expectedOtherFiles.length; i++) {
+                const file = expectedOtherFiles[i];
+                const url = otherUrls[otherStartIndex + i];
+                if (!url) {
+                  throw new Error(
+                    `Thiếu URL upload cho tài liệu chứng minh khác #${i + 1}`
+                  );
+                }
+                uploads.push(uploadToUrl(url, file));
+              }
+
+              await Promise.all(uploads);
               // You can add feedback logic here
             } catch (err) {
               // Handle error feedback here
+            } finally {
+              setUploading(false);
             }
           }}
         >
+          <Dialog
+            open={openRegistrationHelp}
+            onOpenChange={setOpenRegistrationHelp}
+          >
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>
+                  Giải thích về Trạng thái đăng ký &amp; Loại tổ chức
+                </DialogTitle>
+                <DialogDescription>
+                  Hướng dẫn chọn đúng nhóm theo tình trạng đăng ký.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="mt-2 space-y-4 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+                <div className="space-y-2">
+                  <p className="font-medium text-slate-900 dark:text-white">
+                    1) Khi nào chọn “Đã đăng ký”?
+                  </p>
+                  <p>
+                    Nếu tổ chức của bạn đã được đăng ký tại cơ quan quản lý nhà
+                    nước về công tác xã hội/các tổ chức (ví dụ cơ quan dân chính
+                    địa phương) và có giấy chứng nhận đăng ký do cơ quan đó cấp
+                    (như: quỹ, tổ chức cung cấp dịch vụ xã hội, tổ chức/đoàn thể
+                    xã hội), hãy chọn <b>Đã đăng ký</b>.
+                  </p>
+                  <p>
+                    Sau đó, <b>Loại tổ chức</b> chọn theo đúng loại ghi trên
+                    giấy chứng nhận (một số trường hợp “đơn vị dân lập phi doanh
+                    nghiệp” có thể chọn nhóm tương ứng như <b>Tổ chức xã hội</b>
+                    tùy theo giấy tờ thực tế).
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="font-medium text-slate-900 dark:text-white">
+                    2) Khi nào chọn “Chưa đăng ký”?
+                  </p>
+                  <p>
+                    Các tổ chức còn lại hãy chọn <b>Chưa đăng ký</b>, và chọn{' '}
+                    <b>Loại tổ chức</b> theo tình hình thành lập/thực tế hoạt
+                    động.
+                  </p>
+                </div>
+
+                <div className="space-y-2 rounded-md border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900">
+                  <p className="font-medium text-slate-900 dark:text-white">
+                    Ví dụ chọn loại phù hợp
+                  </p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>
+                      <b>Đội tình nguyện Sở/Phòng quản lý thị trường…</b> → chọn{' '}
+                      <b>Được thành lập trong cơ quan chính quyền</b>
+                    </li>
+                    <li>
+                      <b>Đội tình nguyện an ninh trật tự của thị trấn/xã…</b> →
+                      chọn <b>Tổ chức quần chúng (phường, xã, làng)</b>
+                    </li>
+                    <li>
+                      <b>Đội tình nguyện của thôn/làng…</b> → chọn{' '}
+                      <b>Tổ chức quần chúng (phường, xã, làng)</b>
+                    </li>
+                    <li>
+                      <b>CLB/Đoàn thanh niên tình nguyện trong đại học…</b> →
+                      chọn <b>Được thành lập trong trường đại học</b>
+                    </li>
+                    <li>
+                      <b>Đội/CLB tình nguyện trong tiểu học/trung học…</b> →
+                      chọn <b>Được thành lập trong cơ sở giáo dục phổ thông</b>
+                    </li>
+                    <li>
+                      <b>Đội tình nguyện thuộc doanh nghiệp nhà nước…</b> → chọn{' '}
+                      <b>Được thành lập trong doanh nghiệp nhà nước</b>
+                    </li>
+                    <li>
+                      <b>Đội/nhóm tình nguyện thuộc doanh nghiệp tư nhân…</b> →
+                      chọn <b>Được thành lập trong doanh nghiệp tư nhân</b>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="font-medium text-slate-900 dark:text-white">
+                    Ghi chú về “Tổ chức xã hội tự quản”
+                  </p>
+                  <p>
+                    “Tổ chức xã hội tự quản” thường là nhóm/tổ chức tự phát, tự
+                    chủ phát triển và tự vận hành; có quy mô nhất định; tồn tại
+                    dưới hình thức tổ chức dân sự và dần chuyển từ tự phát sang
+                    hoạt động có tổ chức.
+                  </p>
+                  <p>
+                    Nếu không phù hợp với các loại trên, hãy chọn <b>Khác</b>.
+                  </p>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           {/* Tên tổ chức */}
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
@@ -244,6 +467,73 @@ export default function RegisterOrgPage() {
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
             />
           </div>
+
+          {/* Trạng thái đăng ký */}
+          <div>
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                Trạng thái đăng ký <span className="text-red-500">*</span>
+              </label>
+              <button
+                type="button"
+                className="text-xs font-medium text-primary underline-offset-4 hover:underline"
+                onClick={() => setOpenRegistrationHelp(true)}
+              >
+                Chú thích
+              </button>
+            </div>
+            <Select
+              value={form.dhaRegistered ? 'registered' : 'unregistered'}
+              onValueChange={(val) => {
+                const isRegistered = val === 'registered';
+                setForm((f) => ({
+                  ...f,
+                  dhaRegistered: isRegistered,
+                  orgType: ''
+                }));
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Chọn trạng thái" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="registered">Đã đăng ký</SelectItem>
+                <SelectItem value="unregistered">Chưa đăng ký</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Loại tổ chức */}
+          <div>
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                Loại tổ chức <span className="text-red-500">*</span>
+              </label>
+              <button
+                type="button"
+                className="text-xs font-medium text-primary underline-offset-4 hover:underline"
+                onClick={() => setOpenRegistrationHelp(true)}
+              >
+                Chú thích
+              </button>
+            </div>
+            <Select
+              value={form.orgType}
+              onValueChange={(val) => setForm((f) => ({ ...f, orgType: val }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Chọn loại tổ chức" />
+              </SelectTrigger>
+              <SelectContent>
+                {orgTypeOptions.map((label) => (
+                  <SelectItem key={label} value={label}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Giới thiệu về tổ chức */}
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
@@ -521,8 +811,16 @@ export default function RegisterOrgPage() {
               }
             />
           </div>
-          <Button type="submit" className="w-full mt-6" disabled={!isFormValid}>
-            {registering ? 'Đang đăng ký...' : 'Đăng ký'}
+          <Button
+            type="submit"
+            className="w-full mt-6"
+            disabled={!isFormValid || registering || uploading}
+          >
+            {registering
+              ? 'Đang đăng ký...'
+              : uploading
+                ? 'Đang tải file...'
+                : 'Đăng ký'}
           </Button>
         </form>
       </Card>

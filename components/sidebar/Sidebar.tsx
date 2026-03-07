@@ -21,6 +21,11 @@ import { HiOutlineArrowRightOnRectangle } from 'react-icons/hi2';
 import { getRedirectMethod } from '@/utils/auth-helpers/settings';
 import { UserContext, UserDetailsContext } from '@/contexts/layout';
 import { createClient } from '@/utils/supabase/client';
+import { useUnregisterToken } from '@/hooks/features/commons/notification/use-unregister-token';
+import {
+  clearStoredNotificationToken,
+  getStoredNotificationToken
+} from '@/hooks/use-notification-permission';
 
 const supabase = createClient();
 
@@ -40,9 +45,21 @@ function Sidebar(props: SidebarProps) {
 
   const user = useContext(UserContext);
   const userDetails = useContext(UserDetailsContext);
+  const { trigger: unregisterToken } = useUnregisterToken();
   const handleSignOut = async (e) => {
     e.preventDefault();
-    supabase.auth.signOut();
+
+    const token = getStoredNotificationToken();
+    if (token) {
+      try {
+        await unregisterToken(token);
+        clearStoredNotificationToken();
+      } catch (error) {
+        console.error('Failed to unregister notification token:', error);
+      }
+    }
+
+    await supabase.auth.signOut();
     if (redirectMethod === 'client') {
       router.push(signInPath);
     } else {

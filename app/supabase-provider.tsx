@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { SWRConfig } from 'swr';
 import { swrFetcher } from '@/utils/swr-fetcher';
+import { useNotificationPermission } from '@/hooks/use-notification-permission';
 
 type SupabaseContext = {
   supabase: SupabaseClient<Database>;
@@ -21,18 +22,38 @@ export default function SupabaseProvider({
 }) {
   const [supabase] = useState(() => createPagesBrowserClient());
   const router = useRouter();
+  const { requestPermission } = useNotificationPermission();
 
   useEffect(() => {
+    const triggerNotificationRegistration = async () => {
+      try {
+        await requestPermission();
+      } catch (error) {
+        console.error('Failed to trigger notification registration flow:', error);
+      }
+    };
+
+    // Login qua server action thường không bắn SIGNED_IN ở client,
+    // nên chủ động kiểm tra session hiện tại khi component mount.
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        void triggerNotificationRegistration();
+      }
+    });
+
     const {
       data: { subscription }
-    } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN') router.refresh();
+    } = supabase.auth.onAuthStateChange(async (event) => {
+      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+        router.refresh();
+        await triggerNotificationRegistration();
+      }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [router, supabase]);
+  }, [requestPermission, router, supabase]);
 
   return (
     <Context.Provider value={{ supabase }}>

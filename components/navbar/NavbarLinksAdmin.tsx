@@ -17,6 +17,11 @@ import {
   HiOutlineArrowRightOnRectangle
 } from 'react-icons/hi2';
 import { createClient } from '@/utils/supabase/client';
+import { useUnregisterToken } from '@/hooks/features/commons/notification/use-unregister-token';
+import {
+  clearStoredNotificationToken,
+  getStoredNotificationToken
+} from '@/hooks/use-notification-permission';
 
 const supabase = createClient();
 export default function HeaderLinks(props: {
@@ -29,6 +34,7 @@ export default function HeaderLinks(props: {
   const user = useContext(UserContext);
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
+  const { trigger: unregisterToken } = useUnregisterToken();
   const colorVariant = props.colorVariant ?? 'admin';
   const signInPath = props.signInPath ?? '/dashboard/signin';
   const settingsPath = props.settingsPath ?? '/dashboard/settings';
@@ -43,7 +49,18 @@ export default function HeaderLinks(props: {
 
   const handleSignOut = async (e) => {
     e.preventDefault();
-    supabase.auth.signOut();
+
+    const token = getStoredNotificationToken();
+    if (token) {
+      try {
+        await unregisterToken(token);
+        clearStoredNotificationToken();
+      } catch (error) {
+        console.error('Failed to unregister notification token:', error);
+      }
+    }
+
+    await supabase.auth.signOut();
     router.push(signInPath);
   };
   if (!mounted) return null;

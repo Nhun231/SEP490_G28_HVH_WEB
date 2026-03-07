@@ -5,36 +5,12 @@ import { organizerRoutes } from '@/components/routes';
 import { createClient } from '@/utils/supabase/client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useNotificationPermission } from '@/hooks/use-notification-permission';
 
 export default function OrganizerPendingEventsPage() {
   const supabase = createClient();
   const [user, setUser] = useState(null);
   const [userDetails, setUserDetails] = useState(null);
   const router = useRouter();
-  const { permission, requestPermission, isLoading, isMounted } =
-    useNotificationPermission();
-
-  const handleNotificationRequest = async () => {
-    console.log('🔔 Requesting notification permission...');
-    const result = await requestPermission();
-
-    console.log('📋 Permission result:', result.permission);
-
-    if (result.permission === 'granted') {
-      console.log('✅ User ALLOWED notification permission!');
-      if (result.token) {
-        console.log('🎯 Firebase Token:', result.token);
-        // TODO: Gửi token lên server để lưu trữ
-      } else {
-        console.log('⚠️ Permission granted but no token received');
-      }
-    } else if (result.permission === 'denied') {
-      console.log('❌ User DENIED notification permission');
-    } else {
-      console.log('⏸️ Permission status:', result.permission);
-    }
-  };
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -65,12 +41,6 @@ export default function OrganizerPendingEventsPage() {
         routes={organizerRoutes}
         colorVariant="organizer"
         signInPath="/signin/password_signin"
-        notificationButton={{
-          permission,
-          isLoading,
-          isMounted,
-          onRequest: handleNotificationRequest
-        }}
       />
     </div>
   );

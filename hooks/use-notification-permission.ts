@@ -18,6 +18,23 @@ interface UseNotificationPermissionResult {
 }
 
 const NOTIFICATION_DEVICE_ID_KEY = 'notification_device_id';
+const NOTIFICATION_FCM_TOKEN_KEY = 'notification_fcm_token';
+
+export const getStoredNotificationToken = (): string | null => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  return window.localStorage.getItem(NOTIFICATION_FCM_TOKEN_KEY);
+};
+
+export const clearStoredNotificationToken = (): void => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.localStorage.removeItem(NOTIFICATION_FCM_TOKEN_KEY);
+};
 
 const getOrCreateDeviceId = (): string => {
   if (typeof window === 'undefined') {
@@ -70,7 +87,7 @@ export function useNotificationPermission(): UseNotificationPermissionResult {
   }, []);
 
   const requestPermission = useCallback(async () => {
-    if (!isSupported) {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
       return {
         permission: 'unsupported' as NotificationPermission,
         token: null
@@ -82,19 +99,20 @@ export function useNotificationPermission(): UseNotificationPermissionResult {
     try {
       let currentPermission = Notification.permission;
 
-      // Yêu cầu quyền nếu chưa có
+      // Nếu chưa cấp quyền thì yêu cầu người dùng cấp quyền
       if (currentPermission === 'default') {
         currentPermission = await Notification.requestPermission();
       }
 
       let token: string | null = null;
 
-      // Lấy Firebase token nếu được cấp quyền
+      // Nếu đã được cấp quyền thì luôn lấy token và đăng ký với backend
       if (currentPermission === 'granted') {
         console.log('🔥 Getting Firebase token...');
         token = await requestFirebaseToken();
         if (token) {
           console.log('✅ Firebase token obtained successfully!');
+          window.localStorage.setItem(NOTIFICATION_FCM_TOKEN_KEY, token);
 
           try {
             await registerToken({
@@ -127,7 +145,7 @@ export function useNotificationPermission(): UseNotificationPermissionResult {
     } finally {
       setIsLoading(false);
     }
-  }, [isSupported, registerToken]);
+  }, [registerToken]);
 
   return {
     permission,

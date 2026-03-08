@@ -1,3 +1,5 @@
+export { EOrgType } from '@/constants/org-type';
+
 // Common Entity Interfaces
 
 export interface BaseEntity {
@@ -24,16 +26,6 @@ export interface BaseUser {
 export interface User {
   id: string;
   email: string;
-}
-
-export enum EOrgType {
-  NGO = 'NGO',
-  COOPERATIVE = 'COOPERATIVE',
-  SOCIAL_ENTERPRISE = 'SOCIAL_ENTERPRISE',
-  COMMUNITY_BASED_ORG = 'COMMUNITY_BASED_ORG',
-  GOVERNMENT_AGENCY = 'GOVERNMENT_AGENCY',
-  EDUCATIONAL_INSTITUTION = 'EDUCATIONAL_INSTITUTION',
-  OTHER = 'OTHER'
 }
 
 export enum EOrgRegistrationStatus {

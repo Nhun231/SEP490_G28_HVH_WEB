@@ -62,13 +62,13 @@ export default function DefaultAuthLayout(props: DefaultAuthLayoutProps) {
               <Image
                 src={'/img/logo.png'}
                 alt="Logo"
-                width={70}
-                height={70}
-                className="rounded-sm mr-5"
+                width={210}
+                height={210}
+                className="rounded-sm"
               />
 
               <h5
-                className={`text-4xl font-bold leading-5 ${
+                className={`-ml-10 text-[2.75rem] font-bold leading-tight ${
                   isAdmin ? 'text-white' : 'text-primary-foreground'
                 }`}
               >

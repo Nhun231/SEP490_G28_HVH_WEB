@@ -19,10 +19,33 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
+import {
+  EOrgType,
+  REGISTERED_ORG_TYPE_OPTIONS,
+  UNREGISTERED_ORG_TYPE_OPTIONS
+} from '@/constants/org-type';
 import { useRegisterOrg } from '@/hooks/features/uc016-register-organization/useRegisterOrg';
 import { useSendRegisterOrgVerifyMail } from '@/hooks/features/uc016-register-organization/useSendRegisterOrgVerifyMail';
 import { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
+
+interface RegisterOrgFormState {
+  otp: string;
+  name: string;
+  dhaRegistered: boolean;
+  orgType: EOrgType | '';
+  orgIntroduction: string;
+  managerFullName: string;
+  managerCid: string;
+  managerPhone: string;
+  managerEmail: string;
+  applicationReason: string;
+  managerCidFront: File | null;
+  managerCidBack: File | null;
+  managerCidHolding: File | null;
+  activityLicense: File | null;
+  otherEvidences: File[];
+}
 
 export default function RegisterOrgPage() {
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL!;
@@ -39,7 +62,7 @@ export default function RegisterOrgPage() {
   const [otpFeedback, setOtpFeedback] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [openRegistrationHelp, setOpenRegistrationHelp] = useState(false);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<RegisterOrgFormState>({
     otp: '',
     name: '',
     dhaRegistered: false,
@@ -58,28 +81,9 @@ export default function RegisterOrgPage() {
     otherEvidences: [] as File[]
   });
 
-  const REGISTERED_TYPES = [
-    'Quỹ xã hội',
-    'Quỹ từ thiện',
-    'Tổ chức phi chính phủ',
-    'Tổ chức xã hội'
-  ];
-
-  const UNREGISTERED_TYPES = [
-    'Được thành lập trong cơ quan chính quyền',
-    'Được thành lập trong đơn vị sự nghiệp công lập',
-    'Tổ chức quần chúng (phường, xã, làng)',
-    'Được thành lập trong trường đại học',
-    'Được thành lập trong cơ sở giáo dục phổ thông',
-    'Được thành lập trong doanh nghiệp nhà nước',
-    'Được thành lập trong doanh nghiệp tư nhân',
-    'Tổ chức xã hội tự quản',
-    'Khác'
-  ];
-
   const orgTypeOptions = form.dhaRegistered
-    ? REGISTERED_TYPES
-    : UNREGISTERED_TYPES;
+    ? REGISTERED_ORG_TYPE_OPTIONS
+    : UNREGISTERED_ORG_TYPE_OPTIONS;
 
   const normalizeExtension = (raw: string) => {
     const ext = raw.trim().replace(/^\./, '').toLowerCase();
@@ -257,7 +261,7 @@ export default function RegisterOrgPage() {
                 otp: form.otp,
                 name: form.name,
                 dhaRegistered: form.dhaRegistered,
-                orgType: form.orgType,
+                orgType: form.orgType as EOrgType,
                 orgIntroduction: form.orgIntroduction,
                 managerFullName: form.managerFullName,
                 managerCid: form.managerCid,
@@ -519,15 +523,17 @@ export default function RegisterOrgPage() {
             </div>
             <Select
               value={form.orgType}
-              onValueChange={(val) => setForm((f) => ({ ...f, orgType: val }))}
+              onValueChange={(val) =>
+                setForm((f) => ({ ...f, orgType: val as EOrgType }))
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Chọn loại tổ chức" />
               </SelectTrigger>
               <SelectContent>
-                {orgTypeOptions.map((label) => (
-                  <SelectItem key={label} value={label}>
-                    {label}
+                {orgTypeOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
                   </SelectItem>
                 ))}
               </SelectContent>

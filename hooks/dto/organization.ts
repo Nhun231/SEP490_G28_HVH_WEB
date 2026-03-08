@@ -1,9 +1,10 @@
+import { EOrgType } from '@/constants/org-type';
 import type { SystemAdmin } from '@/hooks/entity';
 export interface RegisterOrganizationRequest {
   otp: string;
   name: string;
   dhaRegistered: boolean;
-  orgType: string;
+  orgType: EOrgType;
   orgIntroduction: string;
   managerFullName: string;
   managerCid: string;
@@ -16,15 +17,7 @@ export interface RegisterOrganizationRequest {
   applicationReason: string;
 }
 
-export enum EOrgType {
-  NGO = 'NGO',
-  COOPERATIVE = 'COOPERATIVE',
-  SOCIAL_ENTERPRISE = 'SOCIAL_ENTERPRISE',
-  COMMUNITY_BASED_ORG = 'COMMUNITY_BASED_ORG',
-  GOVERNMENT_AGENCY = 'GOVERNMENT_AGENCY',
-  EDUCATIONAL_INSTITUTION = 'EDUCATIONAL_INSTITUTION',
-  OTHER = 'OTHER'
-}
+export { EOrgType };
 
 export enum EOrgRegistrationStatus {
   PENDING = 'PENDING',

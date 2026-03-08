@@ -53,14 +53,13 @@ export const swrFetcher = async <T>(
       const errorBody = await response.json().catch(() => ({}));
       const moreInfo = errorBody?.moreInfo;
       const infoMessages: string[] = [];
-      const isString = (value: unknown): value is string => typeof value === 'string';
+      const isString = (value: unknown): value is string =>
+        typeof value === 'string';
 
       if (Array.isArray(moreInfo)) {
         infoMessages.push(...moreInfo.filter(isString));
       } else if (moreInfo && typeof moreInfo === 'object') {
-        infoMessages.push(
-          ...Object.values(moreInfo).filter(isString)
-        );
+        infoMessages.push(...Object.values(moreInfo).filter(isString));
       }
 
       const message =

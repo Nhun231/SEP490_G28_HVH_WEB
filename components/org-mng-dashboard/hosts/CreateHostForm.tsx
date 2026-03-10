@@ -58,19 +58,56 @@ export default function CreateHostForm() {
             // Validate required fields
             const trimmedAddress = formData.address.trim();
             const trimmedDetailAddress = formData.detailAddress.trim();
+            const trimedFullName = formData.fullName.trim();
+            const trimmedEmail = formData.email.trim();
+            const trimmedPhone = formData.phone.trim();
+            const trimmedIdCard = formData.idCard.trim();
+            const trimmedDob = formData.dateOfBirth.trim();
 
             if (!trimmedAddress) {
                 throw new Error('Vui lòng chọn Phường/Xã');
             }
 
             if (!trimmedDetailAddress) {
-                throw new Error('Địa chỉ chi tiết là bắt buộc');
+                throw new Error('Vui lòng điền địa chỉ chi tiết');
+            }
+
+            if (!trimedFullName) {
+                throw new Error('Vui lòng điền họ và tên');
+            }
+
+            if (!trimmedEmail) {
+                throw new Error('Vui lòng điền email');
+            }
+
+            if (!trimmedPhone) {
+                throw new Error('Vui lòng điền số điện thoại');
+            }
+
+            if (!trimmedDob) {
+                throw new Error('Vui lòng chọn ngày sinh');
+            }
+
+            if (!trimmedIdCard) {
+                throw new Error('Vui lòng điền CCCD');
+            }
+
+            // Validate email format
+            const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            if (!emailRegex.test(trimmedEmail)) {
+                throw new Error('Email không đúng định dạng (ví dụ: example@domain.com)');
             }
 
             // Validate phone format: ^(0|\+84)(3|5|7|8|9)\d{8}$
             const phoneRegex = /^(0|\+84)(3|5|7|8|9)\d{8}$/;
-            if (!phoneRegex.test(formData.phone)) {
+            if (!phoneRegex.test(trimmedPhone)) {
                 throw new Error('Số điện thoại không đúng định dạng (phải bắt đầu bằng 0 hoặc +84, theo sau là 3/5/7/8/9 và 8 chữ số)');
+            }
+
+            // Validate detailAddress
+            const addressSpecialCharsRegex = /[!@#$%^&*()_+=\[\]{};:'"<>?\\|`~\-\.]/;
+            if (addressSpecialCharsRegex.test(trimmedDetailAddress)) {
+                throw new Error('Địa chỉ chi tiết không được chứa ký tự đặc biệt ngoại trừ dấu phẩy và gạch chéo');
             }
 
             // Format address with "Hà Nội, " prefix
@@ -78,21 +115,21 @@ export default function CreateHostForm() {
 
             // Format date of birth to YYYY-MM-DD if present
             let formattedDob = null;
-            if (formData.dateOfBirth) {
+            if (trimmedDob) {
                 // Ensure it's in YYYY-MM-DD format
-                const date = new Date(formData.dateOfBirth);
+                const date = new Date(trimmedDob);
                 if (!isNaN(date.getTime())) {
-                    formattedDob = formData.dateOfBirth; // Already in YYYY-MM-DD from date input
+                    formattedDob = trimmedDob; // Already in YYYY-MM-DD from date input
                 }
             }
 
             // Prepare payload matching API schema
             const payload = {
-                fullName: formData.fullName.trim(),
-                email: formData.email.trim(),
-                phone: formData.phone.trim(),
+                fullName: trimedFullName,
+                email: trimmedEmail,
+                phone: trimmedPhone,
                 dob: formattedDob,
-                cid: formData.idCard ? formData.idCard.trim() : null,
+                cid: trimmedIdCard || null,
                 address: formattedAddress,
                 detailAddress: trimmedDetailAddress
             };
@@ -126,6 +163,7 @@ export default function CreateHostForm() {
             // Wait a moment to show success message, then redirect
             setTimeout(() => {
                 router.push('/org-mng-dashboard/hosts');
+                router.refresh();
             }, 1500);
         } catch (err) {
             console.error('Error creating host:', err);
@@ -156,11 +194,17 @@ export default function CreateHostForm() {
             {/* Error Message */}
             {error && (
                 <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                    <div className="flex items-center gap-3">
-                        <svg className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <div className="flex items-start gap-3">
+                        <svg className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                         </svg>
-                        <p className="text-sm font-medium text-red-800 dark:text-red-200">{error}</p>
+                        <div className="flex-1">
+                            {error.split('\n').map((line, index) => (
+                                <p key={index} className="text-sm font-medium text-red-800 dark:text-red-200">
+                                    {line}
+                                </p>
+                            ))}
+                        </div>
                     </div>
                 </div>
             )}
@@ -185,7 +229,6 @@ export default function CreateHostForm() {
                                         value={formData.fullName}
                                         onChange={handleInputChange}
                                         placeholder="Nhập họ và tên đầy đủ"
-                                        required
                                         className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#42A5F5] dark:bg-gray-700 dark:text-white"
                                     />
                                 </div>
@@ -204,7 +247,6 @@ export default function CreateHostForm() {
                                         value={formData.email}
                                         onChange={handleInputChange}
                                         placeholder="example@domain.com"
-                                        required
                                         className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#42A5F5] dark:bg-gray-700 dark:text-white"
                                     />
                                 </div>
@@ -223,7 +265,6 @@ export default function CreateHostForm() {
                                         value={formData.phone}
                                         onChange={handleInputChange}
                                         placeholder="0901234567"
-                                        required
                                         className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#42A5F5] dark:bg-gray-700 dark:text-white"
                                     />
                                 </div>
@@ -241,15 +282,16 @@ export default function CreateHostForm() {
                                         name="dateOfBirth"
                                         value={formData.dateOfBirth}
                                         onChange={handleInputChange}
+                                        max={new Date().toISOString().split('T')[0]}
                                         className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#42A5F5] dark:bg-gray-700 dark:text-white"
                                     />
                                 </div>
                             </div>
 
-                            {/* Số CCCD/CMND */}
+                            {/* Số CCCD */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Số CCCD/CMND <span className="text-red-500">*</span>
+                                    Số CCCD <span className="text-red-500">*</span>
                                 </label>
                                 <div className="relative">
                                     <MdCreditCard className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -258,7 +300,7 @@ export default function CreateHostForm() {
                                         name="idCard"
                                         value={formData.idCard}
                                         onChange={handleInputChange}
-                                        placeholder="Nhập số CCCD/CMND"
+                                        placeholder="Nhập số CCCD"
                                         className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#42A5F5] dark:bg-gray-700 dark:text-white"
                                     />
                                 </div>
@@ -275,7 +317,6 @@ export default function CreateHostForm() {
                                         name="address"
                                         value={formData.address}
                                         onChange={handleInputChange}
-                                        required
                                         className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#42A5F5] dark:bg-gray-700 dark:text-white appearance-none"
                                     >
                                         <option value="">Chọn Phường/Xã</option>

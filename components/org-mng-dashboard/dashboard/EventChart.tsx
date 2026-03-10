@@ -7,26 +7,27 @@ interface EventChartProps {
     month: string;
     hostCount: number;
     eventCount: number;
+    volunteerCount: number;
   }[];
 }
 
 const mockData = [
-  { month: '1/1', hostCount: 350, eventCount: 280 },
-  { month: '1/1', hostCount: 280, eventCount: 220 },
-  { month: '1/2', hostCount: 350, eventCount: 280 },
-  { month: '1/2', hostCount: 250, eventCount: 200 },
-  { month: '1/3', hostCount: 520, eventCount: 420 },
-  { month: '1/3', hostCount: 450, eventCount: 360 },
-  { month: '7/4', hostCount: 650, eventCount: 520 },
-  { month: '7/4', hostCount: 380, eventCount: 300 },
-  { month: '7/5', hostCount: 780, eventCount: 620 },
-  { month: '7/5', hostCount: 550, eventCount: 440 },
-  { month: '7/6', hostCount: 850, eventCount: 680 },
-  { month: '7/6', hostCount: 700, eventCount: 560 },
+  { month: '1', hostCount: 350, eventCount: 280, volunteerCount: 420 },
+  { month: '2', hostCount: 280, eventCount: 220, volunteerCount: 350 },
+  { month: '3', hostCount: 350, eventCount: 280, volunteerCount: 450 },
+  { month: '4', hostCount: 250, eventCount: 200, volunteerCount: 320 },
+  { month: '5', hostCount: 520, eventCount: 420, volunteerCount: 640 },
+  { month: '6', hostCount: 450, eventCount: 360, volunteerCount: 580 },
+  { month: '7', hostCount: 650, eventCount: 520, volunteerCount: 780 },
+  { month: '8', hostCount: 380, eventCount: 300, volunteerCount: 460 },
+  { month: '9', hostCount: 780, eventCount: 620, volunteerCount: 920 },
+  { month: '10', hostCount: 550, eventCount: 440, volunteerCount: 680 },
+  { month: '11', hostCount: 850, eventCount: 680, volunteerCount: 980 },
+  { month: '12', hostCount: 700, eventCount: 560, volunteerCount: 840 },
 ];
 
 export default function EventChart({ data = mockData }: EventChartProps) {
-  const maxValue = Math.max(...data.flatMap(d => [d.hostCount, d.eventCount]));
+  const maxValue = Math.max(...data.flatMap(d => [d.hostCount, d.eventCount, d.volunteerCount]));
   const scaleHeight = 300;
 
   return (
@@ -56,7 +57,7 @@ export default function EventChart({ data = mockData }: EventChartProps) {
             {data.map((item, index) => (
               <div 
                 key={index}
-                className="flex-1 flex items-end justify-center gap-1"
+                className="flex-1 flex items-end justify-center gap-0.5"
               >
                 {/* Host bar */}
                 <div 
@@ -66,7 +67,7 @@ export default function EventChart({ data = mockData }: EventChartProps) {
                     minHeight: '4px'
                   }}
                 >
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover:block bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover:block bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-10">
                     Host: {item.hostCount}
                   </div>
                 </div>
@@ -78,8 +79,20 @@ export default function EventChart({ data = mockData }: EventChartProps) {
                     minHeight: '4px'
                   }}
                 >
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover:block bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover:block bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-10">
                     Sự kiện: {item.eventCount}
+                  </div>
+                </div>
+                {/* Volunteer bar */}
+                <div 
+                  className="w-full bg-[#81D4FA] rounded-t hover:bg-[#B3E5FC] transition-colors cursor-pointer relative group"
+                  style={{ 
+                    height: `${(item.volunteerCount / maxValue) * scaleHeight}px`,
+                    minHeight: '4px'
+                  }}
+                >
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover:block bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-10">
+                    Volunteer: {item.volunteerCount}
                   </div>
                 </div>
               </div>
@@ -88,9 +101,9 @@ export default function EventChart({ data = mockData }: EventChartProps) {
 
           {/* X-axis labels */}
           <div className="flex items-center justify-between mt-2">
-            {['1/1', '1/1', '1/2', '1/2', '1/3', '1/3', '7/4', '7/4', '7/5', '7/5', '7/6', '7/6'].map((label, index) => (
+            {data.map((item, index) => (
               <div key={index} className="flex-1 text-center text-xs text-gray-500 dark:text-gray-400">
-                {index % 2 === 0 ? label : ''}
+                {item.month}
               </div>
             ))}
           </div>
@@ -100,11 +113,15 @@ export default function EventChart({ data = mockData }: EventChartProps) {
         <div className="flex items-center justify-center gap-6 mt-4">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-[#42A5F5]"></div>
-            <span className="text-sm text-gray-600 dark:text-gray-400">Host tổng hợp</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">Tổng số Host</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-[#90CAF9]"></div>
-            <span className="text-sm text-gray-600 dark:text-gray-400">Sự kiện</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">Tổng số Sự kiện</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-[#81D4FA]"></div>
+            <span className="text-sm text-gray-600 dark:text-gray-400">Tổng số Volunteer</span>
           </div>
         </div>
       </div>

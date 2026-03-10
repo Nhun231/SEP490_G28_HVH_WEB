@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-import { MdSearch, MdAdd, MdEmail, MdPhone, MdChevronRight } from 'react-icons/md';
+import { useRouter } from 'next/navigation';
+import { MdSearch, MdAdd, MdEmail, MdPhone, MdArrowUpward, MdArrowDownward } from 'react-icons/md';
 import { cn } from '@/lib/utils';
 
 // API Response Structure
@@ -41,7 +41,7 @@ const mockHostData: HostListResponse = {
       email: 'buiminhhtuan@email.com',
       phone: '0990123456',
       fullName: 'Bùi Minh Tuấn',
-      address: 'Quận Nam Từ Liêm',
+      address: 'Phường Nam Từ Liêm',
       district: 'Nam Từ Liêm',
       city: 'Hà Nội',
       status: 'ACTIVE',
@@ -54,7 +54,7 @@ const mockHostData: HostListResponse = {
       email: 'dangvanlong@email.com',
       phone: '0978901234',
       fullName: 'Đặng Văn Long',
-      address: 'Quận Tây Hồ',
+      address: 'Phường Tây Hồ',
       district: 'Tây Hồ',
       city: 'Hà Nội',
       status: 'ACTIVE',
@@ -67,7 +67,7 @@ const mockHostData: HostListResponse = {
       email: 'hoangducthang@email.com',
       phone: '0956789012',
       fullName: 'Hoàng Đức Thắng',
-      address: 'Quận Cầu Giấy',
+      address: 'Phường Cầu Giấy',
       district: 'Cầu Giấy',
       city: 'Hà Nội',
       status: 'ACTIVE',
@@ -80,7 +80,7 @@ const mockHostData: HostListResponse = {
       email: 'leminhcuong@email.com',
       phone: '0934567890',
       fullName: 'Lê Minh Cường',
-      address: 'Quận Đống Đa',
+      address: 'Phường Đống Đa',
       district: 'Đống Đa',
       city: 'Hà Nội',
       status: 'ACTIVE',
@@ -93,7 +93,7 @@ const mockHostData: HostListResponse = {
       email: 'nguyenvanan@email.com',
       phone: '0912345678',
       fullName: 'Nguyễn Văn An',
-      address: 'Quận Ba Đình',
+      address: 'Phường Ba Đình',
       district: 'Ba Đình',
       city: 'Hà Nội',
       status: 'ACTIVE',
@@ -106,7 +106,7 @@ const mockHostData: HostListResponse = {
       email: 'phamthuha@email.com',
       phone: '0945678901',
       fullName: 'Phạm Thu Hà',
-      address: 'Quận Hai Bà Trưng',
+      address: 'Phường Hai Bà Trưng',
       district: 'Hai Bà Trưng',
       city: 'Hà Nội',
       status: 'INACTIVE',
@@ -119,7 +119,7 @@ const mockHostData: HostListResponse = {
       email: 'phamthuha@email.com',
       phone: '0945678901',
       fullName: 'Phạm Thu Hà',
-      address: 'Quận Hai Bà Trưng',
+      address: 'Phường Hai Bà Trưng',
       district: 'Hai Bà Trưng',
       city: 'Hà Nội',
       status: 'INACTIVE',
@@ -132,7 +132,7 @@ const mockHostData: HostListResponse = {
       email: 'phamthuha@email.com',
       phone: '0945678901',
       fullName: 'Phạm Thu Hà',
-      address: 'Quận Hai Bà Trưng',
+      address: 'Phường Hai Bà Trưng',
       district: 'Hai Bà Trưng',
       city: 'Hà Nội',
       status: 'INACTIVE',
@@ -145,7 +145,7 @@ const mockHostData: HostListResponse = {
       email: 'phamthuha@email.com',
       phone: '0945678901',
       fullName: 'Phạm Thu Hà',
-      address: 'Quận Hai Bà Trưng',
+      address: 'Phường Hai Bà Trưng',
       district: 'Hai Bà Trưng',
       city: 'Hà Nội',
       status: 'INACTIVE',
@@ -158,7 +158,7 @@ const mockHostData: HostListResponse = {
       email: 'phamthuha@email.com',
       phone: '0945678901',
       fullName: 'Phạm Thu Hà',
-      address: 'Quận Hai Bà Trưng',
+      address: 'Phường Hai Bà Trưng',
       district: 'Hai Bà Trưng',
       city: 'Hà Nội',
       status: 'INACTIVE',
@@ -171,7 +171,7 @@ const mockHostData: HostListResponse = {
       email: 'phamthuha@email.com',
       phone: '0945678901',
       fullName: 'Phạm Thu Hà',
-      address: 'Quận Hai Bà Trưng',
+      address: 'Phường Hai Bà Trưng',
       district: 'Hai Bà Trưng',
       city: 'Hà Nội',
       status: 'INACTIVE',
@@ -184,7 +184,7 @@ const mockHostData: HostListResponse = {
       email: 'phamthuha@email.com',
       phone: '0945678901',
       fullName: 'Phạm Thu Hà',
-      address: 'Quận Hai Bà Trưng',
+      address: 'Phường Hai Bà Trưng',
       district: 'Hai Bà Trưng',
       city: 'Hà Nội',
       status: 'INACTIVE',
@@ -197,7 +197,7 @@ const mockHostData: HostListResponse = {
       email: 'phamthuha@email.com',
       phone: '0945678901',
       fullName: 'Phạm Thu Hà',
-      address: 'Quận Hai Bà Trưng',
+      address: 'Phường Hai Bà Trưng',
       district: 'Hai Bà Trưng',
       city: 'Hà Nội',
       status: 'INACTIVE',
@@ -225,7 +225,7 @@ const getInitials = (name: string) => {
     .map(word => word[0])
     .join('')
     .toUpperCase()
-    .slice(0, 2);
+    .slice(2, 3);
 };
 
 const getAvatarColor = (index: number) => {
@@ -241,9 +241,11 @@ const getAvatarColor = (index: number) => {
 };
 
 export default function HostManagement() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [sortBy, setSortBy] = useState('name-asc');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'ACTIVE' | 'INACTIVE'>('all');
+  const [sortColumn, setSortColumn] = useState<'name' | 'events' | 'hours'>('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [currentPage, setCurrentPage] = useState(0);
   const [data] = useState<HostListResponse>(mockHostData);
 
@@ -260,18 +262,23 @@ export default function HostManagement() {
 
   // Sort hosts
   filteredHosts = [...filteredHosts].sort((a, b) => {
-    switch (sortBy) {
-      case 'name-asc':
-        return a.fullName.localeCompare(b.fullName, 'vi');
-      case 'name-desc':
-        return b.fullName.localeCompare(a.fullName, 'vi');
-      case 'events-desc':
-        return b.eventCount - a.eventCount;
-      case 'hours-desc':
-        return b.totalHours - a.totalHours;
+    let comparison = 0;
+    
+    switch (sortColumn) {
+      case 'name':
+        comparison = getInitials(a.fullName).localeCompare(getInitials(b.fullName), 'vi');
+        break;
+      case 'events':
+        comparison = a.eventCount - b.eventCount;
+        break;
+      case 'hours':
+        comparison = a.totalHours - b.totalHours;
+        break;
       default:
         return 0;
     }
+    
+    return sortDirection === 'asc' ? comparison : -comparison;
   });
 
   // Calculate pagination info based on filtered results
@@ -280,25 +287,54 @@ export default function HostManagement() {
   const endIndex = startIndex + pageSize;
   const currentPageHosts = filteredHosts.slice(startIndex, endIndex);
 
-  // Reset to first page when search/filter changes
+  // Handle column header clicks for sorting
+  const handleNameSort = () => {
+    if (sortColumn === 'name') {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn('name');
+      setSortDirection('asc');
+    }
+    setCurrentPage(0);
+  };
+
+  const handleStatusFilter = () => {
+    const cycle: Array<'all' | 'ACTIVE' | 'INACTIVE'> = ['all', 'INACTIVE', 'ACTIVE'];
+    const currentIndex = cycle.indexOf(filterStatus);
+    const nextIndex = (currentIndex + 1) % cycle.length;
+    setFilterStatus(cycle[nextIndex]);
+    setCurrentPage(0);
+  };
+
+  const handleEventsSort = () => {
+    if (sortColumn === 'events') {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn('events');
+      setSortDirection('asc');
+    }
+    setCurrentPage(0);
+  };
+
+  const handleHoursSort = () => {
+    if (sortColumn === 'hours') {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn('hours');
+      setSortDirection('asc');
+    }
+    setCurrentPage(0);
+  };
+
+  // Reset to first page when search changes
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
     setCurrentPage(0);
   };
 
-  const handleFilterChange = (value: string) => {
-    setFilterStatus(value);
-    setCurrentPage(0);
-  };
-
-  const handleSortChange = (value: string) => {
-    setSortBy(value);
-    setCurrentPage(0);
-  };
-
   return (
     <div className="space-y-6">
-      {/* Search and Filters */}
+      {/* Search */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-[#E3F2FD] dark:border-gray-700 p-4">
         <div className="flex flex-col md:flex-row gap-4">
           {/* Search */}
@@ -312,29 +348,6 @@ export default function HostManagement() {
               className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#42A5F5] dark:bg-gray-700 dark:text-white"
             />
           </div>
-
-          {/* Status Filter */}
-          <select
-            value={filterStatus}
-            onChange={(e) => handleFilterChange(e.target.value)}
-            className="px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#42A5F5] dark:bg-gray-700 dark:text-white min-w-[180px]"
-          >
-            <option value="all">Tất cả trạng thái</option>
-            <option value="ACTIVE">Hoạt động</option>
-            <option value="INACTIVE">Ngưng hoạt động</option>
-          </select>
-
-          {/* Sort */}
-          <select
-            value={sortBy}
-            onChange={(e) => handleSortChange(e.target.value)}
-            className="px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#42A5F5] dark:bg-gray-700 dark:text-white min-w-[160px]"
-          >
-            <option value="name-asc">Sắp xếp: Tên (A-Z)</option>
-            <option value="name-desc">Sắp xếp: Tên (Z-A)</option>
-            <option value="events-desc">Sự kiện (Nhiều nhất)</option>
-            <option value="hours-desc">Giờ (Nhiều nhất)</option>
-          </select>
         </div>
       </div>
 
@@ -344,23 +357,60 @@ export default function HostManagement() {
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-600">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
-                  HOST
+                <th 
+                  onClick={handleNameSort}
+                  className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none"
+                >
+                  <div className="flex items-center gap-2">
+                    <span>HOST</span>
+                    {sortColumn === 'name' && (
+                      sortDirection === 'asc' ? 
+                        <MdArrowUpward className="text-[#42A5F5]" /> : 
+                        <MdArrowDownward className="text-[#42A5F5]" />
+                    )}
+                  </div>
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
                   LIÊN HỆ
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
-                  TRẠNG THÁI
+                <th 
+                  onClick={handleStatusFilter}
+                  className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none"
+                >
+                  <div className="flex items-center gap-2">
+                    <span>TRẠNG THÁI</span>
+                    {filterStatus !== 'all' && (
+                      <span className="text-[#42A5F5] text-xs">
+                        ({filterStatus === 'ACTIVE' ? 'Hoạt động' : 'Ngưng'})
+                      </span>
+                    )}
+                  </div>
                 </th>
-                <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
-                  SỰ KIỆN
+                <th 
+                  onClick={handleEventsSort}
+                  className="px-6 py-4 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <span>SỰ KIỆN</span>
+                    {sortColumn === 'events' && (
+                      sortDirection === 'asc' ? 
+                        <MdArrowUpward className="text-[#42A5F5]" /> : 
+                        <MdArrowDownward className="text-[#42A5F5]" />
+                    )}
+                  </div>
                 </th>
-                <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
-                  GIỜ PHỤC VỤ
-                </th>
-                <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
-                  THAO TÁC
+                <th 
+                  onClick={handleHoursSort}
+                  className="px-6 py-4 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <span>GIỜ PHỤC VỤ</span>
+                    {sortColumn === 'hours' && (
+                      sortDirection === 'asc' ? 
+                        <MdArrowUpward className="text-[#42A5F5]" /> : 
+                        <MdArrowDownward className="text-[#42A5F5]" />
+                    )}
+                  </div>
                 </th>
               </tr>
             </thead>
@@ -370,7 +420,8 @@ export default function HostManagement() {
                 return (
                 <tr 
                   key={host.id}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+                  onClick={() => router.push(`/org-mng-dashboard/hosts/${host.id}`)}
+                  className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors cursor-pointer"
                 >
                   {/* Host Info */}
                   <td className="px-6 py-4">
@@ -432,16 +483,6 @@ export default function HostManagement() {
                     <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 font-semibold text-sm">
                       {host.totalHours}h
                     </span>
-                  </td>
-
-                  {/* Actions */}
-                  <td className="px-6 py-4 text-center">
-                    <Link
-                      href={`/org-mng-dashboard/hosts/${host.id}`}
-                      className="inline-flex p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                    >
-                      <MdChevronRight className="text-xl text-gray-400" />
-                    </Link>
                   </td>
                 </tr>
                 );

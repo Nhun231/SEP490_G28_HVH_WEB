@@ -54,8 +54,31 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       let errorMessage = 'Failed to create host account';
       
-      // Extract error message from response
-      if (rawText) {
+      // Extract error message from response with new backend error structure
+      if (data.moreInfo && typeof data.moreInfo === 'object') {
+        // Extract all error messages from moreInfo
+        const messages: string[] = [];
+        
+        // Prioritize business, auth messages first
+        if (data.moreInfo.business) {
+          messages.push(data.moreInfo.business);
+        }
+        if (data.moreInfo.auth) {
+          messages.push(data.moreInfo.auth);
+        }
+        
+        // Then add any field-specific validation errors
+        for (const [key, value] of Object.entries(data.moreInfo)) {
+          if (key !== 'business' && key !== 'auth' && typeof value === 'string') {
+            messages.push(value);
+          }
+        }
+        
+        // Join all messages with line breaks
+        if (messages.length > 0) {
+          errorMessage = messages.join('\n');
+        }
+      } else if (rawText) {
         errorMessage = rawText;
       } else if (data.message) {
         errorMessage = data.message;

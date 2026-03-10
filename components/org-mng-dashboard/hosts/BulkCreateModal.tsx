@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom'; // Import Portal
+import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { MdClose, MdUploadFile, MdDownload, MdWarning } from 'react-icons/md';
 import { cn } from '@/lib/utils';
 import * as XLSX from 'xlsx';
@@ -23,6 +24,7 @@ interface HostData {
 }
 
 export default function BulkCreateModal({ isOpen, onClose }: BulkCreateModalProps) {
+  const router = useRouter();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -73,21 +75,48 @@ export default function BulkCreateModal({ isOpen, onClose }: BulkCreateModalProp
     setError(null);
 
     const file = e.dataTransfer.files[0];
-    if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) {
-      setSelectedFile(file);
-      parseExcelFile(file);
-    } else {
-      setError('Vui lòng chọn file Excel (.xlsx hoặc .xls)');
+    if (!file) {
+      setError('Không tìm thấy file');
+      return;
     }
+
+    // Check file format
+    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+      setError('Vui lòng chọn file Excel (.xlsx hoặc .xls)');
+      return;
+    }
+
+    // Check file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+    if (file.size > maxSize) {
+      setError('Dung lượng file vượt quá giới hạn 10MB. Vui lòng chọn file nhỏ hơn.');
+      return;
+    }
+
+    setSelectedFile(file);
+    parseExcelFile(file);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     setError(null);
     const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      parseExcelFile(file);
+    if (!file) return;
+
+    // Check file format
+    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+      setError('Vui lòng chọn file Excel (.xlsx hoặc .xls)');
+      return;
     }
+
+    // Check file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+    if (file.size > maxSize) {
+      setError('Dung lượng file vượt quá giới hạn 10MB. Vui lòng chọn file nhỏ hơn.');
+      return;
+    }
+
+    setSelectedFile(file);
+    parseExcelFile(file);
   };
 
   // Parse Excel file and validate data
@@ -131,22 +160,69 @@ export default function BulkCreateModal({ isOpen, onClose }: BulkCreateModalProp
           email: String(row['Email'] || '').trim(),
           phone: String(row['Số điện thoại'] || '').trim(),
           dob,
-          cid: row['Số CCCD/CMND'] ? String(row['Số CCCD/CMND']).trim() : null,
+          cid: row['Số CCCD'] ? String(row['Số CCCD']).trim() : null,
           address: formattedAddress,
           detailAddress: String(row['Địa chỉ chi tiết'] || '').trim()
         };
       });
 
-      const invalidRows = hosts.filter(h => !h.fullName || !h.email || !h.phone || !h.address || !h.detailAddress);
-      if (invalidRows.length > 0) {
-        setError(`Có ${invalidRows.length} hàng thiếu thông tin bắt buộc (Họ tên, Email, SĐT, Phường/Xã, Địa chỉ chi tiết)`);
+      // Validate required fields with specific error messages
+      const requiredFieldErrors: string[] = [];
+      hosts.forEach((h, index) => {
+        const missingFields: string[] = [];
+        if (!h.fullName) missingFields.push('Họ và tên');
+        if (!h.email) missingFields.push('Email');
+        if (!h.dob) missingFields.push('Ngày sinh');
+        if (!h.cid) missingFields.push('Số CCCD');
+        if (!h.phone) missingFields.push('Số điện thoại');
+        if (!h.address) missingFields.push('Phường/Xã');
+        if (!h.detailAddress) missingFields.push('Địa chỉ chi tiết');
+        
+        if (missingFields.length > 0) {
+          requiredFieldErrors.push(`Hàng ${index + 2}: Thiếu ${missingFields.join(', ')}`);
+        }
+      });
+      if (requiredFieldErrors.length > 0) {
+        setError(requiredFieldErrors.join('\n'));
         return;
       }
 
+      // Validate email format
+      const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      const emailErrors: string[] = [];
+      hosts.forEach((h, index) => {
+        if (!emailRegex.test(h.email)) {
+          emailErrors.push(`Hàng ${index + 2}: Email không đúng định dạng`);
+        }
+      });
+      if (emailErrors.length > 0) {
+        setError(emailErrors.join('\n'));
+        return;
+      }
+
+      // Validate phone format
       const phoneRegex = /^(0|\+84)(3|5|7|8|9)\d{8}$/;
-      const invalidPhones = hosts.filter(h => !phoneRegex.test(h.phone));
-      if (invalidPhones.length > 0) {
-        setError(`Có ${invalidPhones.length} số điện thoại không đúng định dạng`);
+      const phoneErrors: string[] = [];
+      hosts.forEach((h, index) => {
+        if (!phoneRegex.test(h.phone)) {
+          phoneErrors.push(`Hàng ${index + 2}: Số điện thoại không đúng định dạng (phải bắt đầu bằng 0 hoặc +84, theo sau là 3/5/7/8/9 và 8 chữ số)`);
+        }
+      });
+      if (phoneErrors.length > 0) {
+        setError(phoneErrors.join('\n'));
+        return;
+      }
+
+      // Validate detailAddress - no special characters (except , /)
+      const addressSpecialCharsRegex = /[!@#$%^&*()_+=\[\]{};:'"<>?\\|`~\-\.]/;
+      const addressErrors: string[] = [];
+      hosts.forEach((h, index) => {
+        if (addressSpecialCharsRegex.test(h.detailAddress)) {
+          addressErrors.push(`Hàng ${index + 2}: Địa chỉ chi tiết không được chứa ký tự đặc biệt ngoại trừ dấu phẩy và gạch chéo`);
+        }
+      });
+      if (addressErrors.length > 0) {
+        setError(addressErrors.join('\n'));
         return;
       }
 
@@ -165,7 +241,7 @@ export default function BulkCreateModal({ isOpen, onClose }: BulkCreateModalProp
         'Email': 'nguyenvana@example.com',
         'Số điện thoại': '0901234567',
         'Ngày sinh': '15/01/1990',
-        'Số CCCD/CMND': '001234567890',
+        'Số CCCD': '001234567890',
         'Phường/Xã': 'Cầu Giấy',
         'Địa chỉ chi tiết': 'Số 123 Đường Xuân Thủy'
       }
@@ -205,7 +281,23 @@ export default function BulkCreateModal({ isOpen, onClose }: BulkCreateModalProp
 
           if (!response.ok) {
             const result = await response.json();
-            errors.push(`Hàng ${i + 1}: ${result.error || 'Có lỗi xảy ra'}`);
+            // Backend error messages are already formatted by API route (from moreInfo)
+            const errorMessage = result.error || 'Có lỗi xảy ra';
+            
+            // Handle multi-line errors from backend
+            const errorLines = errorMessage.split('\n');
+            if (errorLines.length > 1) {
+              // Multiple error messages (e.g., validation errors)
+              errors.push(`Hàng ${i + 2}:`); // +2 because Excel row 1 is header, data starts at row 2
+              errorLines.forEach(line => {
+                if (line.trim()) {
+                  errors.push(`  - ${line.trim()}`);
+                }
+              });
+            } else {
+              // Single error message
+              errors.push(`Hàng ${i + 2}: ${errorMessage}`);
+            }
             errorCount++;
             continue;
           }
@@ -216,11 +308,16 @@ export default function BulkCreateModal({ isOpen, onClose }: BulkCreateModalProp
       }
 
       if (successCount > 0) {
-        setSuccess(`Thành công ${successCount} tài khoản!`);
-        setTimeout(() => { onClose(); window.location.reload(); }, 2000);
+        setSuccess(`Tạo thành công ${successCount} tài khoản!`);
+        setTimeout(() => {
+          onClose();
+          router.push('/org-mng-dashboard/hosts');
+          router.refresh();
+        }, 1500);
       }
       if (errorCount > 0) {
-        setError(`Có ${errorCount} lỗi. Vui lòng kiểm tra lại.`);
+        const errorSummary = `${errors.join('\n')}`;
+        setError(errorSummary);
       }
     } finally {
       setIsUploading(false);
@@ -230,9 +327,7 @@ export default function BulkCreateModal({ isOpen, onClose }: BulkCreateModalProp
   // Sử dụng createPortal để đưa Modal lên trên cùng của <body>
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      {/* Overlay click-to-close */}
       <div className="absolute inset-0" onClick={handleClose} />
-      
       {/* Modal Container */}
       <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] z-[10000]">
         {/* Header */}
@@ -301,7 +396,18 @@ export default function BulkCreateModal({ isOpen, onClose }: BulkCreateModalProp
 
           {/* Messages */}
           {success && <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 p-4 rounded-lg text-green-600 text-sm">{success}</div>}
-          {error && <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 p-4 rounded-lg text-red-600 text-sm whitespace-pre-line">{error}</div>}
+          {error && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4 rounded-lg">
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+                <div className="flex-1 max-h-60 overflow-y-auto custom-scrollbar">
+                  <pre className="text-sm text-red-800 dark:text-red-200 font-mono whitespace-pre-line">{error}</pre>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Warning */}
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 p-4 rounded-lg flex gap-3">

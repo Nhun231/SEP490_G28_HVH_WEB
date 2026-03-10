@@ -31,13 +31,6 @@ export default async function HostsPage() {
           </div>
           <div className="flex items-center gap-3">
             <Link 
-              href="/org-mng-dashboard/hosts/preview"
-              className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-700 border-2 border-[#42A5F5] text-[#42A5F5] hover:bg-[#E3F2FD] dark:hover:bg-gray-600 rounded-lg font-medium transition-colors"
-            >
-              <MdVisibility className="text-xl" />
-              <span>Xem Demo</span>
-            </Link>
-            <Link 
               href="/org-mng-dashboard/hosts/create"
               className="flex items-center gap-2 px-4 py-2.5 bg-[#42A5F5] hover:bg-[#64B5F6] text-white rounded-lg font-medium transition-colors shadow-md"
             >

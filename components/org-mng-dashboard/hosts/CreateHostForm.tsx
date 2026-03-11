@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { MdPerson, MdEmail, MdPhone, MdCalendarToday, MdCreditCard, MdLocationOn, MdHome, MdCheckCircle } from 'react-icons/md';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/utils/supabase/client';
+import wardData from '@/fixtures/phuong_xa_moi_ha_noi.json';
 
 interface FormData {
     fullName: string;
@@ -320,16 +321,11 @@ export default function CreateHostForm() {
                                         className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#42A5F5] dark:bg-gray-700 dark:text-white appearance-none"
                                     >
                                         <option value="">Chọn Phường/Xã</option>
-                                        <option value="Cầu Giấy">Cầu Giấy</option>
-                                        <option value="Dịch Vọng">Dịch Vọng</option>
-                                        <option value="Mai Dịch">Mai Dịch</option>
-                                        <option value="Nghĩa Đô">Nghĩa Đô</option>
-                                        <option value="Nghĩa Tân">Nghĩa Tân</option>
-                                        <option value="Quân Thánh">Quân Thánh</option>
-                                        <option value="Trúc Bạch">Trúc Bạch</option>
-                                        <option value="Yên Hòa">Yên Hòa</option>
-                                        <option value="Hoàng Mai">Hoàng Mai</option>
-                                        <option value="Thanh Xuân">Thanh Xuân</option>
+                                        {wardData.danh_sach_phuong_xa_moi.map((ward) => (
+                                            <option key={ward.stt} value={ward.ten_moi}>
+                                                {ward.ten_moi}
+                                            </option>
+                                        ))}
                                     </select>
                                     <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />

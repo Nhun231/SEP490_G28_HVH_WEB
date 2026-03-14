@@ -13,6 +13,7 @@ export interface RegisterOrganizationRequest {
   managerCidFrontExtension: string;
   managerCidBackExtension: string;
   managerCidHoldingExtension: string;
+  legalDocumentExtension: string;
   otherEvidencesExtensions: string;
   applicationReason: string;
 }

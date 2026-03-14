@@ -112,6 +112,14 @@ export const organizerRoutes: IRoute[] = [
     collapse: false
   },
   {
+    name: 'Quản lý Host',
+    path: '/organizer/host-management',
+    icon: (
+      <HiOutlineUsers className="-mt-[7px] h-4 w-4 stroke-2 text-inherit" />
+    ),
+    collapse: false
+  },
+  {
     name: 'Về chúng tôi',
     path: '/about-us',
     icon: (

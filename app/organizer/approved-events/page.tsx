@@ -23,6 +23,7 @@ export default async function OrganizerApprovedEventsPage() {
       routes={organizerRoutes}
       colorVariant="organizer"
       signInPath="/signin/password_signin"
+      topHelperText="Quản lý các sự kiện đã được phê duyệt"
       statusFilters={[
         'Đang tuyển quân',
         'Đã đóng đơn',

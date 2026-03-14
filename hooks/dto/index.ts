@@ -3,3 +3,4 @@ export * from './organization';
 export * from './volunteer';
 export * from './activityDomain';
 export * from './notification';
+export * from './event';

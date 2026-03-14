@@ -67,16 +67,16 @@ export default function HeaderLinks(props: {
 
   const iconButtonClassName =
     colorVariant === 'organizer'
-      ? 'flex h-9 min-w-9 cursor-pointer rounded-full border-organizer-secondary-100/70 bg-white/70 p-0 text-xl text-slate-700 hover:bg-white hover:text-slate-900 md:min-h-10 md:min-w-10'
-      : 'flex h-9 min-w-9 cursor-pointer rounded-full border-slate-600 bg-slate-800/50 p-0 text-xl text-slate-200 hover:bg-slate-700 hover:text-white md:min-h-10 md:min-w-10';
+      ? 'flex h-9 min-w-9 cursor-pointer rounded-full border-[#CBE3EF] bg-[#EDF3FB]/95 p-0 text-xl text-[#3A4163] hover:bg-white hover:text-[#1D2737] md:min-h-10 md:min-w-10'
+      : 'flex h-9 min-w-9 cursor-pointer rounded-full border-[#1E2939] bg-[#1A2434]/90 p-0 text-xl text-slate-200 hover:bg-[#1D2737] hover:text-white md:min-h-10 md:min-w-10';
   const menuButtonClassName =
     colorVariant === 'organizer'
       ? `${iconButtonClassName} xl:hidden`
       : `${iconButtonClassName} xl:hidden`;
   const signOutIconClassName =
     colorVariant === 'organizer'
-      ? 'h-4 w-4 stroke-2 text-slate-700'
-      : 'h-4 w-4 stroke-2 text-slate-200';
+      ? 'h-4 w-4 stroke-2 text-[#3A4163]'
+      : 'h-4 w-4 stroke-2 text-[#E5ECF5]';
 
   return (
     <div className="relative flex min-w-max max-w-max flex-grow items-center justify-around gap-1 rounded-lg md:px-2 md:py-2 md:pl-3 xl:gap-2">

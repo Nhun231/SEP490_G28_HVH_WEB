@@ -41,6 +41,7 @@ export default function OrganizerPendingEventsPage() {
         routes={organizerRoutes}
         colorVariant="organizer"
         signInPath="/signin/password_signin"
+        topHelperText="Quản lý các sự kiện đang chờ phê duyệt"
       />
     </div>
   );

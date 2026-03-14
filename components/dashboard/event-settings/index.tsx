@@ -509,11 +509,21 @@ export default function EventSettings(props: Props) {
             {activityDomains.map((domain) => (
               <div
                 key={domain.id}
-                className="flex items-center justify-between rounded-lg border border-zinc-300 p-3 dark:border-zinc-700 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 bg-white dark:bg-zinc-950"
+                className={`flex items-center justify-between rounded-lg border p-3 cursor-pointer transition-colors ${
+                  String(selectedDomain?.id) === String(domain.id)
+                    ? 'border-blue-400 bg-blue-50 shadow-sm dark:border-blue-500 dark:bg-blue-950/40'
+                    : 'border-zinc-300 bg-white hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:hover:bg-zinc-900'
+                }`}
                 onClick={() => setSelectedDomain(domain)}
               >
                 <div className="flex-1">
-                  <p className="text-sm text-zinc-900 dark:text-zinc-100">
+                  <p
+                    className={`text-sm ${
+                      String(selectedDomain?.id) === String(domain.id)
+                        ? 'font-semibold text-blue-700 dark:text-blue-300'
+                        : 'text-zinc-900 dark:text-zinc-100'
+                    }`}
+                  >
                     {domain.name}
                   </p>
                 </div>
@@ -906,51 +916,29 @@ export default function EventSettings(props: Props) {
       >
         <DialogContent className="max-w-md bg-white dark:bg-white">
           <DialogHeader>
-            <div className="flex items-center gap-4 mb-2">
+            <DialogTitle className="pr-8 text-left text-xl font-bold text-zinc-900">
               {(confirmingDomain &&
                 !confirmingSubDomain &&
                 confirmingDomain.active) ||
-              (confirmingSubDomain && confirmingSubDomain.active) ? (
-                <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[#FFEEDB]">
-                  <svg width="32" height="32" fill="none" viewBox="0 0 24 24">
-                    <path
-                      fill="#FF6B00"
-                      d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 18.182A8.182 8.182 0 1 1 12 3.818a8.182 8.182 0 0 1 0 16.364Zm4.09-10.545-5.182 5.182-2.182-2.182a1 1 0 1 0-1.414 1.414l2.889 2.889a1 1 0 0 0 1.414 0l5.889-5.889a1 1 0 1 0-1.414-1.414Z"
-                    />
-                  </svg>
-                </span>
-              ) : (
-                <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[#D1FADF]">
-                  <svg width="32" height="32" fill="none" viewBox="0 0 24 24">
-                    <path
-                      fill="#22C55E"
-                      d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 18.182A8.182 8.182 0 1 1 12 3.818a8.182 8.182 0 0 1 0 16.364Zm4.09-10.545-5.182 5.182-2.182-2.182a1 1 0 1 0-1.414 1.414l2.889 2.889a1 1 0 0 0 1.414 0l5.889-5.889a1 1 0 1 0-1.414-1.414Z"
-                    />
-                  </svg>
-                </span>
-              )}
-              <DialogTitle className="text-black text-xl font-bold">
-                {(confirmingDomain &&
-                  !confirmingSubDomain &&
-                  confirmingDomain.active) ||
-                (confirmingSubDomain && confirmingSubDomain.active)
-                  ? `Ẩn lĩnh vực "${confirmingDomain?.name || confirmingSubDomain?.name}"?`
-                  : `Hiện lĩnh vực "${confirmingDomain?.name || confirmingSubDomain?.name}"?`}
-              </DialogTitle>
-            </div>
-            <DialogDescription className="text-[#667085] text-base font-normal">
+              (confirmingSubDomain && confirmingSubDomain.active)
+                ? `Ẩn lĩnh vực "${confirmingDomain?.name || confirmingSubDomain?.name}"?`
+                : `Hiện lĩnh vực "${confirmingDomain?.name || confirmingSubDomain?.name}"?`}
+            </DialogTitle>
+            <DialogDescription className="pt-1 text-left text-[15px] leading-7 text-[#667085]">
               {confirmingSubDomain ? (
                 confirmingSubDomain.active ? (
                   <>
-                    Khi ẩn lĩnh vực con&nbsp;
-                    <span className="font-normal">
+                    Khi ẩn lĩnh vực con này,
+                    <span className="font-normal"> </span>
+                    <span className="font-medium text-[#DC2626]">
                       Người dùng sẽ không thể xem hoặc chọn lĩnh vực con này.
                     </span>
                   </>
                 ) : (
                   <>
-                    Khi hiện lĩnh vực con&nbsp;
-                    <span className="font-normal">
+                    Khi hiện lĩnh vực con này,
+                    <span className="font-normal"> </span>
+                    <span className="font-medium text-[#16A34A]">
                       Người dùng có thể xem và chọn lĩnh vực con này.
                     </span>
                   </>
@@ -959,28 +947,26 @@ export default function EventSettings(props: Props) {
                 confirmingDomain.active ? (
                   <>
                     Khi ẩn lĩnh vực này, tất cả{' '}
-                    <span className="font-bold text-[#344054]">
+                    <span className="font-bold text-[#DC2626]">
                       {confirmingDomain.activitySubDomains?.length || 0} lĩnh
                       vực con
-                    </span>
-                    <br />
+                    </span>{' '}
                     và các kỹ năng bên trong cũng sẽ bị ẩn.
                     <br />
-                    <span className="font-normal">
+                    <span className="font-medium text-[#DC2626]">
                       Người dùng sẽ không thể xem hoặc chọn lĩnh vực này.
                     </span>
                   </>
                 ) : (
                   <>
                     Khi hiện lĩnh vực này, tất cả{' '}
-                    <span className="font-bold text-[#344054]">
+                    <span className="font-bold text-[#16A34A]">
                       {confirmingDomain.activitySubDomains?.length || 0} lĩnh
                       vực con
-                    </span>
-                    <br />
+                    </span>{' '}
                     và các kỹ năng bên trong sẽ được hiển thị trở lại.
                     <br />
-                    <span className="font-normal">
+                    <span className="font-medium text-[#16A34A]">
                       Người dùng có thể xem và chọn lĩnh vực này.
                     </span>
                   </>
@@ -988,14 +974,14 @@ export default function EventSettings(props: Props) {
               ) : null}
             </DialogDescription>
           </DialogHeader>
-          <div className="flex justify-end gap-3 pt-6">
+          <div className="flex items-center justify-end gap-3 pt-4">
             <Button
               onClick={() => {
                 setOpenConfirmToggleDomain(false);
                 setConfirmingDomain(null);
                 setConfirmingSubDomain(null);
               }}
-              className="border border-[#D0D5DD] bg-[#F3F4F6] text-[#6B7280] font-medium rounded px-6 py-2 text-base hover:bg-[#E5E7EB]"
+              className="rounded-md border border-[#D0D5DD] bg-white px-6 py-2 text-base font-medium text-[#6B7280] hover:bg-[#F9FAFB]"
               style={{ minWidth: 110 }}
             >
               Hủy
@@ -1023,8 +1009,8 @@ export default function EventSettings(props: Props) {
                   !confirmingSubDomain &&
                   confirmingDomain.active) ||
                 (confirmingSubDomain && confirmingSubDomain.active)
-                  ? 'bg-[#FF4500] hover:bg-[#e03e00] text-white font-semibold rounded px-6 py-2 text-base'
-                  : 'bg-[#22C55E] hover:bg-[#16a34a] text-white font-semibold rounded px-6 py-2 text-base'
+                  ? 'rounded-md bg-[#DC2626] px-6 py-2 text-base font-semibold text-white hover:bg-[#B91C1C]'
+                  : 'rounded-md bg-[#16A34A] px-6 py-2 text-base font-semibold text-white hover:bg-[#15803D]'
               }
               style={{ minWidth: 130 }}
             >
@@ -1032,8 +1018,8 @@ export default function EventSettings(props: Props) {
                 !confirmingSubDomain &&
                 confirmingDomain.active) ||
               (confirmingSubDomain && confirmingSubDomain.active)
-                ? `Xác nhận Ẩn`
-                : `Xác nhận Hiện`}
+                ? `Xác nhận ẩn`
+                : `Xác nhận hiện`}
             </Button>
           </div>
         </DialogContent>

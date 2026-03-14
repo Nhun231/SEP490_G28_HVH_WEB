@@ -62,8 +62,7 @@
 html {
   scroll-behavior: smooth;
   color-scheme: unset !important;
-  scrollbar-gutter: stable;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
 button,

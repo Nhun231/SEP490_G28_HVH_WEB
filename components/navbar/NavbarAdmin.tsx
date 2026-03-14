@@ -16,30 +16,32 @@ export default function AdminNavbar(props: {
 
   const navClassName =
     colorVariant === 'organizer'
-      ? 'bg-organizer-secondary-100/75 border border-organizer-secondary-100/80'
-      : 'bg-slate-900/90 border border-slate-700/50';
+      ? 'border border-[#CBE3EF] bg-[#FFFFFF]/90 shadow-[0_10px_24px_rgba(90,168,214,0.18)]'
+      : 'border border-[#1E2939]/80 bg-[#121A2A]/88 shadow-[0_10px_30px_rgba(10,16,28,0.28)]';
+  const navEffectClassName =
+    colorVariant === 'organizer' ? 'backdrop-blur-0' : 'backdrop-blur-xl';
   const crumbBaseClassName =
     colorVariant === 'organizer'
-      ? 'text-xs font-normal text-slate-600 hover:underline hover:text-slate-800'
-      : 'text-xs font-normal text-slate-300 hover:underline hover:text-slate-100';
+      ? 'text-xs font-normal text-[#3A4163] hover:underline hover:text-[#1D2737]'
+      : 'text-xs font-normal text-slate-300 hover:underline hover:text-[#F4F7FB]';
   const crumbSlashClassName =
-    colorVariant === 'organizer' ? 'text-slate-400' : 'text-slate-400';
+    colorVariant === 'organizer' ? 'text-[#5AA8D6]' : 'text-slate-500';
   const brandLinkClassName =
     colorVariant === 'organizer'
-      ? 'text-xs font-normal capitalize text-slate-600 hover:underline hover:text-slate-800'
-      : 'text-xs font-normal capitalize text-slate-300 hover:underline hover:text-slate-100';
+      ? 'text-xs font-normal capitalize text-[#3A4163] hover:underline hover:text-[#1D2737]'
+      : 'text-xs font-normal capitalize text-slate-300 hover:underline hover:text-[#F4F7FB]';
   const brandTitleWrapperClassName =
     colorVariant === 'organizer'
-      ? 'text-md shrink capitalize text-slate-900 md:text-3xl'
+      ? 'text-md shrink capitalize text-[#3A4163] md:text-3xl'
       : 'text-md shrink capitalize text-white md:text-3xl';
   const brandTitleLinkClassName =
     colorVariant === 'organizer'
-      ? 'font-bold capitalize hover:text-slate-700'
-      : 'font-bold capitalize hover:text-slate-200';
+      ? 'font-bold capitalize hover:text-[#1D2737]'
+      : 'font-bold capitalize hover:text-[#E8EEF7]';
 
   return (
     <nav
-      className={`fixed right-3 top-3 z-[40] flex w-[calc(100vw_-_6%)] flex-row items-center justify-between rounded-lg py-2 backdrop-blur-xl transition-all md:right-[30px] md:top-4 md:w-[calc(100vw_-_8%)] md:p-2 lg:w-[calc(100vw_-_6%)] xl:top-[20px] xl:w-[calc(100vw_-_365px)] 2xl:w-[calc(100vw_-_380px)] ${navClassName}`}
+      className={`fixed right-3 top-3 z-[40] flex w-[calc(100vw_-_6%)] flex-row items-center justify-between rounded-lg py-2 transition-all md:right-[30px] md:top-4 md:w-[calc(100vw_-_8%)] md:p-2 lg:w-[calc(100vw_-_6%)] xl:top-[20px] xl:w-[calc(100vw_-_365px)] 2xl:w-[calc(100vw_-_380px)] ${navClassName} ${navEffectClassName}`}
     >
       <div className="ml-[6px]">
         <div className="h-6 md:mb-2 md:w-[224px] md:pt-1">

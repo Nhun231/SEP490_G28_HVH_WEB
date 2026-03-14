@@ -73,7 +73,6 @@ export default function RegisterOrgPage() {
     managerPhone: '',
     managerEmail: '',
     applicationReason: '',
-    // File selection (upload happens AFTER BE returns URLs)
     managerCidFront: null as File | null,
     managerCidBack: null as File | null,
     managerCidHolding: null as File | null,
@@ -108,6 +107,19 @@ export default function RegisterOrgPage() {
       default:
         return '';
     }
+  };
+
+  const formatEvidenceExtensions = (files: Array<File | null>) => {
+    const uniqueExtensions: string[] = [];
+
+    files.forEach((file) => {
+      const extension = getFileExtension(file);
+      if (extension && !uniqueExtensions.includes(extension)) {
+        uniqueExtensions.push(extension);
+      }
+    });
+
+    return uniqueExtensions.join(' ');
   };
 
   const uploadToUrl = async (url: string, file: File) => {
@@ -248,13 +260,12 @@ export default function RegisterOrgPage() {
               const managerCidHoldingExtension = getFileExtension(
                 form.managerCidHolding
               );
-
-              // Keep backwards-compat with existing backend DTO:
-              // we send operating license as the first item of other evidences.
-              const otherExtensions = [
-                getFileExtension(form.activityLicense),
-                ...(form.otherEvidences || []).map((f) => getFileExtension(f))
-              ].filter(Boolean);
+              const legalDocumentExtension = getFileExtension(
+                form.activityLicense
+              );
+              const otherEvidencesExtensions = formatEvidenceExtensions(
+                form.otherEvidences || []
+              );
 
               setUploading(true);
               const registerRes = await registerOrg({
@@ -270,7 +281,8 @@ export default function RegisterOrgPage() {
                 managerCidFrontExtension,
                 managerCidBackExtension,
                 managerCidHoldingExtension,
-                otherEvidencesExtensions: otherExtensions.join(','),
+                legalDocumentExtension,
+                otherEvidencesExtensions,
                 applicationReason: form.applicationReason
               });
 
@@ -306,16 +318,14 @@ export default function RegisterOrgPage() {
                   : [];
 
               const explicitLicenseUrl =
+                uploadInfo.legalDocumentUrl ||
+                uploadInfo.legalDocumentUploadUrl ||
                 uploadInfo.activityLicenseUrl ||
                 uploadInfo.activityLicenseUploadUrl;
 
               const expectedOtherFiles = form.otherEvidences || [];
               const licenseFile = form.activityLicense;
-
-              const licenseUrl =
-                explicitLicenseUrl || (licenseFile ? otherUrls[0] : undefined);
-              const otherStartIndex =
-                licenseFile && !explicitLicenseUrl ? 1 : 0;
+              const licenseUrl = explicitLicenseUrl;
 
               const uploads: Array<Promise<void>> = [];
 
@@ -342,7 +352,7 @@ export default function RegisterOrgPage() {
 
               for (let i = 0; i < expectedOtherFiles.length; i++) {
                 const file = expectedOtherFiles[i];
-                const url = otherUrls[otherStartIndex + i];
+                const url = otherUrls[i];
                 if (!url) {
                   throw new Error(
                     `Thiếu URL upload cho tài liệu chứng minh khác #${i + 1}`

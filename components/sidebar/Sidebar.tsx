@@ -46,6 +46,43 @@ function Sidebar(props: SidebarProps) {
   const user = useContext(UserContext);
   const userDetails = useContext(UserDetailsContext);
   const { trigger: unregisterToken } = useUnregisterToken();
+
+  const getOrgNameCandidate = (candidate: unknown) => {
+    if (typeof candidate === 'string' && candidate.trim().length > 0) {
+      return candidate.trim();
+    }
+
+    if (candidate && typeof candidate === 'object') {
+      const name = (candidate as { name?: unknown }).name;
+      if (typeof name === 'string' && name.trim().length > 0) {
+        return name.trim();
+      }
+    }
+
+    return null;
+  };
+
+  const orgNameCandidates = [
+    userDetails?.organization_name,
+    userDetails?.organizationName,
+    userDetails?.org_name,
+    userDetails?.orgName,
+    userDetails?.organization,
+    userDetails?.org,
+    user?.user_metadata?.organization_name,
+    user?.user_metadata?.organizationName,
+    user?.user_metadata?.org_name,
+    user?.user_metadata?.orgName,
+    user?.user_metadata?.organization,
+    user?.user_metadata?.org
+  ];
+
+  const organizerName = orgNameCandidates.find(
+    (candidate) => getOrgNameCandidate(candidate) !== null
+  );
+  const organizerDisplayName =
+    getOrgNameCandidate(organizerName) ?? 'Tổ chức của bạn';
+
   const handleSignOut = async (e) => {
     e.preventDefault();
 
@@ -69,10 +106,10 @@ function Sidebar(props: SidebarProps) {
   // SIDEBAR
   const sidebarBgClass =
     colorVariant === 'organizer'
-      ? 'bg-gradient-to-b from-organizer-primary to-organizer-secondary-50'
-      : 'bg-gradient-to-b from-slate-900 to-slate-950';
+      ? 'bg-gradient-to-b from-[#5AA8D6] via-[#4A89B5] to-[#3A4163]'
+      : 'bg-gradient-to-b from-[#121A2A] via-[#1A2434] to-[#1D2737]';
   const dividerClass =
-    colorVariant === 'organizer' ? 'bg-white/20' : 'bg-slate-700';
+    colorVariant === 'organizer' ? 'bg-[#CBE3EF]/45' : 'bg-[#1E2939]';
 
   return (
     <div
@@ -91,7 +128,7 @@ function Sidebar(props: SidebarProps) {
           <div className="flex h-full flex-col justify-between">
             <div>
               <span
-                className="absolute top-4 right-4 block cursor-pointer text-slate-400 hover:text-white xl:hidden"
+                className="absolute top-4 right-4 block cursor-pointer text-slate-400 hover:text-[#F3F6FB] xl:hidden"
                 onClick={() => props.setOpen(false)}
               >
                 <HiX />
@@ -109,6 +146,16 @@ function Sidebar(props: SidebarProps) {
                   <span className="mt-2   block">Thiện Nguyện</span>
                 </h5>
               </div>
+              {colorVariant === 'organizer' && (
+                <div className="mx-auto mt-4 w-[92%] max-w-[260px] rounded-xl border border-[#CBE3EF]/70 bg-white/18 px-4 py-2.5 text-center shadow-lg shadow-[#3A4163]/20 backdrop-blur-sm">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#EDF3FB]">
+                    To chuc
+                  </p>
+                  <p className="mt-0.5 truncate text-base font-extrabold tracking-[0.01em] text-white">
+                    {organizerDisplayName}
+                  </p>
+                </div>
+              )}
               <div className={`mb-8 mt-8 h-px ${dividerClass}`} />
               {/* Nav item */}
               <ul>

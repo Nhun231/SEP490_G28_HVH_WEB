@@ -5,13 +5,13 @@ import DashboardLayout from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { User } from '@supabase/supabase-js';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { createClient } from '@/utils/supabase/client';
-import { getURL, getStatusRedirect } from '@/utils/helpers';
-import Notifications from './components/notification-settings';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Mail, Phone, ShieldCheck, UserRound } from 'lucide-react';
 
 interface Props {
   user: User | null | undefined;
@@ -19,197 +19,322 @@ interface Props {
 }
 
 const supabase = createClient();
-export default function Settings(props: Props) {
-  // Input States
-  const [nameError, setNameError] = useState<{
-    status: boolean;
-    message: string;
-  }>();
-  console.log(props.user);
-  console.log(props.userDetails);
-  const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmitEmail = async (e: React.FormEvent<HTMLFormElement>) => {
-    setIsSubmitting(true);
-    // Check if the new email is the same as the old email
-    if (e.currentTarget.newEmail.value === props.user.email) {
-      e.preventDefault();
-      setIsSubmitting(false);
-      return;
-    }
-    // Get form data
-    const newEmail = e.currentTarget.newEmail.value.trim();
-    const callbackUrl = getURL(
-      getStatusRedirect(
-        '/dashboard/settings',
-        'Thành công!',
-        `Email của bạn đã được cập nhật.`
-      )
+const formatDateTime = (value?: string | null) => {
+  if (!value) {
+    return 'Chưa có dữ liệu';
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return 'Chưa có dữ liệu';
+  }
+
+  return new Intl.DateTimeFormat('vi-VN', {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  }).format(date);
+};
+
+export default function Settings(props: Props) {
+  const router = useRouter();
+  const [isSubmittingName, setIsSubmittingName] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const displayName = useMemo(() => {
+    return (
+      props.userDetails?.full_name ??
+      props.user?.user_metadata?.full_name ??
+      props.user?.email?.split('@')[0] ??
+      'Chưa cập nhật'
     );
-    e.preventDefault();
-    const { error } = await supabase.auth.updateUser(
-      { email: newEmail },
-      {
-        emailRedirectTo: callbackUrl
-      }
-    );
-    router.push('/dashboard/settings');
-    setIsSubmitting(false);
-  };
+  }, [
+    props.userDetails?.full_name,
+    props.user?.user_metadata?.full_name,
+    props.user?.email
+  ]);
+
+  const displayEmail = props.user?.email ?? 'Chưa cập nhật';
+  const displayPhone =
+    props.user?.phone ??
+    props.userDetails?.phone ??
+    props.user?.user_metadata?.phone ??
+    null;
+  const displayAvatar =
+    props.userDetails?.avatar_url ??
+    props.user?.user_metadata?.avatar_url ??
+    undefined;
+
+  const roleName =
+    props.user?.app_metadata?.role ??
+    props.userDetails?.role ??
+    props.userDetails?.role_name ??
+    'Người dùng';
+
+  const organizationName =
+    props.userDetails?.organization_name ??
+    props.userDetails?.organizationName ??
+    props.userDetails?.org_name ??
+    props.userDetails?.orgName ??
+    props.userDetails?.organization ??
+    props.user?.user_metadata?.organization_name ??
+    props.user?.user_metadata?.organizationName ??
+    props.user?.user_metadata?.org_name ??
+    props.user?.user_metadata?.orgName ??
+    props.user?.user_metadata?.organization ??
+    null;
+
+  const [fullNameInput, setFullNameInput] = useState(displayName);
 
   const handleSubmitName = async (e: React.FormEvent<HTMLFormElement>) => {
-    setIsSubmitting(true);
-    // Check if the new name is the same as the old name
-    if (e.currentTarget.fullName.value === props.user.user_metadata.full_name) {
-      e.preventDefault();
-      setIsSubmitting(false);
+    e.preventDefault();
+    setIsSubmittingName(true);
+    setNameError(null);
+    setSuccessMessage(null);
+
+    const fullName = fullNameInput.trim();
+
+    if (!fullName) {
+      setNameError('Vui lòng nhập họ và tên.');
+      setIsSubmittingName(false);
       return;
     }
-    // Get form data
-    const fullName = e.currentTarget.fullName.value.trim();
 
-    const { error } = await supabase
+    if (fullName.length > 30) {
+      setNameError('Họ và tên không được vượt quá 30 ký tự.');
+      setIsSubmittingName(false);
+      return;
+    }
+
+    if (fullName === displayName) {
+      setNameError('Tên mới trùng với tên hiện tại.');
+      setIsSubmittingName(false);
+      return;
+    }
+
+    const { error: updateUserTableError } = await supabase
       .from('users')
       .update({ full_name: fullName })
       .eq('id', props.user?.id);
-    if (error) {
-      console.log(error);
+
+    if (updateUserTableError) {
+      setNameError(updateUserTableError.message);
+      setIsSubmittingName(false);
+      return;
     }
-    e.preventDefault();
-    supabase.auth.updateUser({
+
+    const { error: updateAuthError } = await supabase.auth.updateUser({
       data: { full_name: fullName }
     });
-    router.push('/dashboard/settings');
-    setIsSubmitting(false);
+
+    if (updateAuthError) {
+      setNameError(updateAuthError.message);
+      setIsSubmittingName(false);
+      return;
+    }
+
+    setSuccessMessage('Đã cập nhật họ và tên thành công.');
+    router.refresh();
+    setIsSubmittingName(false);
   };
 
-  const notifications = [
-    { message: 'Cuộc gọi của bạn đã được xác nhận.', time: '1 giờ trước' },
-    { message: 'Bạn có tin nhắn mới!', time: '1 giờ trước' },
-    { message: 'Gói đăng ký của bạn sắp hết hạn!', time: '2 giờ trước' }
-  ];
+  const initials =
+    displayName && displayName.length > 0
+      ? displayName.charAt(0).toUpperCase()
+      : displayEmail.charAt(0).toUpperCase();
 
   return (
     <DashboardLayout
       user={props.user}
       userDetails={props.userDetails}
-      title="Cài đặt tài khoản"
-      description="Cài đặt hồ sơ."
+      title="Cài đặt hồ sơ"
+      description="Quản lý và cập nhật thông tin tài khoản từ Supabase."
     >
-      <div className="relative mx-auto flex w-max max-w-full flex-col md:pt-[unset] lg:pt-[100px] lg:pb-[100px]">
-        <div className="maw-w-full mx-auto w-full flex-col justify-center md:w-full md:flex-row xl:w-full">
-          <Card
-            className={
-              'mb-5 h-min flex items-center aligh-center max-w-full py-8 px-4 bg-white border-zinc-200 shadow-sm dark:border-zinc-800'
-            }
-          >
-            <Avatar className="min-h-[68px] min-w-[68px]">
-              <AvatarImage src={props.user?.user_metadata.avatar_url} />
-              <AvatarFallback className="text-2xl font-bold dark:text-zinc-950">
-                {props.user.user_metadata.full_name &&
-                props.user.user_metadata.full_name.length > 0
-                  ? `${props.user.user_metadata.full_name[0]}`
-                  : props.user?.user_metadata.email &&
-                      props.user.user_metadata.email.length > 0
-                    ? `${props.user.user_metadata.email[0].toUpperCase()}`
-                    : '?'}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="text-xl font-extrabold text-zinc-950 leading-[100%] dark:text-white pl-4 md:text-3xl">
-                {props.user.user_metadata.full_name}
-              </p>
-              <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400 md:mt-2 pl-4 md:text-base">
-                Giám đốc & Nhà sáng lập
-              </p>
+      <div className="mx-auto w-full max-w-6xl pb-16 pt-2">
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+          <Card className="border-zinc-200 bg-white p-6 shadow-sm xl:col-span-1">
+            <div className="rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 to-cyan-50 p-5">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-16 w-16 border border-white shadow-sm">
+                  <AvatarImage src={displayAvatar} />
+                  <AvatarFallback className="bg-sky-100 text-xl font-bold text-sky-700">
+                    {initials || '?'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xl font-extrabold text-zinc-900">
+                    {displayName}
+                  </p>
+                  <p className="mt-1 truncate text-sm text-zinc-600">
+                    {displayEmail}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Badge className="bg-sky-600 text-white hover:bg-sky-600">
+                  {String(roleName)}
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="border-zinc-300 text-zinc-600"
+                >
+                  {props.user?.email_confirmed_at
+                    ? 'Email đã xác minh'
+                    : 'Email chưa xác minh'}
+                </Badge>
+              </div>
             </div>
-          </Card>
-          <Card
-            className={
-              'mb-5 h-min max-w-full pt-8 pb-6 px-6 bg-white border-zinc-200 shadow-sm dark:border-zinc-800'
-            }
-          >
-            <p className="text-xl font-extrabold text-zinc-950 dark:text-white md:text-3xl">
-              Thông tin tài khoản
-            </p>
-            <p className="mb-6 mt-1 text-sm font-medium text-zinc-500 dark:text-zinc-400 md:mt-4 md:text-base">
-              Tại đây bạn có thể thay đổi thông tin tài khoản
-            </p>
-            <label
-              className="mb-3 flex cursor-pointer px-2.5 font-bold leading-none text-zinc-950 dark:text-white"
-              htmlFor={'name'}
-            >
-              Họ và tên
-              <p className="ml-1 mt-[1px] text-sm font-medium leading-none text-zinc-500 dark:text-zinc-400">
-                (Tối đa 30 ký tự)
-              </p>
-            </label>
-            <div className="mb-8 flex flex-col md:flex-row">
-              <form
-                className="w-full"
-                id="nameForm"
-                onSubmit={(e) => handleSubmitName(e)}
-              >
-                <Input
-                  type="text"
-                  name="fullName"
-                  // defaultValue={props.user?.user_metadata.full_name ?? ''}
-                  defaultValue={props.userDetails?.full_name ?? ''}
-                  placeholder="Vui lòng nhập họ và tên"
-                  className={`mb-2 mr-4 flex h-full w-full px-4 py-4 outline-none md:mb-0 bg-white border-zinc-300 focus:border-zinc-400`}
-                />
-              </form>
-              <Button
-                className="flex h-full max-h-full w-full items-center justify-center rounded-lg px-4 py-4 text-base font-medium md:ms-4 md:w-[300px]"
-                form="nameForm"
-                type="submit"
-              >
-                Cập nhật tên
-              </Button>
-              <div className="mt-8 h-px w-full max-w-[90%] self-center bg-zinc-200 dark:bg-white/10 md:mt-0 md:hidden" />
-            </div>
-            <p
-              className={`mb-5 px-2.5 text-red-500 md:px-9 ${
-                nameError?.status ? 'block' : 'hidden'
-              }`}
-            >
-              {nameError?.message}
-            </p>
-            <label
-              className="mb-3 ml-2.5 flex cursor-pointer px-2.5 font-bold leading-none text-zinc-950 dark:text-white"
-              htmlFor={'email'}
-            >
-              Email của bạn
-              <p className="ml-1 mt-[1px] text-sm font-medium leading-none text-zinc-500 dark:text-zinc-400">
-                (Chúng tôi sẽ gửi email để xác minh thay đổi)
-              </p>
-            </label>
 
-            <div className="mb-8 flex flex-col md:flex-row">
-              <form
-                className="w-full"
-                id="emailForm"
-                onSubmit={(e) => handleSubmitEmail(e)}
-              >
-                <Input
-                  placeholder="Vui lòng nhập email"
-                  defaultValue={props.user.email ?? ''}
-                  type="text"
-                  name="newEmail"
-                  className={`mr-4 flex h-full max-w-full w-full items-center justify-center px-4 py-4 outline-none bg-white border-zinc-300 focus:border-zinc-400`}
-                />
-              </form>
-              <Button
-                className="flex h-full max-h-full w-full items-center justify-center rounded-lg px-4 py-4 text-base md:ms-4 font-medium md:w-[300px]"
-                type="submit"
-                form="emailForm"
-              >
-                Cập nhật email
-              </Button>
+            <div className="mt-5 space-y-4">
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50/70 p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500">
+                  Tổ chức
+                </p>
+                <p className="mt-1 text-sm font-semibold text-zinc-900">
+                  {organizationName ?? 'Chưa cập nhật'}
+                </p>
+              </div>
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50/70 p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500">
+                  Ngày tham gia
+                </p>
+                <p className="mt-1 text-sm font-medium text-zinc-900">
+                  {formatDateTime(props.user?.created_at)}
+                </p>
+              </div>
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50/70 p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500">
+                  Lần đăng nhập gần nhất
+                </p>
+                <p className="mt-1 text-sm font-medium text-zinc-900">
+                  {formatDateTime(props.user?.last_sign_in_at)}
+                </p>
+              </div>
             </div>
           </Card>
-          <Notifications notifications={notifications} />
+
+          <Card className="border-zinc-200 bg-white p-6 shadow-sm xl:col-span-2">
+            <div className="mb-5">
+              <h2 className="text-2xl font-extrabold text-zinc-900">
+                Thông tin tài khoản
+              </h2>
+              <p className="mt-1 text-sm text-zinc-500">
+                Dữ liệu hiển thị được đồng bộ từ Supabase (Auth và bảng users).
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div className="rounded-xl border border-zinc-200 p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500">
+                  User ID
+                </p>
+                <p className="mt-1 break-all text-sm font-medium text-zinc-900">
+                  {props.user?.id ?? 'Chưa có dữ liệu'}
+                </p>
+              </div>
+              <div className="rounded-xl border border-zinc-200 p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500">
+                  Số điện thoại
+                </p>
+                <p className="mt-1 text-sm font-medium text-zinc-900">
+                  {displayPhone ?? 'Chưa cập nhật'}
+                </p>
+              </div>
+              <div className="rounded-xl border border-zinc-200 p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500">
+                  Credits
+                </p>
+                <p className="mt-1 text-sm font-medium text-zinc-900">
+                  {props.userDetails?.credits ?? 0}
+                </p>
+              </div>
+              <div className="rounded-xl border border-zinc-200 p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500">
+                  Trial Credits
+                </p>
+                <p className="mt-1 text-sm font-medium text-zinc-900">
+                  {props.userDetails?.trial_credits ?? 0}
+                </p>
+              </div>
+            </div>
+
+            <div className="my-6 h-px bg-zinc-200" />
+
+            <div className="space-y-5">
+              <form onSubmit={handleSubmitName} className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
+                  <UserRound className="h-4 w-4 text-zinc-500" />
+                  Họ và tên (tối đa 30 ký tự)
+                </label>
+                <div className="flex flex-col gap-3 md:flex-row">
+                  <Input
+                    type="text"
+                    name="fullName"
+                    value={fullNameInput}
+                    onChange={(e) => setFullNameInput(e.target.value)}
+                    placeholder="Vui lòng nhập họ và tên"
+                    className="border-zinc-300 bg-white focus-visible:ring-zinc-300"
+                  />
+                  <Button
+                    type="submit"
+                    disabled={isSubmittingName}
+                    className="md:min-w-[180px]"
+                  >
+                    {isSubmittingName ? 'Đang cập nhật...' : 'Cập nhật tên'}
+                  </Button>
+                </div>
+                {nameError && (
+                  <p className="text-sm text-red-500">{nameError}</p>
+                )}
+              </form>
+
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
+                  <Mail className="h-4 w-4 text-zinc-500" />
+                  Email
+                </label>
+                <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2">
+                  <p className="text-sm font-medium text-zinc-900">
+                    {displayEmail}
+                  </p>
+                  <p className="mt-1 text-xs text-zinc-500">
+                    Email không cho phép cập nhật tại đây.
+                  </p>
+                </div>
+              </div>
+
+              {successMessage && (
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                  {successMessage}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+                <p className="flex items-center gap-2 text-sm font-semibold text-zinc-800">
+                  <ShieldCheck className="h-4 w-4 text-zinc-500" />
+                  Trạng thái bảo mật
+                </p>
+                <p className="mt-1 text-sm text-zinc-600">
+                  {props.user?.email_confirmed_at
+                    ? 'Tài khoản đã xác minh email.'
+                    : 'Tài khoản chưa xác minh email.'}
+                </p>
+              </div>
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+                <p className="flex items-center gap-2 text-sm font-semibold text-zinc-800">
+                  <Phone className="h-4 w-4 text-zinc-500" />
+                  Liên hệ
+                </p>
+                <p className="mt-1 text-sm text-zinc-600">
+                  {displayPhone ??
+                    'Chưa cập nhật số điện thoại trong Supabase.'}
+                </p>
+              </div>
+            </div>
+          </Card>
         </div>
       </div>
     </DashboardLayout>

@@ -31,6 +31,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/cn';
 import type { IRoute } from '@/types/types';
+import { usePendingEvents } from '@/hooks/features/commons/list-event-for-admin/usePendingEvents';
 
 interface Props {
   user: User | null | undefined;
@@ -49,6 +50,7 @@ interface Props {
   badgeFromStatus?: boolean;
   badgeClassName?: string;
   badgeClassNameByStatus?: Partial<Record<string, string>>;
+  topHelperText?: string;
   notificationButton?: {
     permission: 'granted' | 'denied' | 'default' | 'unsupported';
     isLoading: boolean;
@@ -57,78 +59,90 @@ interface Props {
   };
 }
 
-const mockPendingEvents = [
-  {
-    id: 1,
-    eventName: 'Chương trình tình nguyện môi trường',
-    organizer: 'Tổ chức Xanh Việt',
-    date: '15/03/2026',
-    location: 'Công viên Tao Đàn, TPHCM',
-    volunteers: 45,
-    submittedDate: '10/02/2026',
-    status: 'Chờ phê duyệt'
-  },
-  {
-    id: 2,
-    eventName: 'Hỗ trợ cộng đồng địa phương',
-    organizer: 'Hội chữ Thập Đỏ',
-    date: '22/03/2026',
-    location: 'Huyện Nhà Bè',
-    volunteers: 30,
-    submittedDate: '05/02/2026',
-    status: 'Chờ phê duyệt'
-  },
-  {
-    id: 3,
-    eventName: 'Giáo dục cho trẻ em vùng cao',
-    organizer: 'Quỹ Phúc Lợi Xã Hội',
-    date: '28/03/2026',
-    location: 'Tỉnh Yên Bái',
-    volunteers: 60,
-    submittedDate: '01/02/2026',
-    status: 'Chờ phê duyệt'
-  },
-  {
-    id: 4,
-    eventName: 'Hiến máu nhân đạo mùa xuân',
-    organizer: 'Hội chữ Thập Đỏ',
-    date: '05/01/2026',
-    location: 'Quận Đống Đa, Hà Nội',
-    volunteers: 80,
-    submittedDate: '15/12/2025',
-    status: 'Đang tuyển quân'
-  },
-  {
-    id: 5,
-    eventName: 'Trồng cây gây rừng ven đô',
-    organizer: 'Tổ chức Xanh Việt',
-    date: '10/02/2026',
-    location: 'Sóc Sơn, Hà Nội',
-    volunteers: 120,
-    submittedDate: '20/12/2025',
-    status: 'Đã đóng đơn'
-  },
-  {
-    id: 6,
-    eventName: 'Khám sức khỏe cộng đồng',
-    organizer: 'Hội chữ Thập Đỏ',
-    date: '04/03/2026',
-    location: 'Quận Hai Bà Trưng, Hà Nội',
-    volunteers: 35,
-    submittedDate: '10/01/2026',
-    status: 'Đang diễn ra'
-  },
-  {
-    id: 7,
-    eventName: 'Tủ sách cho em',
-    organizer: 'Quỹ Phúc Lợi Xã Hội',
-    date: '15/01/2026',
-    location: 'Tỉnh Yên Bái',
-    volunteers: 25,
-    submittedDate: '20/12/2025',
-    status: 'Đã kết thúc'
+interface PendingEvent {
+  id: string;
+  eventName: string;
+  organizer: string;
+  date: string;
+  location: string;
+  volunteers: number;
+  submittedDate: string;
+  status: string;
+}
+
+const formatDisplayDate = (value: unknown) => {
+  if (typeof value !== 'string' || !value.trim()) {
+    return '-';
   }
-];
+
+  const trimmed = value.trim();
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  const parsed = new Date(trimmed);
+  if (Number.isNaN(parsed.getTime())) {
+    return '-';
+  }
+
+  const day = String(parsed.getDate()).padStart(2, '0');
+  const month = String(parsed.getMonth() + 1).padStart(2, '0');
+  const year = parsed.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+const getString = (...values: unknown[]) => {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim() !== '') {
+      return value.trim();
+    }
+  }
+  return '';
+};
+
+const getEventListFromResponse = (payload: unknown) => {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (!payload || typeof payload !== 'object') {
+    return [];
+  }
+
+  const source = payload as Record<string, unknown>;
+  const directCandidates = [
+    source.items,
+    source.data,
+    source.content,
+    source.results,
+    source.records,
+    source.events
+  ];
+
+  for (const candidate of directCandidates) {
+    if (Array.isArray(candidate)) {
+      return candidate;
+    }
+  }
+
+  if (source.data && typeof source.data === 'object') {
+    const nested = source.data as Record<string, unknown>;
+    const nestedCandidates = [
+      nested.items,
+      nested.content,
+      nested.results,
+      nested.records,
+      nested.events
+    ];
+    for (const candidate of nestedCandidates) {
+      if (Array.isArray(candidate)) {
+        return candidate;
+      }
+    }
+  }
+
+  return [];
+};
 
 export default function PendingEvents({
   user,
@@ -138,7 +152,7 @@ export default function PendingEvents({
   colorVariant,
   signInPath,
   shellClassName,
-  statusFilter = 'Chờ phê duyệt',
+  statusFilter = 'APPROVED_BY_MNG',
   statusFilters,
   pageTitle = 'Sự kiện chờ phê duyệt',
   pageDescription = 'Danh sách các sự kiện đang chờ phê duyệt',
@@ -147,9 +161,9 @@ export default function PendingEvents({
   badgeFromStatus = false,
   badgeClassName = 'rounded-full bg-gray-500 text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150 hover:bg-gray-400',
   badgeClassNameByStatus,
+  topHelperText,
   notificationButton
 }: Props) {
-  type PendingEvent = (typeof mockPendingEvents)[0];
   type SortKey =
     | 'eventName'
     | 'organizer'
@@ -164,7 +178,7 @@ export default function PendingEvents({
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [eventDateFrom, setEventDateFrom] = useState('');
   const [eventDateTo, setEventDateTo] = useState('');
   const [submittedDateFrom, setSubmittedDateFrom] = useState('');
@@ -174,6 +188,75 @@ export default function PendingEvents({
     Partial<Record<ValueFilterKey, string[]>>
   >({});
   const pageSize = 10;
+
+  const {
+    data: pendingEventsResponse,
+    isLoading: isPendingEventsLoading,
+    error: pendingEventsError
+  } = usePendingEvents({
+    name: searchQuery,
+    baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL!
+  });
+
+  const pendingEvents = useMemo<PendingEvent[]>(() => {
+    const rawList = getEventListFromResponse(pendingEventsResponse);
+
+    return rawList
+      .map((item, index) => {
+        const row = (item ?? {}) as Record<string, unknown>;
+        const org =
+          row.organization && typeof row.organization === 'object'
+            ? (row.organization as Record<string, unknown>)
+            : null;
+
+        const id = getString(row.id, row.eventId, row.event_id, row.code);
+        const eventName = getString(row.eventName, row.name, row.title);
+        const organizer = getString(
+          row.organizer,
+          row.organizerName,
+          row.organizationName,
+          org?.name
+        );
+        const location = getString(
+          row.location,
+          row.locationName,
+          row.region,
+          row.address
+        );
+        const date = formatDisplayDate(
+          row.date ?? row.eventDate ?? row.startDate ?? row.startedAt
+        );
+        const submittedDate = formatDisplayDate(
+          row.submittedDate ?? row.createdAt ?? row.created_at
+        );
+        const status =
+          getString(row.status, row.statusName, row.eventStatus) ||
+          statusFilter;
+
+        const volunteersRaw =
+          typeof row.volunteers === 'number'
+            ? row.volunteers
+            : typeof row.totalVolunteers === 'number'
+              ? row.totalVolunteers
+              : 0;
+
+        if (!id || !eventName) {
+          return null;
+        }
+
+        return {
+          id: id || String(index),
+          eventName,
+          organizer: organizer || '-',
+          date,
+          location: location || '-',
+          volunteers: volunteersRaw,
+          submittedDate,
+          status
+        } satisfies PendingEvent;
+      })
+      .filter((event): event is PendingEvent => Boolean(event));
+  }, [pendingEventsResponse, statusFilter]);
 
   const setSortForKey = (key: SortKey, order: SortOrder) => {
     setSortCriteria((prev) => {
@@ -234,7 +317,7 @@ export default function PendingEvents({
 
   const getUniqueValuesForKey = (key: ValueFilterKey) => {
     const unique = new Set<string>();
-    mockPendingEvents.forEach((e) => unique.add(getFilterValueForKey(e, key)));
+    pendingEvents.forEach((e) => unique.add(getFilterValueForKey(e, key)));
     return Array.from(unique).sort((a, b) =>
       a.localeCompare(b, 'vi', { sensitivity: 'base' })
     );
@@ -627,7 +710,7 @@ export default function PendingEvents({
         ? statusFilters
         : [statusFilter];
 
-    let result = mockPendingEvents.filter((event) =>
+    let result = pendingEvents.filter((event) =>
       allowedStatuses.includes(event.status)
     );
 
@@ -710,7 +793,8 @@ export default function PendingEvents({
     sortCriteria,
     statusFilter,
     statusFilters,
-    getFilterValueForKey
+    getFilterValueForKey,
+    pendingEvents
   ]);
 
   const totalPages = Math.max(1, Math.ceil(filteredEvents.length / pageSize));
@@ -731,6 +815,12 @@ export default function PendingEvents({
     sortCriteria
   ]);
 
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
   return (
     <DashboardLayout
       user={user}
@@ -743,7 +833,15 @@ export default function PendingEvents({
       shellClassName={shellClassName}
     >
       <div className="w-full max-w-none">
-        <div className="mb-6"></div>
+        {topHelperText ? (
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex-1 min-w-[240px]">
+              <p className="text-sm text-zinc-500">{topHelperText}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="mb-6"></div>
+        )}
 
         <div className="mb-6">
           <Input
@@ -784,7 +882,14 @@ export default function PendingEvents({
         <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="border-b border-zinc-200 bg-zinc-50">
+              <TableRow
+                className={cn(
+                  'border-b border-zinc-200 bg-zinc-50',
+                  colorVariant === 'organizer'
+                    ? 'hover:bg-zinc-100'
+                    : 'hover:bg-muted/50'
+                )}
+              >
                 <TableHead className="text-zinc-700">
                   <div className="flex items-center justify-between gap-2">
                     <span>Tên sự kiện</span>
@@ -805,11 +910,8 @@ export default function PendingEvents({
                 </TableHead>
                 <TableHead className="text-zinc-700">
                   <div className="flex items-center justify-between gap-2">
-                    <span>Địa điểm</span>
-                    <ValueFilterDropdown
-                      columnKey="location"
-                      label="Địa điểm"
-                    />
+                    <span>Khu vực</span>
+                    <ValueFilterDropdown columnKey="location" label="Khu vực" />
                   </div>
                 </TableHead>
                 <TableHead className="text-zinc-700">
@@ -839,13 +941,7 @@ export default function PendingEvents({
                   </div>
                 </TableHead>
                 <TableHead className="text-zinc-700">
-                  <div className="flex items-center justify-between gap-2">
-                    <span>Trạng thái</span>
-                    <ValueFilterDropdown
-                      columnKey="status"
-                      label="Trạng thái"
-                    />
-                  </div>
+                  <span>Trạng thái</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -899,7 +995,11 @@ export default function PendingEvents({
                     colSpan={6}
                     className="py-8 text-center text-zinc-500"
                   >
-                    {emptyStateText}
+                    {pendingEventsError
+                      ? 'Không thể tải danh sách sự kiện.'
+                      : isPendingEventsLoading
+                        ? 'Đang tải danh sách sự kiện...'
+                        : emptyStateText}
                   </TableCell>
                 </TableRow>
               )}

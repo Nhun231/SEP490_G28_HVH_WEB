@@ -34,8 +34,8 @@ const DashboardLayout: React.FC<Props> = (props: Props) => {
   const shellClassName =
     props.shellClassName ??
     (colorVariant === 'organizer'
-      ? 'bg-gradient-to-br from-organizer-light-100 to-organizer-light-50'
-      : 'bg-gradient-to-br from-slate-900 to-slate-950');
+      ? 'bg-gradient-to-br from-[#FFFFFF] via-[#EDF3FB] to-[#CBE3EF]'
+      : 'bg-gradient-to-br from-[#121A26] via-[#121A2A] to-[#1E2939]');
   const signInPath =
     props.signInPath ??
     (colorVariant === 'organizer'
@@ -46,7 +46,9 @@ const DashboardLayout: React.FC<Props> = (props: Props) => {
     <UserContext.Provider value={props.user}>
       <UserDetailsContext.Provider value={props.userDetails}>
         <OpenContext.Provider value={{ open, setOpen }}>
-          <div className={`flex h-full w-full ${shellClassName}`}>
+          <div
+            className={`flex min-h-screen w-full overflow-x-hidden ${shellClassName}`}
+          >
             <Toaster />
             <Sidebar
               routes={effectiveRoutes}
@@ -54,9 +56,9 @@ const DashboardLayout: React.FC<Props> = (props: Props) => {
               colorVariant={colorVariant}
               signInPath={signInPath}
             />
-            <div className="h-full w-full bg-transparent">
+            <div className="min-w-0 flex-1 bg-transparent">
               <main
-                className={`mx-2.5 flex-none transition-all bg-transparent md:pr-2 xl:ml-[300px]`}
+                className={`mx-2.5 min-w-0 transition-all bg-transparent md:pr-2 xl:ml-[300px]`}
               >
                 <div className="mx-auto min-h-screen p-2 !pt-[90px] md:p-2 md:!pt-[118px]">
                   {props.children}
@@ -67,7 +69,7 @@ const DashboardLayout: React.FC<Props> = (props: Props) => {
                   signInPath={signInPath}
                 />
                 <div className="p-3">
-                  <Footer />
+                  <Footer colorVariant={colorVariant} />
                 </div>
               </main>
             </div>

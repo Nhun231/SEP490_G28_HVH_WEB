@@ -33,6 +33,7 @@ interface Props {
   infoText?: string;
   showActions?: boolean;
   showApprovedActions?: boolean;
+  showHostInfo?: boolean;
 }
 
 const mockPendingEvents = [
@@ -200,10 +201,12 @@ export default function PendingEventDetail({
   pageDescription = 'Thông tin chi tiết sự kiện chờ phê duyệt',
   infoText = 'Thông tin chi tiết sự kiện chờ phê duyệt',
   showActions = true,
-  showApprovedActions = false
+  showApprovedActions = false,
+  showHostInfo
 }: Props) {
   const router = useRouter();
   const effectiveVariant = colorVariant ?? 'admin';
+  const shouldShowHostInfo = showHostInfo ?? effectiveVariant === 'organizer';
   const approveLabel =
     effectiveVariant === 'organizer' ? 'Chuyển phê duyệt' : 'Phê duyệt';
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -322,7 +325,7 @@ export default function PendingEventDetail({
                       </Badge>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-sm text-zinc-500">Địa điểm</p>
+                      <p className="text-sm text-zinc-500">Khu vực</p>
                       <p className="text-sm text-zinc-700">{event.location}</p>
                     </div>
                     <div className="space-y-1">
@@ -427,61 +430,63 @@ export default function PendingEventDetail({
                 </Card>
               </div>
 
-              <Card className="border-zinc-200 bg-white p-6 shadow-sm">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
-                    Thông tin host
-                  </h2>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="h-auto p-0 text-sm text-emerald-600 hover:bg-transparent hover:text-emerald-700"
-                    onClick={() => {
-                      // TODO: handle change host
-                    }}
-                  >
-                    Thay đổi host
-                  </Button>
-                </div>
-
-                <div className="mt-4 grid gap-3">
-                  <div className="flex items-start gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4">
-                    <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 bg-white">
-                      <UserRound className="h-4 w-4 text-zinc-600" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs text-zinc-500">Host</p>
-                      <p className="truncate text-sm text-zinc-800">
-                        {event.hostName ?? '-'}
-                      </p>
-                    </div>
+              {shouldShowHostInfo && (
+                <Card className="border-zinc-200 bg-white p-6 shadow-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
+                      Thông tin host
+                    </h2>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="h-auto p-0 text-sm text-emerald-600 hover:bg-transparent hover:text-emerald-700"
+                      onClick={() => {
+                        // TODO: handle change host
+                      }}
+                    >
+                      Thay đổi host
+                    </Button>
                   </div>
 
-                  <div className="flex items-start gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4">
-                    <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 bg-white">
-                      <Mail className="h-4 w-4 text-zinc-600" />
+                  <div className="mt-4 grid gap-3">
+                    <div className="flex items-start gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+                      <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 bg-white">
+                        <UserRound className="h-4 w-4 text-zinc-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs text-zinc-500">Host</p>
+                        <p className="truncate text-sm text-zinc-800">
+                          {event.hostName ?? '-'}
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-xs text-zinc-500">Email liên hệ</p>
-                      <p className="truncate text-sm text-zinc-800">
-                        {event.hostEmail ?? '-'}
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="flex items-start gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4">
-                    <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 bg-white">
-                      <Phone className="h-4 w-4 text-zinc-600" />
+                    <div className="flex items-start gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+                      <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 bg-white">
+                        <Mail className="h-4 w-4 text-zinc-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs text-zinc-500">Email liên hệ</p>
+                        <p className="truncate text-sm text-zinc-800">
+                          {event.hostEmail ?? '-'}
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-xs text-zinc-500">Số điện thoại</p>
-                      <p className="truncate text-sm text-zinc-800">
-                        {event.hostPhone ?? '-'}
-                      </p>
+
+                    <div className="flex items-start gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+                      <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 bg-white">
+                        <Phone className="h-4 w-4 text-zinc-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs text-zinc-500">Số điện thoại</p>
+                        <p className="truncate text-sm text-zinc-800">
+                          {event.hostPhone ?? '-'}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Card>
+                </Card>
+              )}
 
               <Card className="border-zinc-200 bg-white p-6 shadow-sm">
                 <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
@@ -522,14 +527,6 @@ export default function PendingEventDetail({
                     }}
                   >
                     Hủy sự kiện
-                  </Button>
-                  <Button
-                    className="bg-green-600 text-white hover:bg-green-700"
-                    onClick={() => {
-                      // TODO: handle edit event
-                    }}
-                  >
-                    Chỉnh sửa
                   </Button>
                 </div>
               )}

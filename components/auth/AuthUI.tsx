@@ -71,14 +71,18 @@ export default function AuthUI(props: any) {
 
   return (
     <div className="my-auto mb-auto mt-8 flex flex-col md:mt-[70px] md:max-w-full lg:mt-[130px] lg:max-w-[420px]">
-      <p className="text-[32px] font-bold text-foreground">
+      <p
+        className={`text-[32px] font-bold ${isAdmin ? 'text-foreground' : 'text-[#3A4163]'}`}
+      >
         {props.viewProp === 'forgot_password'
           ? 'Quên mật khẩu'
           : props.viewProp === 'update_password'
             ? 'Cập nhật mật khẩu'
             : 'Đăng nhập'}
       </p>
-      <p className="mb-2.5 mt-2.5 font-normal text-muted-foreground">
+      <p
+        className={`mb-2.5 mt-2.5 font-normal ${isAdmin ? 'text-muted-foreground' : 'text-[#5AA8D6]'}`}
+      >
         {props.viewProp === 'forgot_password'
           ? 'Nhập email để nhận liên kết đặt lại mật khẩu!'
           : props.viewProp === 'update_password'

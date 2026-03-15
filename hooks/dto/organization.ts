@@ -13,7 +13,7 @@ export interface RegisterOrganizationRequest {
   managerCidFrontExtension: string;
   managerCidBackExtension: string;
   managerCidHoldingExtension: string;
-  legalDocumentExtension: string;
+  legalDocumentsExtensions: string;
   otherEvidencesExtensions: string;
   applicationReason: string;
 }
@@ -49,6 +49,7 @@ export interface OrganizationManagerInfo {
 }
 
 export interface OrganizationRegistrationDetailsResponse {
+  legalDocumentsUrls: null;
   id: string;
   name: string | null;
   dhaRegistered: boolean | null;

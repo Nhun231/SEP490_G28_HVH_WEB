@@ -72,6 +72,7 @@ export default function PendingOrgDetailContainer({
         managerCidBackUrl: data.managerCidBackUrl ?? null,
         managerCidHoldingUrl: data.managerCidHoldingUrl ?? null,
         otherEvidencesUrls: data.otherEvidencesUrls ?? null,
+        legalDocumentsUrls: data.legalDocumentsUrls ?? null,
         applicationReason: data.applicationReason ?? null,
         status: data.status ?? null,
         rejectionReason: data.rejectionReason ?? null,
@@ -83,6 +84,12 @@ export default function PendingOrgDetailContainer({
         note: data.note ?? null
       }
     : null;
+
+  // Debug log: check API data
+  console.log('API data:', data);
+
+  // Debug log: check mapped detail
+  console.log('Mapped detail:', detail);
 
   return (
     <PendingOrgDetail user={user} userDetails={userDetails} detail={detail} />

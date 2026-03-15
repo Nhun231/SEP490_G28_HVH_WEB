@@ -4,7 +4,7 @@ export default function Footer(props: { variant?: 'admin' | 'organizer' }) {
   const isAdmin = props.variant === 'admin';
   const linkClassName = isAdmin
     ? 'text-[10px] font-medium text-zinc-950 hover:text-zinc-950/80 lg:text-sm'
-    : 'text-[10px] font-medium text-foreground/80 hover:text-foreground lg:text-sm';
+    : 'text-[10px] font-medium text-[#3A4163]/70 hover:text-[#3A4163] lg:text-sm';
 
   return (
     <div className="z-[3] flex flex-col items-center justify-between mt-auto pb-[30px] md:px-0 lg:flex-row">

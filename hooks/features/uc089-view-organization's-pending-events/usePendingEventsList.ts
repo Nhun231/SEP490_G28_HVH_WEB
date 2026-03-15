@@ -7,18 +7,15 @@ interface Params {
   pageSize?: number;
   name?: string;
   baseUrl?: string;
-  enabled?: boolean;
 }
 
-export const usePendingEvents = ({
+export const usePendingEventsList = ({
   pageNumber = 0,
-  pageSize = 100,
+  pageSize = 10,
   name = '',
-  baseUrl = '',
-  enabled = true
+  baseUrl = ''
 }: Params) => {
-  const pendingEventsUrl = useMemo(() => {
-    if (!enabled) return null;
+  const url = useMemo(() => {
     const queryParams = new URLSearchParams({
       pageNumber: String(Math.max(0, pageNumber)),
       pageSize: String(pageSize)
@@ -28,10 +25,10 @@ export const usePendingEvents = ({
       queryParams.append('name', name.trim());
     }
 
-    const path = `/event/admin/pending?${queryParams.toString()}`;
+    const path = `/event/manager/pending?${queryParams.toString()}`;
 
     return baseUrl ? `${baseUrl}${path}` : path;
-  }, [baseUrl, enabled, name, pageNumber, pageSize]);
+  }, [baseUrl, name, pageNumber, pageSize]);
 
-  return useSWR<PendingEventsResponse>(pendingEventsUrl);
+  return useSWR<PendingEventsResponse>(url);
 };

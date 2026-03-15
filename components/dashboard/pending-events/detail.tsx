@@ -19,6 +19,13 @@ import { Mail, Phone, UserRound } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { IRoute } from '@/types/types';
+import type { EventDetailsResponseForManager } from '@/hooks/dto';
+import { EEventStatus, EVENT_STATUS_LABELS } from '@/constants/event-status';
+import { EServedTarget, SERVED_TARGET_LABELS } from '@/constants/served-target';
+import {
+  EServingPlaceType,
+  SERVING_PLACE_TYPE_LABELS
+} from '@/constants/serving-place-type';
 
 interface Props {
   user: User | null | undefined;
@@ -34,161 +41,10 @@ interface Props {
   showActions?: boolean;
   showApprovedActions?: boolean;
   showHostInfo?: boolean;
+  externalData?: EventDetailsResponseForManager | null;
+  externalIsLoading?: boolean;
+  externalError?: Error | null;
 }
-
-const mockPendingEvents = [
-  {
-    id: '1',
-    eventName: 'Chương trình tình nguyện môi trường',
-    organizer: 'Tổ chức Xanh Việt',
-    hostName: 'Nguyễn Văn An',
-    hostEmail: 'nguyenvanan@email.com',
-    hostPhone: '0901234567',
-    date: '15/03/2026',
-    endDate: '15/03/2026',
-    startTime: '08:00',
-    endTime: '12:00',
-    registrationDeadline: '12/03/2026',
-    approvalMode: 'Manual',
-    location: 'Công viên Tao Đàn, TPHCM',
-    region: 'TPHCM / Quận 1 / Phường Bến Thành',
-    volunteers: 45,
-    expectedBeneficiaries: 200,
-    serviceTarget: 'Môi trường',
-    serviceField: 'Môi trường',
-    checkinPointName: 'Cổng chính công viên',
-    geofencingRadius: '500m',
-    submittedDate: '10/02/2026',
-    status: 'Chờ phê duyệt',
-    description: 'Sự kiện tuyên truyền và dọn dẹp môi trường tại công viên.',
-    images: [
-      'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=900&q=80'
-    ]
-  },
-  {
-    id: '2',
-    eventName: 'Hỗ trợ cộng đồng địa phương',
-    organizer: 'Hội chữ Thập Đỏ',
-    hostName: 'Trần Thị Bình',
-    hostEmail: 'tranthibinh@email.com',
-    hostPhone: '0912345678',
-    date: '22/03/2026',
-    endDate: '22/03/2026',
-    startTime: '08:30',
-    endTime: '13:00',
-    registrationDeadline: '19/03/2026',
-    approvalMode: 'Auto',
-    location: 'Huyện Nhà Bè',
-    region: 'TPHCM / Huyện Nhà Bè / Xã Phước Kiển',
-    volunteers: 30,
-    expectedBeneficiaries: 150,
-    serviceTarget: 'Cộng đồng địa phương',
-    serviceField: 'Xã hội',
-    checkinPointName: 'UBND xã',
-    geofencingRadius: '400m',
-    submittedDate: '05/02/2026',
-    status: 'Chờ phê duyệt',
-    description: 'Chương trình hỗ trợ hộ gia đình khó khăn tại địa phương.',
-    images: [
-      'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1504805572947-34fad45aed93?auto=format&fit=crop&w=900&q=80'
-    ]
-  },
-  {
-    id: '3',
-    eventName: 'Giáo dục cho trẻ em vùng cao',
-    organizer: 'Quỹ Phúc Lợi Xã Hội',
-    hostName: 'Lê Minh Khang',
-    hostEmail: 'leminhkhang@email.com',
-    hostPhone: '0987654321',
-    date: '28/03/2026',
-    endDate: '29/03/2026',
-    startTime: '07:30',
-    endTime: '15:30',
-    registrationDeadline: '24/03/2026',
-    approvalMode: 'Manual',
-    location: 'Tỉnh Yên Bái',
-    region: 'Yên Bái / Huyện Mù Cang Chải / Xã La Pán Tẩn',
-    volunteers: 60,
-    expectedBeneficiaries: 500,
-    serviceTarget: 'Trẻ em vùng cao',
-    serviceField: 'Giáo dục',
-    checkinPointName: 'Trường tiểu học La Pán Tẩn',
-    geofencingRadius: '600m',
-    submittedDate: '01/02/2026',
-    status: 'Chờ phê duyệt',
-    description: 'Hoạt động hỗ trợ giáo dục cho trẻ em vùng cao.',
-    images: [
-      'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80'
-    ]
-  },
-  {
-    id: '4',
-    eventName: 'Hiến máu nhân đạo mùa xuân',
-    organizer: 'Hội chữ Thập Đỏ',
-    hostName: 'Nguyễn Văn An',
-    hostEmail: 'nguyenvanan@email.com',
-    hostPhone: '0901234567',
-    date: '05/01/2026',
-    endDate: '05/01/2026',
-    startTime: '07:30',
-    endTime: '12:00',
-    registrationDeadline: '02/01/2026',
-    approvalMode: 'Manual',
-    location: 'Quận Đống Đa, Hà Nội',
-    region: 'Hà Nội / Quận Đống Đa / Phường Láng Thượng',
-    volunteers: 80,
-    expectedBeneficiaries: 300,
-    serviceTarget: 'Cộng đồng',
-    serviceField: 'Y tế',
-    checkinPointName: 'Nhà văn hóa',
-    geofencingRadius: '500m',
-    submittedDate: '15/12/2025',
-    status: 'Đang tuyển quân',
-    description: 'Chương trình hiến máu nhân đạo phục vụ cộng đồng.',
-    images: [
-      '/img/about-us/full.jpg',
-      '/img/about-us/scrappy.jpg',
-      '/img/about-us/row-1-column-1.png'
-    ]
-  },
-  {
-    id: '5',
-    eventName: 'Trồng cây gây rừng ven đô',
-    organizer: 'Tổ chức Xanh Việt',
-    hostName: 'Phạm Thu Hà',
-    hostEmail: 'phamthuha@email.com',
-    hostPhone: '0977001122',
-    date: '10/02/2026',
-    endDate: '10/02/2026',
-    startTime: '08:00',
-    endTime: '11:30',
-    registrationDeadline: '07/02/2026',
-    approvalMode: 'Auto',
-    location: 'Sóc Sơn, Hà Nội',
-    region: 'Hà Nội / Huyện Sóc Sơn / Xã Minh Phú',
-    volunteers: 120,
-    expectedBeneficiaries: 1000,
-    serviceTarget: 'Môi trường',
-    serviceField: 'Môi trường',
-    checkinPointName: 'Cổng khu sinh thái',
-    geofencingRadius: '600m',
-    submittedDate: '20/12/2025',
-    status: 'Đã đóng đơn',
-    description: 'Hoạt động trồng cây và chăm sóc rừng ven đô.',
-    images: [
-      '/img/about-us/curious.webp',
-      '/img/about-us/connect.webp',
-      '/img/about-us/kid.webp'
-    ]
-  }
-];
-
 export default function PendingEventDetail({
   user,
   userDetails,
@@ -202,7 +58,10 @@ export default function PendingEventDetail({
   infoText = 'Thông tin chi tiết sự kiện chờ phê duyệt',
   showActions = true,
   showApprovedActions = false,
-  showHostInfo
+  showHostInfo,
+  externalData,
+  externalIsLoading,
+  externalError
 }: Props) {
   const router = useRouter();
   const effectiveVariant = colorVariant ?? 'admin';
@@ -210,18 +69,197 @@ export default function PendingEventDetail({
   const approveLabel =
     effectiveVariant === 'organizer' ? 'Chuyển phê duyệt' : 'Phê duyệt';
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const event = mockPendingEvents.find((item) => item.id === eventId);
-  const canEditApprovedEvent =
-    event?.status === 'Đang tuyển quân' || event?.status === 'Đã đóng đơn';
+
+  interface EventData {
+    id: string;
+    eventName: string;
+    organizer: string;
+    approvalMode: string;
+    status: string;
+    location: string;
+    region: string;
+    date: string;
+    endDate: string;
+    startTime: string;
+    endTime: string;
+    registrationDeadline: string;
+    submittedDate: string;
+    volunteers: number;
+    expectedBeneficiaries: number;
+    serviceTarget: string;
+    serviceField: string;
+    checkinPointName: string;
+    geofencingRadius: string;
+    hostName: string;
+    hostEmail: string;
+    hostPhone: string;
+    description: string;
+    images: string[];
+    servingPlaceType: string;
+    note: string;
+    sessions: Array<{
+      id: string;
+      startDateTime: string;
+      endDateTime: string;
+      expectedVolAmount: number;
+      expectedSerAmount: number;
+    }>;
+  }
+
+  const getStr = (...vals: unknown[]): string => {
+    for (const v of vals) {
+      if (typeof v === 'string' && v.trim()) return v.trim();
+    }
+    return '-';
+  };
+
+  const fmtDate = (v: unknown): string => {
+    if (typeof v !== 'string' || !v.trim()) return '-';
+    const t = v.trim();
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(t)) return t;
+    const d = new Date(t);
+    if (Number.isNaN(d.getTime())) return '-';
+    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+  };
+
+  const fmtTime = (v: unknown): string => {
+    if (typeof v !== 'string' || !v.trim()) return '-';
+    const t = v.trim();
+    if (/^\d{2}:\d{2}(:\d{2})?$/.test(t)) return t.slice(0, 5);
+    const d = new Date(t);
+    if (Number.isNaN(d.getTime())) return '-';
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  };
+
+  const normalizeEvent = (raw: EventDetailsResponseForManager): EventData => {
+    const r = raw as Record<string, unknown>;
+    const sessionsRaw = Array.isArray(r.eventSessions)
+      ? (r.eventSessions as Array<Record<string, unknown>>)
+      : [];
+    const sessions = sessionsRaw.map((s) => ({
+      id: getStr(s.id),
+      startDateTime: getStr(s.startDateTime),
+      endDateTime: getStr(s.endDateTime),
+      expectedVolAmount:
+        typeof s.expectedVolAmount === 'number'
+          ? s.expectedVolAmount
+          : Number(s.expectedVolAmount ?? 0),
+      expectedSerAmount:
+        typeof s.expectedSerAmount === 'number'
+          ? s.expectedSerAmount
+          : Number(s.expectedSerAmount ?? 0)
+    }));
+
+    const firstSession = sessions[0];
+    const lastSession = sessions[sessions.length - 1];
+
+    return {
+      id: getStr(r.id),
+      eventName: getStr(r.name, r.eventName, r.title),
+      organizer: getStr(r.organizationName, r.organizer),
+      approvalMode: getStr(r.approvalMode, r.registrationMethod),
+      status: getStr(r.status, r.eventStatus),
+      location: getStr(r.location, r.address),
+      region: getStr(r.region, r.ward, r.district),
+      date: fmtDate(r.startDate ?? firstSession?.startDateTime ?? r.startedAt),
+      endDate: fmtDate(lastSession?.endDateTime ?? r.endDate ?? r.endedAt),
+      startTime: fmtTime(
+        firstSession?.startDateTime ?? r.startTime ?? r.startedAt
+      ),
+      endTime: fmtTime(lastSession?.endDateTime ?? r.endTime ?? r.endedAt),
+      registrationDeadline: fmtDate(
+        r.recruitmentEndDate ?? r.registrationDeadline
+      ),
+      submittedDate: fmtDate(r.createdAt ?? r.submittedDate),
+      volunteers:
+        typeof r.maxVolunteers === 'number'
+          ? r.maxVolunteers
+          : sessions.reduce((sum, s) => sum + s.expectedVolAmount, 0),
+      expectedBeneficiaries: sessions.reduce(
+        (sum, s) => sum + s.expectedSerAmount,
+        0
+      ),
+      serviceTarget: (() => {
+        const val = getStr(
+          r.servedTarget,
+          r.serviceTarget,
+          r.targetBeneficiary
+        );
+        return SERVED_TARGET_LABELS[val as EServedTarget] || val || '-';
+      })(),
+      serviceField: getStr(
+        r.activitySubDomain,
+        r.serviceField,
+        r.activityDomain
+      ),
+      checkinPointName: getStr(r.checkinPointName, r.checkInPoint),
+      geofencingRadius: getStr(r.geofencingRadius, r.radius),
+      hostName: getStr(r.hostName, r.hostFullName),
+      hostEmail: getStr(r.hostEmail),
+      hostPhone: getStr(r.hostPhone, r.hostPhoneNumber),
+      description: getStr(r.description),
+      images: Array.isArray(r.images)
+        ? (r.images as string[])
+        : Array.isArray(r.imageUrls)
+          ? (r.imageUrls as string[])
+          : [],
+      servingPlaceType: (() => {
+        const val = getStr(r.servingPlaceType);
+        return (
+          SERVING_PLACE_TYPE_LABELS[val as EServingPlaceType] || val || '-'
+        );
+      })(),
+      note: getStr(r.note),
+      sessions
+    };
+  };
+
+  const event: EventData | null = externalData
+    ? normalizeEvent(externalData)
+    : null;
+  const displayValue = (value: string) => {
+    if (!value || value.trim() === '' || value === '-') {
+      return 'Chưa cập nhật';
+    }
+    return value;
+  };
+
+  const totalSessionCount = event?.sessions.length ?? 0;
+  const totalSessionVolunteers =
+    event?.sessions.reduce(
+      (sum, session) => sum + session.expectedVolAmount,
+      0
+    ) ?? 0;
+  const totalSessionServedTargets =
+    event?.sessions.reduce(
+      (sum, session) => sum + session.expectedSerAmount,
+      0
+    ) ?? 0;
+
+  const canEditApprovedEvent = event
+    ? ['Đang tuyển quân', 'Đã đóng đơn', 'RECRUITING', 'CLOSED'].includes(
+        event.status
+      )
+    : false;
 
   const lifecycleStatusBadgeClassName: Partial<Record<string, string>> = {
     'Đang tuyển quân':
       'mt-1 rounded-full bg-blue-600 px-3 py-0.5 text-xs font-semibold text-white transition-colors duration-150 hover:bg-blue-500',
+    RECRUITING:
+      'mt-1 rounded-full bg-blue-600 px-3 py-0.5 text-xs font-semibold text-white transition-colors duration-150 hover:bg-blue-500',
     'Đã đóng đơn':
+      'mt-1 rounded-full bg-yellow-400 px-3 py-0.5 text-xs font-semibold text-zinc-900 transition-colors duration-150 hover:bg-yellow-300',
+    FINISHED:
       'mt-1 rounded-full bg-yellow-400 px-3 py-0.5 text-xs font-semibold text-zinc-900 transition-colors duration-150 hover:bg-yellow-300',
     'Đang diễn ra':
       'mt-1 rounded-full bg-green-600 px-3 py-0.5 text-xs font-semibold text-white transition-colors duration-150 hover:bg-green-500',
+    ONGOING:
+      'mt-1 rounded-full bg-green-600 px-3 py-0.5 text-xs font-semibold text-white transition-colors duration-150 hover:bg-green-500',
     'Đã kết thúc':
+      'mt-1 rounded-full bg-red-600 px-3 py-0.5 text-xs font-semibold text-white transition-colors duration-150 hover:bg-red-500',
+    ENDED:
+      'mt-1 rounded-full bg-red-600 px-3 py-0.5 text-xs font-semibold text-white transition-colors duration-150 hover:bg-red-500',
+    CANCELLED:
       'mt-1 rounded-full bg-red-600 px-3 py-0.5 text-xs font-semibold text-white transition-colors duration-150 hover:bg-red-500'
   };
 
@@ -251,12 +289,63 @@ export default function PendingEventDetail({
             </Button>
           </div>
 
-          {!event ? (
+          {externalIsLoading ? (
+            <Card className="border-zinc-200 bg-white p-6 text-zinc-900 shadow-sm">
+              <p className="text-zinc-600">Đang tải thông tin sự kiện...</p>
+            </Card>
+          ) : externalError ? (
+            <Card className="border-zinc-200 bg-white p-6 text-zinc-900 shadow-sm">
+              <p className="text-red-600">Không thể tải thông tin sự kiện.</p>
+            </Card>
+          ) : !event ? (
             <Card className="border-zinc-200 bg-white p-6 text-zinc-900 shadow-sm">
               <p className="text-zinc-600">Không tìm thấy sự kiện.</p>
             </Card>
           ) : (
             <div className="grid gap-6">
+              <Card className="border-zinc-200 bg-white p-6 shadow-sm">
+                <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
+                  Tóm tắt nhanh
+                </h2>
+                <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+                  <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+                    <p className="text-xs text-zinc-500">Trạng thái</p>
+                    <p className="mt-1 text-sm font-semibold text-zinc-800">
+                      {EVENT_STATUS_LABELS[event.status as EEventStatus] ||
+                        event.status}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+                    <p className="text-xs text-zinc-500">Thời gian diễn ra</p>
+                    <p className="mt-1 text-sm font-semibold text-zinc-800">
+                      {displayValue(event.date)} - {displayValue(event.endDate)}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+                    <p className="text-xs text-zinc-500">Tổng số phiên</p>
+                    <p className="mt-1 text-sm font-semibold text-zinc-800">
+                      {totalSessionCount}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+                    <p className="text-xs text-zinc-500">
+                      Tổng số tình nguyện viên dự kiến
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-zinc-800">
+                      {totalSessionVolunteers}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+                    <p className="text-xs text-zinc-500">
+                      Tổng số đối tượng phục vụ dự kiến
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-zinc-800">
+                      {totalSessionServedTargets}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+
               <Card className="border-zinc-200 bg-white p-6 text-zinc-900 shadow-sm">
                 <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
                   Ảnh minh họa sự kiện
@@ -305,12 +394,14 @@ export default function PendingEventDetail({
                     </div>
                     <div className="space-y-1">
                       <p className="text-sm text-zinc-500">Tổ chức</p>
-                      <p className="text-sm text-zinc-700">{event.organizer}</p>
+                      <p className="text-sm text-zinc-700">
+                        {displayValue(event.organizer)}
+                      </p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-sm text-zinc-500">Chế độ duyệt</p>
                       <p className="text-sm text-zinc-700">
-                        {event.approvalMode}
+                        {displayValue(event.approvalMode)}
                       </p>
                     </div>
                     <div className="space-y-1">
@@ -321,16 +412,21 @@ export default function PendingEventDetail({
                           'mt-1 border-zinc-200 bg-blue-50 text-blue-700'
                         }
                       >
-                        {event.status}
+                        {EVENT_STATUS_LABELS[event.status as EEventStatus] ||
+                          event.status}
                       </Badge>
                     </div>
                     <div className="space-y-1">
                       <p className="text-sm text-zinc-500">Khu vực</p>
-                      <p className="text-sm text-zinc-700">{event.location}</p>
+                      <p className="text-sm text-zinc-700">
+                        {displayValue(event.location)}
+                      </p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-sm text-zinc-500">Khu vực</p>
-                      <p className="text-sm text-zinc-700">{event.region}</p>
+                      <p className="text-sm text-zinc-500">Nơi phục vụ</p>
+                      <p className="text-sm text-zinc-700">
+                        {displayValue(event.servingPlaceType)}
+                      </p>
                     </div>
                   </div>
                 </Card>
@@ -359,13 +455,13 @@ export default function PendingEventDetail({
                     <div className="space-y-1">
                       <p className="text-sm text-zinc-500">Hạn đăng ký</p>
                       <p className="text-sm text-zinc-700">
-                        {event.registrationDeadline}
+                        {displayValue(event.registrationDeadline)}
                       </p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-sm text-zinc-500">Ngày nộp</p>
                       <p className="text-sm text-zinc-700">
-                        {event.submittedDate}
+                        {displayValue(event.submittedDate)}
                       </p>
                     </div>
                   </div>
@@ -379,14 +475,16 @@ export default function PendingEventDetail({
                   </h2>
                   <div className="mt-4 grid gap-4 md:grid-cols-2">
                     <div className="space-y-1">
-                      <p className="text-sm text-zinc-500">Tình nguyện viên</p>
+                      <p className="text-sm text-zinc-500">
+                        Tổng số tình nguyện viên dự kiến
+                      </p>
                       <p className="text-sm text-zinc-700">
                         {event.volunteers}
                       </p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-sm text-zinc-500">
-                        Số đối tượng phục vụ
+                        Tổng số đối tượng phục vụ dự kiến
                       </p>
                       <p className="text-sm text-zinc-700">
                         {event.expectedBeneficiaries}
@@ -395,7 +493,7 @@ export default function PendingEventDetail({
                     <div className="space-y-1">
                       <p className="text-sm text-zinc-500">Đối tượng phục vụ</p>
                       <p className="text-sm text-zinc-700">
-                        {event.serviceTarget}
+                        {displayValue(event.serviceTarget)}
                       </p>
                     </div>
                     <div className="space-y-1">
@@ -403,7 +501,7 @@ export default function PendingEventDetail({
                         Lĩnh vực hoạt động
                       </p>
                       <p className="text-sm text-zinc-700">
-                        {event.serviceField}
+                        {displayValue(event.serviceField)}
                       </p>
                     </div>
                   </div>
@@ -417,18 +515,98 @@ export default function PendingEventDetail({
                     <div className="space-y-1">
                       <p className="text-sm text-zinc-500">Điểm check-in</p>
                       <p className="text-sm text-zinc-700">
-                        {event.checkinPointName}
+                        {displayValue(event.checkinPointName)}
                       </p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-sm text-zinc-500">Bán kính</p>
                       <p className="text-sm text-zinc-700">
-                        {event.geofencingRadius}
+                        {displayValue(event.geofencingRadius)}
                       </p>
                     </div>
                   </div>
                 </Card>
               </div>
+
+              <Card className="border-zinc-200 bg-white p-6 shadow-sm">
+                <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
+                  Lịch phiên hoạt động
+                </h2>
+                {event.sessions.length === 0 ? (
+                  <p className="mt-3 text-sm text-zinc-600">
+                    Chưa có thông tin phiên hoạt động.
+                  </p>
+                ) : (
+                  <div className="mt-4 overflow-x-auto rounded-lg border border-zinc-200">
+                    <table className="min-w-full divide-y divide-zinc-200">
+                      <thead className="bg-zinc-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-600">
+                            Phiên
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-600">
+                            Ngày tổ chức
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-600">
+                            Giờ bắt đầu
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-600">
+                            Giờ kết thúc
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-600">
+                            Tình nguyện viên dự kiến
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-600">
+                            Đối tượng phục vụ dự kiến
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-100 bg-white">
+                        {event.sessions.map((session, index) => (
+                          <tr
+                            key={session.id || `${event.id}-session-${index}`}
+                          >
+                            <td className="px-4 py-3 text-sm font-medium text-zinc-800">
+                              Phiên {index + 1}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-zinc-700">
+                              {fmtDate(session.startDateTime)}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-zinc-700">
+                              {fmtTime(session.startDateTime)}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-zinc-700">
+                              {fmtTime(session.endDateTime)}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-zinc-700">
+                              {session.expectedVolAmount}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-zinc-700">
+                              {session.expectedSerAmount}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot className="bg-zinc-50">
+                        <tr>
+                          <td
+                            colSpan={4}
+                            className="px-4 py-3 text-sm font-semibold text-zinc-800"
+                          >
+                            Tổng
+                          </td>
+                          <td className="px-4 py-3 text-sm font-semibold text-zinc-800">
+                            {totalSessionVolunteers}
+                          </td>
+                          <td className="px-4 py-3 text-sm font-semibold text-zinc-800">
+                            {totalSessionServedTargets}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                )}
+              </Card>
 
               {shouldShowHostInfo && (
                 <Card className="border-zinc-200 bg-white p-6 shadow-sm">
@@ -439,7 +617,7 @@ export default function PendingEventDetail({
                     <Button
                       type="button"
                       variant="ghost"
-                      className="h-auto p-0 text-sm text-emerald-600 hover:bg-transparent hover:text-emerald-700"
+                      className="h-auto p-0 text-sm text-blue-600 hover:bg-transparent hover:text-blue-700"
                       onClick={() => {
                         // TODO: handle change host
                       }}
@@ -456,7 +634,7 @@ export default function PendingEventDetail({
                       <div className="min-w-0">
                         <p className="text-xs text-zinc-500">Host</p>
                         <p className="truncate text-sm text-zinc-800">
-                          {event.hostName ?? '-'}
+                          {displayValue(event.hostName)}
                         </p>
                       </div>
                     </div>
@@ -468,7 +646,7 @@ export default function PendingEventDetail({
                       <div className="min-w-0">
                         <p className="text-xs text-zinc-500">Email liên hệ</p>
                         <p className="truncate text-sm text-zinc-800">
-                          {event.hostEmail ?? '-'}
+                          {displayValue(event.hostEmail)}
                         </p>
                       </div>
                     </div>
@@ -480,7 +658,7 @@ export default function PendingEventDetail({
                       <div className="min-w-0">
                         <p className="text-xs text-zinc-500">Số điện thoại</p>
                         <p className="truncate text-sm text-zinc-800">
-                          {event.hostPhone ?? '-'}
+                          {displayValue(event.hostPhone)}
                         </p>
                       </div>
                     </div>
@@ -493,8 +671,16 @@ export default function PendingEventDetail({
                   Mô tả chi tiết
                 </h2>
                 <p className="mt-3 text-sm text-zinc-700">
-                  {event.description}
+                  {displayValue(event.description)}
                 </p>
+                {event.note !== '-' && (
+                  <>
+                    <p className="mt-4 text-sm font-medium text-zinc-800">
+                      Ghi chú
+                    </p>
+                    <p className="mt-1 text-sm text-zinc-700">{event.note}</p>
+                  </>
+                )}
               </Card>
 
               {showActions && (

@@ -1,39 +1,63 @@
+'use client';
+
 import PendingEventDetail from '@/components/dashboard/pending-events/detail';
 import { organizerRoutes } from '@/components/routes';
-import { createClient } from '@/utils/supabase/server';
-import { getUser, getUserDetails } from '@/utils/supabase/queries';
-import { redirect } from 'next/navigation';
+import { useViewPendingEventDetailsByOrgManager } from '@/hooks/features/uc090-view-pending-event-details-by-org-manager/useViewPendingEventDetailsByOrgManger';
+import { createClient } from '@/utils/supabase/client';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
-export default async function OrganizerPendingEventDetailPage({
-  params
-}: {
-  params: Promise<{ id: string | string[] | undefined }>;
-}) {
-  const { id } = await params;
-  const eventId = Array.isArray(id) ? id[0] : id;
-  if (!eventId) {
-    return redirect('/organizer/pending-events');
-  }
+export default function OrganizerPendingEventDetailPage() {
+  const supabase = createClient();
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [userDetails, setUserDetails] = useState(null);
 
-  const supabase = await createClient();
-  const [user, userDetails] = await Promise.all([
-    getUser(supabase),
-    getUserDetails(supabase)
-  ]);
+  const {
+    data: eventData,
+    isLoading: isEventLoading,
+    error: eventError
+  } = useViewPendingEventDetailsByOrgManager({
+    id: id ?? '',
+    baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL!
+  });
 
-  if (!user) {
-    return redirect('/signin/password_signin');
-  }
+  useEffect(() => {
+    if (!id) {
+      router.push('/organizer/pending-events');
+      return;
+    }
+
+    const fetchUserData = async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        router.push('/signin/password_signin');
+        return;
+      }
+      const { data: userDetailsData } = await supabase
+        .from('user_details')
+        .select('*')
+        .single();
+      setUser(userData.user as any);
+      setUserDetails(userDetailsData as any);
+    };
+
+    fetchUserData();
+  }, [id, supabase, router]);
 
   return (
     <PendingEventDetail
       user={user}
       userDetails={userDetails}
-      eventId={eventId}
+      eventId={id ?? ''}
       backBasePath="/organizer/pending-events"
       routes={organizerRoutes}
       colorVariant="organizer"
       signInPath="/signin/password_signin"
+      externalData={eventData}
+      externalIsLoading={isEventLoading}
+      externalError={eventError ?? null}
     />
   );
 }

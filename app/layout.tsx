@@ -3,6 +3,7 @@ import NotificationManager from '@/components/NotificationManager';
 import { PropsWithChildren } from 'react';
 import { Roboto } from 'next/font/google';
 import '@/styles/globals.css';
+import { Toaster } from '@/components/ui/sonner';
 
 const roboto = Roboto({
   subsets: ['latin'],
@@ -101,6 +102,7 @@ export default function RootLayout({
       >
         <SupabaseProvider>
           <NotificationManager />
+          <Toaster />
           <main id="skip">{children}</main>
         </SupabaseProvider>
       </body>

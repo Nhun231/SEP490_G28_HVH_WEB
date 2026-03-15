@@ -31,6 +31,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/cn';
 import type { IRoute } from '@/types/types';
+import type { PendingEventsResponse } from '@/hooks/dto';
+import { EEventStatus, EVENT_STATUS_LABELS } from '@/constants/event-status';
 import { usePendingEvents } from '@/hooks/features/commons/list-event-for-admin/usePendingEvents';
 
 interface Props {
@@ -57,6 +59,9 @@ interface Props {
     isMounted: boolean;
     onRequest: () => void;
   };
+  externalData?: PendingEventsResponse | null;
+  externalIsLoading?: boolean;
+  externalError?: Error | null;
 }
 
 interface PendingEvent {
@@ -162,7 +167,10 @@ export default function PendingEvents({
   badgeClassName = 'rounded-full bg-gray-500 text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150 hover:bg-gray-400',
   badgeClassNameByStatus,
   topHelperText,
-  notificationButton
+  notificationButton,
+  externalData,
+  externalIsLoading,
+  externalError
 }: Props) {
   type SortKey =
     | 'eventName'
@@ -176,6 +184,7 @@ export default function PendingEvents({
   type ValueFilterKey = 'eventName' | 'organizer' | 'location' | 'status';
 
   const router = useRouter();
+  const hideOrganizerColumn = colorVariant === 'organizer';
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -189,14 +198,24 @@ export default function PendingEvents({
   >({});
   const pageSize = 10;
 
+  const hasExternalData =
+    externalData !== undefined || externalIsLoading !== undefined;
+
   const {
-    data: pendingEventsResponse,
-    isLoading: isPendingEventsLoading,
-    error: pendingEventsError
+    data: _internalData,
+    isLoading: _internalIsLoading,
+    error: _internalError
   } = usePendingEvents({
     name: searchQuery,
-    baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL!
+    baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL!,
+    enabled: !hasExternalData
   });
+
+  const pendingEventsResponse = hasExternalData ? externalData : _internalData;
+  const isPendingEventsLoading = hasExternalData
+    ? (externalIsLoading ?? false)
+    : _internalIsLoading;
+  const pendingEventsError = hasExternalData ? externalError : _internalError;
 
   const pendingEvents = useMemo<PendingEvent[]>(() => {
     const rawList = getEventListFromResponse(pendingEventsResponse);
@@ -899,15 +918,17 @@ export default function PendingEvents({
                     />
                   </div>
                 </TableHead>
-                <TableHead className="text-zinc-700">
-                  <div className="flex items-center justify-between gap-2">
-                    <span>Tổ chức</span>
-                    <ValueFilterDropdown
-                      columnKey="organizer"
-                      label="Tổ chức"
-                    />
-                  </div>
-                </TableHead>
+                {!hideOrganizerColumn && (
+                  <TableHead className="text-zinc-700">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>Tổ chức</span>
+                      <ValueFilterDropdown
+                        columnKey="organizer"
+                        label="Tổ chức"
+                      />
+                    </div>
+                  </TableHead>
+                )}
                 <TableHead className="text-zinc-700">
                   <div className="flex items-center justify-between gap-2">
                     <span>Khu vực</span>
@@ -963,9 +984,11 @@ export default function PendingEvents({
                     <TableCell className="font-medium text-zinc-900">
                       {event.eventName}
                     </TableCell>
-                    <TableCell className="text-zinc-600">
-                      {event.organizer}
-                    </TableCell>
+                    {!hideOrganizerColumn && (
+                      <TableCell className="text-zinc-600">
+                        {event.organizer}
+                      </TableCell>
+                    )}
                     <TableCell className="text-zinc-600">
                       {event.location}
                     </TableCell>
@@ -977,7 +1000,10 @@ export default function PendingEvents({
                     </TableCell>
                     <TableCell>
                       {(() => {
-                        const text = badgeFromStatus ? event.status : badgeText;
+                        const text = badgeFromStatus
+                          ? EVENT_STATUS_LABELS[event.status as EEventStatus] ||
+                            event.status
+                          : badgeText;
                         const className =
                           badgeFromStatus &&
                           badgeClassNameByStatus?.[event.status]
@@ -992,7 +1018,7 @@ export default function PendingEvents({
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={hideOrganizerColumn ? 5 : 6}
                     className="py-8 text-center text-zinc-500"
                   >
                     {pendingEventsError

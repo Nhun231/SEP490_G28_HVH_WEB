@@ -60,6 +60,8 @@ export default function PasswordSignIn({
         return;
       }
 
+      console.log('[Auth] Access token:', data.session?.access_token);
+
       document.cookie =
         'preferredSignInView=password_signin; path=/; SameSite=Lax';
 
@@ -94,7 +96,7 @@ export default function PasswordSignIn({
         <div className="grid gap-2">
           <div className="grid gap-1">
             <label
-              className="text-sm font-medium text-foreground"
+              className={`text-sm font-medium ${isAdmin ? 'text-foreground' : 'text-[#3A4163]'}`}
               htmlFor="email"
             >
               Email
@@ -110,7 +112,7 @@ export default function PasswordSignIn({
               autoCorrect="off"
             />
             <label
-              className="mt-2 text-sm font-medium text-foreground"
+              className={`mt-2 text-sm font-medium ${isAdmin ? 'text-foreground' : 'text-[#3A4163]'}`}
               htmlFor="password"
             >
               Mật khẩu
@@ -162,7 +164,7 @@ export default function PasswordSignIn({
               ? '/dashboard/signin/forgot_password'
               : '/signin/forgot_password'
           }
-          className="text-sm font-medium text-foreground hover:text-primary"
+          className={`text-sm font-medium ${isAdmin ? 'text-foreground hover:text-primary' : 'text-[#3A4163] hover:text-[#5AA8D6]'}`}
         >
           Quên mật khẩu?
         </a>
@@ -171,7 +173,7 @@ export default function PasswordSignIn({
         <p>
           <a
             href="/register-org"
-            className="text-sm font-medium text-foreground hover:text-primary"
+            className="text-sm font-medium text-[#3A4163] hover:text-[#5AA8D6]"
           >
             Chưa có tài khoản? Đăng ký
           </a>

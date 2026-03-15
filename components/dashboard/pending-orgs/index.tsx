@@ -32,6 +32,7 @@ import { useRouter } from 'next/navigation';
 import { useOrgRegistrationsList } from '@/hooks/features/uc040-approve-reject-organization/useOrgRegistrationsList';
 import type { OrgRegistrationItem } from '@/hooks/entity';
 import { cn } from '@/utils/cn';
+import { ORG_TYPE_LABELS, EOrgType } from '@/constants/org-type';
 
 interface Props {
   user: User | null | undefined;
@@ -532,10 +533,10 @@ export default function PendingOrgs({ user, userDetails }: Props) {
                 </TableHead>
                 <TableHead className="text-zinc-700">
                   <div className="flex items-center justify-between gap-2">
-                    <span>DHA</span>
+                    <span>Đăng ký với Sở Nội Vụ</span>
                     <ValueFilterDropdown
                       columnKey="dhaRegistered"
-                      label="DHA"
+                      label="Đăng ký với Sở Nội Vụ"
                     />
                   </div>
                 </TableHead>
@@ -617,7 +618,9 @@ export default function PendingOrgs({ user, userDetails }: Props) {
                       {org.name || '-'}
                     </TableCell>
                     <TableCell className="text-zinc-600">
-                      {org.orgType || '-'}
+                      {ORG_TYPE_LABELS[org.orgType as EOrgType] ||
+                        org.orgType ||
+                        '-'}
                     </TableCell>
                     <TableCell className="text-zinc-600">
                       {renderYesNo(org.dhaRegistered)}

@@ -1,9 +1,9 @@
-/* eslint-disable @next/next/no-img-element */
-
 'use client';
+/* eslint-disable @next/next/no-img-element */
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -26,7 +26,8 @@ import {
 } from '@/constants/org-type';
 import { useRegisterOrg } from '@/hooks/features/uc016-register-organization/useRegisterOrg';
 import { useSendRegisterOrgVerifyMail } from '@/hooks/features/uc016-register-organization/useSendRegisterOrgVerifyMail';
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useUploadFiles } from '@/hooks/features/commons/bucket/useUploadFiles';
 import { useDropzone } from 'react-dropzone';
 
 interface RegisterOrgFormState {
@@ -43,12 +44,14 @@ interface RegisterOrgFormState {
   managerCidFront: File | null;
   managerCidBack: File | null;
   managerCidHolding: File | null;
-  activityLicense: File | null;
+  activityLicense: File[];
   otherEvidences: File[];
 }
 
 export default function RegisterOrgPage() {
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL!;
+  const { uploadFileToSignedUrl } = useUploadFiles();
+  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const {
     trigger: registerOrg,
     isMutating: registering,
@@ -76,9 +79,24 @@ export default function RegisterOrgPage() {
     managerCidFront: null as File | null,
     managerCidBack: null as File | null,
     managerCidHolding: null as File | null,
-    activityLicense: null as File | null,
+    activityLicense: [] as File[],
     otherEvidences: [] as File[]
   });
+
+  // Dropzone for CMND/CCCD mặt trước
+  const { getRootProps: getFrontRootProps, getInputProps: getFrontInputProps } =
+    useDropzone({
+      accept: { 'image/*': [] },
+      maxFiles: 1,
+      onDrop: (files) => {
+        const file = files[0];
+        if (!file) return;
+        setForm((f) => ({
+          ...f,
+          managerCidFront: file
+        }));
+      }
+    });
 
   const orgTypeOptions = form.dhaRegistered
     ? REGISTERED_ORG_TYPE_OPTIONS
@@ -109,17 +127,20 @@ export default function RegisterOrgPage() {
     }
   };
 
+  // Join all extensions (including duplicates) with spaces, in order
+  const formatLicenseExtensions = (files: Array<File | null>) => {
+    return files
+      .map((file) => getFileExtension(file))
+      .filter((ext) => !!ext)
+      .join(' ');
+  };
+
+  // Join all extensions (including duplicates) with spaces, in order
   const formatEvidenceExtensions = (files: Array<File | null>) => {
-    const uniqueExtensions: string[] = [];
-
-    files.forEach((file) => {
-      const extension = getFileExtension(file);
-      if (extension && !uniqueExtensions.includes(extension)) {
-        uniqueExtensions.push(extension);
-      }
-    });
-
-    return uniqueExtensions.join(' ');
+    return files
+      .map((file) => getFileExtension(file))
+      .filter((ext) => !!ext)
+      .join(' ');
   };
 
   const uploadToUrl = async (url: string, file: File) => {
@@ -132,29 +153,12 @@ export default function RegisterOrgPage() {
       let bodyText = '';
       try {
         bodyText = await res.text();
-      } catch {
-        bodyText = '';
-      }
+      } catch {}
       throw new Error(
         `Upload failed (${res.status})${bodyText ? `: ${bodyText}` : ''}`
       );
     }
   };
-
-  // Dropzone for CMND/CCCD images
-  const { getRootProps: getFrontRootProps, getInputProps: getFrontInputProps } =
-    useDropzone({
-      accept: { 'image/*': [] },
-      maxFiles: 1,
-      onDrop: (files) => {
-        const file = files[0];
-        if (!file) return;
-        setForm((f) => ({
-          ...f,
-          managerCidFront: file
-        }));
-      }
-    });
   const { getRootProps: getBackRootProps, getInputProps: getBackInputProps } =
     useDropzone({
       accept: { 'image/*': [] },
@@ -190,14 +194,16 @@ export default function RegisterOrgPage() {
     getInputProps: getLicenseInputProps
   } = useDropzone({
     accept: { 'image/*': [], 'application/pdf': [] },
-    maxFiles: 1,
+    maxFiles: 10,
     onDrop: (files) => {
-      const file = files[0];
-      if (!file) return;
-      setForm((f) => ({
-        ...f,
-        activityLicense: file
-      }));
+      if (!files || files.length === 0) return;
+      setForm((f) => {
+        const next = [...(f.activityLicense || []), ...files].slice(0, 10);
+        return {
+          ...f,
+          activityLicense: next
+        };
+      });
     }
   });
   // Dropzone for other evidences
@@ -231,7 +237,63 @@ export default function RegisterOrgPage() {
     form.managerCidBack &&
     form.managerCidHolding &&
     form.activityLicense &&
+    form.activityLicense.length > 0 &&
     form.applicationReason;
+
+  // --- File preview URL memoization and cleanup ---
+  // For single files (CMND/CCCD)
+  const managerCidFrontUrl = useMemo(() => {
+    if (!form.managerCidFront) return '';
+    return URL.createObjectURL(form.managerCidFront);
+  }, [form.managerCidFront]);
+  useEffect(() => {
+    return () => {
+      if (managerCidFrontUrl) URL.revokeObjectURL(managerCidFrontUrl);
+    };
+  }, [managerCidFrontUrl]);
+
+  const managerCidBackUrl = useMemo(() => {
+    if (!form.managerCidBack) return '';
+    return URL.createObjectURL(form.managerCidBack);
+  }, [form.managerCidBack]);
+  useEffect(() => {
+    return () => {
+      if (managerCidBackUrl) URL.revokeObjectURL(managerCidBackUrl);
+    };
+  }, [managerCidBackUrl]);
+
+  const managerCidHoldingUrl = useMemo(() => {
+    if (!form.managerCidHolding) return '';
+    return URL.createObjectURL(form.managerCidHolding);
+  }, [form.managerCidHolding]);
+  useEffect(() => {
+    return () => {
+      if (managerCidHoldingUrl) URL.revokeObjectURL(managerCidHoldingUrl);
+    };
+  }, [managerCidHoldingUrl]);
+
+  // For array files (activityLicense, otherEvidences)
+  const activityLicenseUrls = useMemo(() => {
+    return (form.activityLicense || []).map((file) =>
+      file ? URL.createObjectURL(file) : ''
+    );
+  }, [form.activityLicense]);
+  useEffect(() => {
+    return () => {
+      activityLicenseUrls.forEach((url) => url && URL.revokeObjectURL(url));
+    };
+  }, [activityLicenseUrls]);
+
+  const otherEvidencesUrls = useMemo(() => {
+    return (form.otherEvidences || []).map((file) =>
+      file ? URL.createObjectURL(file) : ''
+    );
+  }, [form.otherEvidences]);
+  useEffect(() => {
+    return () => {
+      otherEvidencesUrls.forEach((url) => url && URL.revokeObjectURL(url));
+    };
+  }, [otherEvidencesUrls]);
 
   return (
     <div
@@ -260,8 +322,8 @@ export default function RegisterOrgPage() {
               const managerCidHoldingExtension = getFileExtension(
                 form.managerCidHolding
               );
-              const legalDocumentExtension = getFileExtension(
-                form.activityLicense
+              const legalDocumentsExtensions = formatLicenseExtensions(
+                form.activityLicense || []
               );
               const otherEvidencesExtensions = formatEvidenceExtensions(
                 form.otherEvidences || []
@@ -281,90 +343,126 @@ export default function RegisterOrgPage() {
                 managerCidFrontExtension,
                 managerCidBackExtension,
                 managerCidHoldingExtension,
-                legalDocumentExtension,
+                legalDocumentsExtensions,
                 otherEvidencesExtensions,
                 applicationReason: form.applicationReason
               });
 
-              // After BE stores metadata and returns upload URLs, FE uploads files.
+              // FE uploads files to Supabase using signed URLs from BE
               const uploadInfo: any =
                 registerRes && typeof registerRes === 'object'
                   ? (registerRes as any).uploadUrls || registerRes
                   : {};
 
-              const frontUrl =
+              // Helper nối domain nếu là path
+              const joinSupabaseUrl = (url) => {
+                if (!url) return '';
+                if (url.startsWith('http')) return url;
+                return SUPABASE_URL?.replace(/\/$/, '') + url;
+              };
+
+              // CMND/CCCD
+              const frontUrl = joinSupabaseUrl(
                 uploadInfo.managerCidFrontUrl ||
-                uploadInfo.managerCidFrontUploadUrl;
-              const backUrl =
+                  uploadInfo.managerCidFrontUploadUrl
+              );
+              const backUrl = joinSupabaseUrl(
                 uploadInfo.managerCidBackUrl ||
-                uploadInfo.managerCidBackUploadUrl;
-              const holdingUrl =
+                  uploadInfo.managerCidBackUploadUrl
+              );
+              const holdingUrl = joinSupabaseUrl(
                 uploadInfo.managerCidHoldingUrl ||
-                uploadInfo.managerCidHoldingUploadUrl;
+                  uploadInfo.managerCidHoldingUploadUrl
+              );
 
-              const rawOtherUrls =
-                uploadInfo.otherEvidencesUrls ||
-                uploadInfo.otherEvidencesUploadUrls ||
-                uploadInfo.otherEvidenceUrls ||
-                uploadInfo.otherEvidenceUploadUrls ||
+              // Giấy phép hoạt động (array)
+              const licenseUrlsRaw: string[] =
+                uploadInfo.legalDocumentsUploadUrls ||
+                uploadInfo.legalDocumentUploadUrls ||
+                uploadInfo.activityLicenseUploadUrls ||
                 [];
-              const otherUrls: string[] = Array.isArray(rawOtherUrls)
-                ? rawOtherUrls
-                : typeof rawOtherUrls === 'string'
-                  ? rawOtherUrls
-                      .split(',')
-                      .map((s: string) => s.trim())
-                      .filter(Boolean)
-                  : [];
+              const licenseUrls = licenseUrlsRaw.map(joinSupabaseUrl);
+              const licenseFiles = form.activityLicense || [];
 
-              const explicitLicenseUrl =
-                uploadInfo.legalDocumentUrl ||
-                uploadInfo.legalDocumentUploadUrl ||
-                uploadInfo.activityLicenseUrl ||
-                uploadInfo.activityLicenseUploadUrl;
-
+              // Tài liệu chứng minh khác (array)
+              const otherUrlsRaw: string[] =
+                uploadInfo.otherEvidencesUploadUrls ||
+                uploadInfo.otherEvidencesUrls ||
+                uploadInfo.otherEvidenceUploadUrls ||
+                uploadInfo.otherEvidenceUrls ||
+                [];
+              const otherUrls = otherUrlsRaw.map(joinSupabaseUrl);
               const expectedOtherFiles = form.otherEvidences || [];
-              const licenseFile = form.activityLicense;
-              const licenseUrl = explicitLicenseUrl;
 
-              const uploads: Array<Promise<void>> = [];
-
-              if (form.managerCidFront) {
-                if (!frontUrl)
-                  throw new Error('Thiếu URL upload CCCD mặt trước');
-                uploads.push(uploadToUrl(frontUrl, form.managerCidFront));
+              const uploads: Array<Promise<any>> = [];
+              // Upload từng file lên đúng signed URL
+              if (form.managerCidFront && frontUrl) {
+                uploads.push(
+                  uploadFileToSignedUrl(form.managerCidFront, frontUrl)
+                );
               }
-              if (form.managerCidBack) {
-                if (!backUrl) throw new Error('Thiếu URL upload CCCD mặt sau');
-                uploads.push(uploadToUrl(backUrl, form.managerCidBack));
+              if (form.managerCidBack && backUrl) {
+                uploads.push(
+                  uploadFileToSignedUrl(form.managerCidBack, backUrl)
+                );
               }
-              if (form.managerCidHolding) {
-                if (!holdingUrl)
-                  throw new Error('Thiếu URL upload ảnh cầm CCCD');
-                uploads.push(uploadToUrl(holdingUrl, form.managerCidHolding));
+              if (form.managerCidHolding && holdingUrl) {
+                uploads.push(
+                  uploadFileToSignedUrl(form.managerCidHolding, holdingUrl)
+                );
               }
-
-              if (licenseFile) {
-                if (!licenseUrl)
-                  throw new Error('Thiếu URL upload giấy phép hoạt động');
-                uploads.push(uploadToUrl(licenseUrl, licenseFile));
+              // Giấy phép hoạt động
+              for (let i = 0; i < licenseFiles.length; i++) {
+                const file = licenseFiles[i];
+                const url = licenseUrls[i];
+                if (file && url) {
+                  uploads.push(uploadFileToSignedUrl(file, url));
+                }
               }
-
+              // Tài liệu chứng minh khác
               for (let i = 0; i < expectedOtherFiles.length; i++) {
                 const file = expectedOtherFiles[i];
                 const url = otherUrls[i];
-                if (!url) {
-                  throw new Error(
-                    `Thiếu URL upload cho tài liệu chứng minh khác #${i + 1}`
-                  );
+                if (file && url) {
+                  uploads.push(uploadFileToSignedUrl(file, url));
                 }
-                uploads.push(uploadToUrl(url, file));
               }
 
               await Promise.all(uploads);
-              // You can add feedback logic here
+              toast('Đăng ký tổ chức thành công!', {
+                description:
+                  'Thông tin đã được gửi. Vui lòng chờ xác nhận qua email.',
+                action: { label: 'Đóng', onClick: () => {} }
+              });
             } catch (err) {
-              // Handle error feedback here
+              let lines: string[] = [];
+              if (
+                err &&
+                typeof err === 'object' &&
+                (err as any).moreInfo &&
+                typeof (err as any).moreInfo === 'object'
+              ) {
+                lines = Object.entries((err as any).moreInfo)
+                  .filter(([key]) => key !== 'business')
+                  .map(([, value]) => String(value).trim())
+                  .filter(Boolean);
+              } else {
+                let errorMsg =
+                  (err as any)?.message || 'Có lỗi xảy ra, vui lòng thử lại.';
+                lines = errorMsg
+                  .split(/\.|\n|;/)
+                  .map((s) => s.trim())
+                  .filter(Boolean);
+              }
+              toast.error('Đăng ký thất bại', {
+                description: (
+                  <div>
+                    {lines.map((line, idx) => (
+                      <div key={idx}>{line}</div>
+                    ))}
+                  </div>
+                )
+              });
             } finally {
               setUploading(false);
             }
@@ -374,7 +472,7 @@ export default function RegisterOrgPage() {
             open={openRegistrationHelp}
             onOpenChange={setOpenRegistrationHelp}
           >
-            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogContent className="max-w-2xl max-h-[80vh] bg-blue-50 dark:bg-slate-800 rounded-2xl pt-8 p-0">
               <DialogHeader>
                 <DialogTitle>
                   Giải thích về Trạng thái đăng ký &amp; Loại tổ chức
@@ -384,22 +482,21 @@ export default function RegisterOrgPage() {
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="mt-2 space-y-4 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+              <div className="mt-2 space-y-4 text-sm leading-relaxed text-slate-700 dark:text-slate-200 overflow-y-auto max-h-[70vh] rounded-2xl p-6">
                 <div className="space-y-2">
                   <p className="font-medium text-slate-900 dark:text-white">
                     1) Khi nào chọn “Đã đăng ký”?
                   </p>
                   <p>
-                    Nếu tổ chức của bạn đã được đăng ký tại cơ quan quản lý nhà
-                    nước về công tác xã hội/các tổ chức (ví dụ cơ quan dân chính
-                    địa phương) và có giấy chứng nhận đăng ký do cơ quan đó cấp
-                    (như: quỹ, tổ chức cung cấp dịch vụ xã hội, tổ chức/đoàn thể
-                    xã hội), hãy chọn <b>Đã đăng ký</b>.
+                    Nếu tổ chức của bạn đã được đăng ký tại <b>Sở Nội Vụ</b> về
+                    công tác xã hội/các tổ chức và có giấy chứng nhận đăng ký do
+                    cơ quan đó cấp (như: quỹ, tổ chức cung cấp dịch vụ xã hội,
+                    tổ chức/đoàn thể xã hội), hãy chọn <b>Đã đăng ký</b>.
                   </p>
                   <p>
                     Sau đó, <b>Loại tổ chức</b> chọn theo đúng loại ghi trên
                     giấy chứng nhận (một số trường hợp “đơn vị dân lập phi doanh
-                    nghiệp” có thể chọn nhóm tương ứng như <b>Tổ chức xã hội</b>
+                    nghiệp” có thể chọn nhóm tương ứng như <b>Tổ chức xã hội</b>{' '}
                     tùy theo giấy tờ thực tế).
                   </p>
                 </div>
@@ -490,7 +587,7 @@ export default function RegisterOrgPage() {
               </label>
               <button
                 type="button"
-                className="text-xs font-medium text-primary underline-offset-4 hover:underline"
+                className="text-xs font-medium text-primary hover:text-blue-700 focus:text-blue-800 transition-colors underline-offset-4 no-underline hover:no-underline focus:no-underline"
                 onClick={() => setOpenRegistrationHelp(true)}
               >
                 Chú thích
@@ -525,7 +622,7 @@ export default function RegisterOrgPage() {
               </label>
               <button
                 type="button"
-                className="text-xs font-medium text-primary underline-offset-4 hover:underline"
+                className="text-xs font-medium text-primary hover:text-blue-700 focus:text-blue-800 transition-colors underline-offset-4 no-underline hover:no-underline focus:no-underline"
                 onClick={() => setOpenRegistrationHelp(true)}
               >
                 Chú thích
@@ -682,14 +779,11 @@ export default function RegisterOrgPage() {
                     <>
                       {form.managerCidFront.type.startsWith('image') ? (
                         <img
-                          src={URL.createObjectURL(form.managerCidFront)}
+                          src={managerCidFrontUrl}
                           alt="Mặt trước"
                           className="mx-auto mb-2 w-full max-h-48 object-contain rounded"
                         />
                       ) : null}
-                      <span className="block text-xs text-green-600">
-                        {form.managerCidFront.name}
-                      </span>
                     </>
                   ) : (
                     <span className="text-xs text-slate-500">Mặt trước</span>
@@ -707,14 +801,11 @@ export default function RegisterOrgPage() {
                     <>
                       {form.managerCidBack.type.startsWith('image') ? (
                         <img
-                          src={URL.createObjectURL(form.managerCidBack)}
+                          src={managerCidBackUrl}
                           alt="Mặt sau"
                           className="mx-auto mb-2 w-full max-h-48 object-contain rounded"
                         />
                       ) : null}
-                      <span className="block text-xs text-green-600">
-                        {form.managerCidBack.name}
-                      </span>
                     </>
                   ) : (
                     <span className="text-xs text-slate-500">Mặt sau</span>
@@ -732,14 +823,11 @@ export default function RegisterOrgPage() {
                     <>
                       {form.managerCidHolding.type.startsWith('image') ? (
                         <img
-                          src={URL.createObjectURL(form.managerCidHolding)}
+                          src={managerCidHoldingUrl}
                           alt="Cầm giấy tờ"
                           className="mx-auto mb-2 w-full max-h-48 object-contain rounded"
                         />
                       ) : null}
-                      <span className="block text-xs text-green-600">
-                        {form.managerCidHolding.name}
-                      </span>
                     </>
                   ) : (
                     <span className="text-xs text-slate-500">Cầm giấy tờ</span>
@@ -756,25 +844,44 @@ export default function RegisterOrgPage() {
             </label>
             <div
               {...getLicenseRootProps()}
-              className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer bg-slate-50 dark:bg-slate-800 min-h-[120px] flex flex-col items-center justify-center"
+              className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer bg-slate-50 dark:bg-slate-800 min-h-[120px] flex flex-wrap gap-2 items-center justify-center"
             >
-              <input {...getLicenseInputProps()} />
-              {form.activityLicense ? (
-                <>
-                  {form.activityLicense.type.startsWith('image') ? (
-                    <img
-                      src={URL.createObjectURL(form.activityLicense)}
-                      alt="Giấy phép hoạt động"
-                      className="mx-auto mb-2 w-full max-h-48 object-contain rounded"
-                    />
-                  ) : null}
-                  <span className="block text-xs text-green-600">
-                    {form.activityLicense.name}
-                  </span>
-                </>
+              <input {...getLicenseInputProps()} multiple />
+              {form.activityLicense && form.activityLicense.length > 0 ? (
+                form.activityLicense.map((f, idx) => (
+                  <div key={idx} className="relative w-full mb-4">
+                    {f.type && f.type.startsWith('image') ? (
+                      <img
+                        src={activityLicenseUrls[idx]}
+                        alt={f.name}
+                        className="w-full max-h-48 object-contain rounded border"
+                      />
+                    ) : (
+                      <span className="block text-xs text-green-600 px-2 py-1 bg-slate-100 rounded border w-full">
+                        {f.name}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      className="absolute top-2 right-2 bg-blue-500 text-white rounded-full w-7 h-7 flex items-center justify-center text-base shadow hover:bg-blue-600 border-2 border-white"
+                      title="Xóa file"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setForm((prev) => ({
+                          ...prev,
+                          activityLicense: prev.activityLicense.filter(
+                            (_, i) => i !== idx
+                          )
+                        }));
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))
               ) : (
                 <span className="text-xs text-slate-500">
-                  Chọn file ảnh/pdf
+                  Chọn file ảnh/pdf (tối đa 10)
                 </span>
               )}
             </div>
@@ -790,20 +897,37 @@ export default function RegisterOrgPage() {
             >
               <input {...getOtherInputProps()} />
               {form.otherEvidences && form.otherEvidences.length > 0 ? (
-                form.otherEvidences.map((f, idx) =>
-                  f.type && f.type.startsWith('image') ? (
-                    <img
-                      key={idx}
-                      src={URL.createObjectURL(f)}
-                      alt={f.name}
-                      className="w-full max-h-48 object-contain rounded border"
-                    />
-                  ) : (
-                    <span key={idx} className="block text-xs text-green-600">
-                      {f.name}
-                    </span>
-                  )
-                )
+                form.otherEvidences.map((f, idx) => (
+                  <div key={idx} className="relative w-full mb-4">
+                    {f.type && f.type.startsWith('image') ? (
+                      <img
+                        src={otherEvidencesUrls[idx]}
+                        alt={f.name}
+                        className="w-full max-h-48 object-contain rounded border"
+                      />
+                    ) : (
+                      <span className="block text-xs text-green-600 px-2 py-1 bg-slate-100 rounded border w-full">
+                        {f.name}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      className="absolute top-2 right-2 bg-blue-500 text-white rounded-full w-7 h-7 flex items-center justify-center text-base shadow hover:bg-blue-600 border-2 border-white"
+                      title="Xóa file"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setForm((prev) => ({
+                          ...prev,
+                          otherEvidences: prev.otherEvidences.filter(
+                            (_, i) => i !== idx
+                          )
+                        }));
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))
               ) : (
                 <span className="text-xs text-slate-500">
                   Chọn file ảnh/pdf

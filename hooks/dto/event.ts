@@ -18,3 +18,20 @@ export interface PendingEventsResponse {
     totalPages: number;
   };
 }
+
+export interface EventDetailsResponseForManager {
+  id: string;
+  name: string;
+  description: string;
+  status: string;
+  startedAt: string;
+  endedAt: string;
+  location: string;
+  maxVolunteers: number;
+  currentVolunteers: number;
+  createdAt: string;
+  updatedAt: string;
+  organizationId: string;
+  organizationName: string;
+  [key: string]: unknown;
+}

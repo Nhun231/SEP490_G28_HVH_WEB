@@ -3,6 +3,8 @@
 'use client';
 
 import DashboardLayout from '@/components/layout';
+import { ORG_REGISTRATION_STATUS_LABELS } from '@/constants/org-type-labels';
+import { ORG_TYPE_LABELS } from '@/constants/org-type';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -19,6 +21,7 @@ import { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useEffect } from 'react';
 
 interface OrgRegistrationDetail {
   id: string;
@@ -66,6 +69,7 @@ interface OrgRegistrationDetail {
     updatedAt: string | null;
   } | null;
   note: string | null;
+  legalDocumentsUrls?: string[] | null;
 }
 
 interface Props {
@@ -80,6 +84,13 @@ const renderValue = (value?: string | number | boolean | null) => {
   return String(value);
 };
 
+import { EOrgType } from '@/constants/org-type';
+
+const renderOrgType = (orgType?: string | null) => {
+  if (!orgType) return '-';
+  return ORG_TYPE_LABELS[orgType as EOrgType] || orgType || '-';
+};
+
 const renderStatusBadge = (status?: string | null) => {
   if (!status) return <span className="text-zinc-500">-</span>;
   const normalized = status.toUpperCase();
@@ -90,7 +101,11 @@ const renderStatusBadge = (status?: string | null) => {
         ? 'border-green-200 bg-green-50 text-green-700'
         : 'border-red-200 bg-red-50 text-red-700';
 
-  return <Badge className={className}>{normalized}</Badge>;
+  return (
+    <Badge className={className}>
+      {ORG_REGISTRATION_STATUS_LABELS[normalized] || normalized}
+    </Badge>
+  );
 };
 
 const renderCidImage = (src: string | null, label: string) => {
@@ -119,6 +134,18 @@ const splitEvidenceString = (value?: string | null) => {
     .map((item) => item.trim())
     .filter(Boolean);
 };
+
+// Thêm hàm tiện ích để lấy full URL cho ảnh Supabase
+const SUPABASE_DOMAIN =
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  'https://kbmxlrqkzgjbtkmlbaei.supabase.co';
+function getFullUrl(url: string) {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  // BE trả về /object/sign/... => cần nối prefix storage/v1
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  return supabaseUrl + '/storage/v1' + url;
+}
 
 export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
   const router = useRouter();
@@ -182,6 +209,12 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
     new Set([...evidenceUrls, ...organizationEvidenceUrls])
   );
 
+  const cccdImages = [
+    detail.managerCidFrontUrl,
+    detail.managerCidBackUrl,
+    detail.managerCidHoldingUrl
+  ].filter(Boolean);
+
   return (
     <DashboardLayout
       user={user}
@@ -225,11 +258,11 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
                 <div className="space-y-1">
                   <p className="text-sm text-zinc-500">Loại tổ chức</p>
                   <p className="text-sm text-zinc-700">
-                    {renderValue(detail.orgType)}
+                    {renderOrgType(detail.orgType)}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-zinc-500">DHA</p>
+                  <p className="text-sm text-zinc-500">Đăng ký với Sở Nội Vụ</p>
                   <p className="text-sm text-zinc-700">
                     {renderValue(detail.dhaRegistered)}
                   </p>
@@ -261,9 +294,42 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
               </div>
             </Card>
 
+            {/* Section: Giấy phép đăng ký */}
+            {Array.isArray(detail.legalDocumentsUrls) &&
+              detail.legalDocumentsUrls.length > 0 && (
+                <Card className="border-zinc-200 bg-white p-6 shadow-sm">
+                  <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl mb-2">
+                    Giấy phép đăng ký
+                  </h2>
+                  <div className="mt-3 grid gap-2 md:grid-cols-3">
+                    {detail.legalDocumentsUrls.map((url, idx) => {
+                      const path = url.split('?')[0];
+                      return path.match(/\.(jpg|jpeg|png|gif|webp|png)$/i) ? (
+                        <img
+                          key={url}
+                          src={getFullUrl(url)}
+                          alt={`Giấy phép đăng ký ${idx + 1}`}
+                          className="rounded-md border border-zinc-200 object-cover max-w-xs max-h-60"
+                        />
+                      ) : (
+                        <a
+                          key={url}
+                          href={getFullUrl(url)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-sm text-blue-600 hover:underline"
+                        >
+                          {url}
+                        </a>
+                      );
+                    })}
+                  </div>
+                </Card>
+              )}
+
             <Card className="border-zinc-200 bg-white p-6 shadow-sm">
               <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
-                Thông tin quản lý
+                Thông tin người quản lý
               </h2>
               <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <div className="space-y-1">
@@ -296,19 +362,52 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
                   <p className="text-xs font-medium text-zinc-600">
                     CCCD mặt trước
                   </p>
-                  {renderCidImage(detail.managerCidFrontUrl, 'CCCD mặt trước')}
+                  {detail.managerCidFrontUrl ? (
+                    <img
+                      src={getFullUrl(detail.managerCidFrontUrl)}
+                      alt="CCCD mặt trước"
+                      className="mt-2 h-40 w-full rounded-md border border-zinc-200 object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="mt-2 flex h-40 w-full items-center justify-center rounded-md border border-dashed border-zinc-200 bg-zinc-50 text-xs text-zinc-500">
+                      CCCD mặt trước
+                    </div>
+                  )}
                 </div>
                 <div>
                   <p className="text-xs font-medium text-zinc-600">
                     CCCD mặt sau
                   </p>
-                  {renderCidImage(detail.managerCidBackUrl, 'CCCD mặt sau')}
+                  {detail.managerCidBackUrl ? (
+                    <img
+                      src={getFullUrl(detail.managerCidBackUrl)}
+                      alt="CCCD mặt sau"
+                      className="mt-2 h-40 w-full rounded-md border border-zinc-200 object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="mt-2 flex h-40 w-full items-center justify-center rounded-md border border-dashed border-zinc-200 bg-zinc-50 text-xs text-zinc-500">
+                      CCCD mặt sau
+                    </div>
+                  )}
                 </div>
                 <div>
                   <p className="text-xs font-medium text-zinc-600">
                     Ảnh cầm CCCD
                   </p>
-                  {renderCidImage(detail.managerCidHoldingUrl, 'Ảnh cầm CCCD')}
+                  {detail.managerCidHoldingUrl ? (
+                    <img
+                      src={getFullUrl(detail.managerCidHoldingUrl)}
+                      alt="Ảnh cầm CCCD"
+                      className="mt-2 h-40 w-full rounded-md border border-zinc-200 object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="mt-2 flex h-40 w-full items-center justify-center rounded-md border border-dashed border-zinc-200 bg-zinc-50 text-xs text-zinc-500">
+                      Ảnh cầm CCCD
+                    </div>
+                  )}
                 </div>
               </div>
             </Card>
@@ -321,13 +420,43 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
                 <div className="space-y-1">
                   <p className="text-sm text-zinc-500">Ngày tạo</p>
                   <p className="text-sm text-zinc-700">
-                    {renderValue(detail.createdAt)}
+                    {detail.createdAt ? (
+                      <>
+                        {new Date(detail.createdAt).toLocaleTimeString(
+                          'vi-VN',
+                          {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit'
+                          }
+                        )}{' '}
+                        {new Date(detail.createdAt).toLocaleDateString('vi-VN')}
+                      </>
+                    ) : (
+                      '-'
+                    )}
                   </p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-zinc-500">Ngày duyệt</p>
                   <p className="text-sm text-zinc-700">
-                    {renderValue(detail.reviewedAt)}
+                    {detail.reviewedAt ? (
+                      <>
+                        {new Date(detail.reviewedAt).toLocaleTimeString(
+                          'vi-VN',
+                          {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit'
+                          }
+                        )}{' '}
+                        {new Date(detail.reviewedAt).toLocaleDateString(
+                          'vi-VN'
+                        )}
+                      </>
+                    ) : (
+                      '-'
+                    )}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -356,18 +485,28 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
                   Không có tệp đính kèm.
                 </p>
               ) : (
-                <div className="mt-3 grid gap-2">
-                  {mergedEvidenceUrls.map((url) => (
-                    <a
-                      key={url}
-                      href={url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-sm text-blue-600 hover:underline"
-                    >
-                      {url}
-                    </a>
-                  ))}
+                <div className="mt-3 grid gap-2 md:grid-cols-3">
+                  {mergedEvidenceUrls.map((url) => {
+                    const path = url.split('?')[0];
+                    return path.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                      <img
+                        key={url}
+                        src={getFullUrl(url)}
+                        alt="Bằng chứng bổ sung"
+                        className="rounded-md border border-zinc-200 object-cover max-w-xs max-h-60"
+                      />
+                    ) : (
+                      <a
+                        key={url}
+                        href={getFullUrl(url)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm text-blue-600 hover:underline"
+                      >
+                        {url}
+                      </a>
+                    );
+                  })}
                 </div>
               )}
             </Card>

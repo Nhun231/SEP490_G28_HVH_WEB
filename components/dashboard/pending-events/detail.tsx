@@ -1,6 +1,6 @@
 'use client';
 /* eslint-disable @next/next/no-img-element */
-// Helper to get full image URL for Supabase Storage (giống PendingOrgDetail)
+// Helper to get full image URL for Supabase Storage
 function getFullImageUrl(url: string) {
   if (!url) return '';
   if (url.startsWith('http')) return url;
@@ -19,22 +19,32 @@ import {
   CarouselNext,
   CarouselPrevious
 } from '@/components/ui/carousel';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { User } from '@supabase/supabase-js';
-import { Mail, Phone, UserRound } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import type { IRoute } from '@/types/types';
-import type {
-  EventDetailsResponseForSystemAdmin,
-  EventDetailsResponseForManager
-} from '@/hooks/dto';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { EEventStatus, EVENT_STATUS_LABELS } from '@/constants/event-status';
 import { EServedTarget, SERVED_TARGET_LABELS } from '@/constants/served-target';
 import {
   EServingPlaceType,
   SERVING_PLACE_TYPE_LABELS
 } from '@/constants/serving-place-type';
+import type {
+  EventDetailsResponseForManager,
+  EventDetailsResponseForSystemAdmin
+} from '@/hooks/dto';
+import { useRejectEventByOrgManager } from '@/hooks/features/uc080-approve-reject-event-by-org-manager/useReject';
+import type { IRoute } from '@/types/types';
+import { User } from '@supabase/supabase-js';
+import { Mail, Phone, UserRound } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { useApproveEventByOrgManager } from '@/hooks/features/uc080-approve-reject-event-by-org-manager/useApprove';
 // No data fetching here; handled by container
 
 type Props = {
@@ -80,6 +90,17 @@ export default function PendingEventDetail({
   const approveLabel =
     effectiveVariant === 'organizer' ? 'Chuyển phê duyệt' : 'Phê duyệt';
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [approveModalOpen, setApproveModalOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const [rejectError, setRejectError] = useState('');
+  const [rejectSuccess, setRejectSuccess] = useState('');
+  const eventId = externalData?.id || '';
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
+  const { trigger: rejectEvent, isMutating: isRejecting } =
+    useRejectEventByOrgManager({ id: eventId, baseUrl });
+  const { trigger: approveEvent, isMutating: isApproving } =
+    useApproveEventByOrgManager({ id: eventId, baseUrl });
 
   interface EventData {
     id: string;
@@ -239,10 +260,7 @@ export default function PendingEventDetail({
           r.recruitmentEndDate ?? r.registrationDeadline
         ),
         submittedDate: fmtDate(r.createdAt ?? r.submittedDate),
-        volunteers:
-          typeof r.maxVolunteers === 'number'
-            ? r.maxVolunteers
-            : sessions.reduce((sum, s) => sum + s.expectedVolAmount, 0),
+        volunteers: sessions.reduce((sum, s) => sum + s.expectedVolAmount, 0),
         expectedBeneficiaries: sessions.reduce(
           (sum, s) => sum + s.expectedSerAmount,
           0
@@ -354,24 +372,28 @@ export default function PendingEventDetail({
     : false;
 
   const lifecycleStatusBadgeClassName: Partial<Record<string, string>> = {
-    'Đang tuyển quân':
-      'mt-1 rounded-full bg-blue-600 px-3 py-0.5 text-xs font-semibold text-white transition-colors duration-150 hover:bg-blue-500',
+    EDITING:
+      'mt-1 rounded-full bg-gray-400 text-white hover:bg-gray-500 px-3 py-0.5 text-xs font-semibold transition-colors duration-150',
+    SUBMITTED:
+      'mt-1 rounded-full bg-blue-500 text-white hover:bg-blue-600 px-3 py-0.5 text-xs font-semibold transition-colors duration-150',
+    APPROVED_BY_MNG:
+      'mt-1 rounded-full bg-green-500 text-white hover:bg-green-600 px-3 py-0.5 text-xs font-semibold transition-colors duration-150',
+    REJECTED_BY_MNG:
+      'mt-1 rounded-full bg-red-500 text-white hover:bg-red-600 px-3 py-0.5 text-xs font-semibold transition-colors duration-150',
+    REJECTED_BY_AD:
+      'mt-1 rounded-full bg-red-700 text-white hover:bg-red-800 px-3 py-0.5 text-xs font-semibold transition-colors duration-150',
     RECRUITING:
-      'mt-1 rounded-full bg-blue-600 px-3 py-0.5 text-xs font-semibold text-white transition-colors duration-150 hover:bg-blue-500',
-    'Đã đóng đơn':
-      'mt-1 rounded-full bg-yellow-400 px-3 py-0.5 text-xs font-semibold text-zinc-900 transition-colors duration-150 hover:bg-yellow-300',
-    FINISHED:
-      'mt-1 rounded-full bg-yellow-400 px-3 py-0.5 text-xs font-semibold text-zinc-900 transition-colors duration-150 hover:bg-yellow-300',
-    'Đang diễn ra':
-      'mt-1 rounded-full bg-green-600 px-3 py-0.5 text-xs font-semibold text-white transition-colors duration-150 hover:bg-green-500',
+      'mt-1 rounded-full bg-yellow-500 text-white hover:bg-yellow-600 px-3 py-0.5 text-xs font-semibold transition-colors duration-150',
+    UPCOMING:
+      'mt-1 rounded-full bg-indigo-500 text-white hover:bg-indigo-600 px-3 py-0.5 text-xs font-semibold transition-colors duration-150',
     ONGOING:
-      'mt-1 rounded-full bg-green-600 px-3 py-0.5 text-xs font-semibold text-white transition-colors duration-150 hover:bg-green-500',
-    'Đã kết thúc':
-      'mt-1 rounded-full bg-red-600 px-3 py-0.5 text-xs font-semibold text-white transition-colors duration-150 hover:bg-red-500',
+      'mt-1 rounded-full bg-orange-500 text-white hover:bg-orange-600 px-3 py-0.5 text-xs font-semibold transition-colors duration-150',
     ENDED:
-      'mt-1 rounded-full bg-red-600 px-3 py-0.5 text-xs font-semibold text-white transition-colors duration-150 hover:bg-red-500',
+      'mt-1 rounded-full bg-zinc-500 text-white hover:bg-zinc-600 px-3 py-0.5 text-xs font-semibold transition-colors duration-150',
+    COMPLETED:
+      'mt-1 rounded-full bg-green-700 text-white hover:bg-green-800 px-3 py-0.5 text-xs font-semibold transition-colors duration-150',
     CANCELLED:
-      'mt-1 rounded-full bg-red-600 px-3 py-0.5 text-xs font-semibold text-white transition-colors duration-150 hover:bg-red-500'
+      'mt-1 rounded-full bg-zinc-700 text-white hover:bg-zinc-800 px-3 py-0.5 text-xs font-semibold transition-colors duration-150'
   };
 
   return (
@@ -596,7 +618,7 @@ export default function PendingEventDetail({
                         Tổng số tình nguyện viên dự kiến
                       </p>
                       <p className="text-sm text-zinc-700">
-                        {event.volunteers}
+                        {totalSessionVolunteers}
                       </p>
                     </div>
                     <div className="space-y-1">
@@ -604,7 +626,7 @@ export default function PendingEventDetail({
                         Tổng số đối tượng phục vụ dự kiến
                       </p>
                       <p className="text-sm text-zinc-700">
-                        {event.expectedBeneficiaries}
+                        {totalSessionServedTargets}
                       </p>
                     </div>
                     <div className="space-y-1">
@@ -800,24 +822,65 @@ export default function PendingEventDetail({
                 )}
               </Card>
 
-              {showActions && (
+              {showActions && event?.status === 'SUBMITTED' && (
                 <div className="flex flex-wrap justify-end gap-2">
                   <Button
                     className="bg-red-600 text-white hover:bg-red-700"
-                    onClick={() => {
-                      // TODO: handle reject
-                    }}
+                    onClick={() => setRejectModalOpen(true)}
                   >
                     Từ chối
                   </Button>
                   <Button
                     className="bg-blue-600 text-white hover:bg-blue-700"
-                    onClick={() => {
-                      // TODO: handle approve
-                    }}
+                    onClick={() => setApproveModalOpen(true)}
                   >
                     {approveLabel}
                   </Button>
+                  {/* Modal xác nhận phê duyệt */}
+                  <Dialog
+                    open={approveModalOpen}
+                    onOpenChange={setApproveModalOpen}
+                  >
+                    <DialogContent className="bg-white max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Xác nhận phê duyệt sự kiện</DialogTitle>
+                      </DialogHeader>
+                      <p className="mt-2 text-sm text-zinc-700">
+                        Bạn có chắc chắn muốn chuyển phê duyệt dự kiện cho quản
+                        trị viên?
+                      </p>
+                      <DialogFooter className="mt-4 flex gap-2">
+                        <Button
+                          variant="outline"
+                          className="bg-zinc-200 text-zinc-700 border-none hover:bg-zinc-300"
+                          onClick={() => setApproveModalOpen(false)}
+                          disabled={isApproving}
+                        >
+                          Hủy
+                        </Button>
+                        <Button
+                          className="bg-blue-600 text-white hover:bg-blue-700"
+                          disabled={isApproving}
+                          onClick={async () => {
+                            try {
+                              await approveEvent();
+                              toast.success('Đã phê duyệt sự kiện thành công!');
+                              setApproveModalOpen(false);
+                              setTimeout(() => {
+                                router.push(backBasePath);
+                              }, 500);
+                            } catch (err: any) {
+                              toast.error(
+                                err?.message || 'Có lỗi xảy ra khi phê duyệt.'
+                              );
+                            }
+                          }}
+                        >
+                          Xác nhận chuyển phê duyệt
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               )}
 
@@ -849,6 +912,63 @@ export default function PendingEventDetail({
               className="h-auto w-full rounded-md object-contain"
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal nhập lý do từ chối */}
+      <Dialog open={rejectModalOpen} onOpenChange={setRejectModalOpen}>
+        <DialogContent className="bg-white max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nhập lý do từ chối sự kiện</DialogTitle>
+          </DialogHeader>
+          <Input
+            placeholder="Nhập lý do từ chối..."
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            disabled={isRejecting}
+          />
+          {rejectError && (
+            <p className="text-red-600 text-sm mt-2">{rejectError}</p>
+          )}
+          {rejectSuccess && (
+            <p className="text-green-600 text-sm mt-2">{rejectSuccess}</p>
+          )}
+          <DialogFooter className="mt-4 flex gap-2">
+            <Button
+              variant="outline"
+              className="bg-zinc-200 text-zinc-700 border-none hover:bg-zinc-300"
+              onClick={() => setRejectModalOpen(false)}
+              disabled={isRejecting}
+            >
+              Hủy
+            </Button>
+            <Button
+              className="bg-red-600 text-white hover:bg-red-700"
+              disabled={isRejecting || !rejectReason.trim()}
+              onClick={async () => {
+                setRejectError('');
+                setRejectSuccess('');
+                if (!rejectReason.trim()) {
+                  setRejectError('Vui lòng nhập lý do từ chối.');
+                  return;
+                }
+                try {
+                  await rejectEvent({ reason: rejectReason });
+                  toast.success('Đã từ chối sự kiện thành công!');
+                  setRejectSuccess('Đã từ chối sự kiện thành công!');
+                  setRejectModalOpen(false);
+                  setRejectReason('');
+                  setTimeout(() => {
+                    router.push(backBasePath);
+                  }, 500);
+                } catch (err: any) {
+                  setRejectError(err?.message || 'Có lỗi xảy ra khi từ chối.');
+                }
+              }}
+            >
+              Xác nhận từ chối
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>

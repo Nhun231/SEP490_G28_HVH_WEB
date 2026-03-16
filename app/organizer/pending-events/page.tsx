@@ -41,6 +41,20 @@ export default function OrganizerPendingEventsPage() {
     fetchUserData();
   }, [supabase, router]);
 
+  // Badge color mapping for each status
+  const badgeClassNameByStatus = {
+    EDITING: 'bg-gray-400 text-white hover:bg-gray-500',
+    SUBMITTED: 'bg-blue-500 text-white hover:bg-blue-600',
+    APPROVED_BY_MNG: 'bg-green-500 text-white hover:bg-green-600',
+    REJECTED_BY_MNG: 'bg-red-400 text-white hover:bg-red-500',
+    REJECTED_BY_AD: 'bg-red-700 text-white hover:bg-red-800',
+    RECRUITING: 'bg-yellow-500 text-white hover:bg-yellow-600',
+    UPCOMING: 'bg-indigo-500 text-white hover:bg-indigo-600',
+    ONGOING: 'bg-orange-500 text-white hover:bg-orange-600',
+    ENDED: 'bg-zinc-500 text-white hover:bg-zinc-600',
+    COMPLETED: 'bg-green-700 text-white hover:bg-green-800',
+    CANCELLED: 'bg-zinc-700 text-white hover:bg-zinc-800'
+  };
   return (
     <div>
       <PendingEvents
@@ -54,6 +68,8 @@ export default function OrganizerPendingEventsPage() {
         externalData={pendingEventsData}
         externalIsLoading={isPendingEventsLoading}
         externalError={pendingEventsError ?? null}
+        badgeFromStatus={true}
+        badgeClassNameByStatus={badgeClassNameByStatus}
       />
     </div>
   );

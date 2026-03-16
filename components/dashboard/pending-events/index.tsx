@@ -33,7 +33,8 @@ import { cn } from '@/utils/cn';
 import type { IRoute } from '@/types/types';
 import type { PendingEventsResponse } from '@/hooks/dto';
 import { EEventStatus, EVENT_STATUS_LABELS } from '@/constants/event-status';
-import { usePendingEvents } from '@/hooks/features/commons/list-event-for-admin/usePendingEvents';
+import { getBadgeClassNameByStatus } from '@/constants/event-badge-status';
+// Data fetching is now handled outside this component. Only presentational logic remains.
 
 interface Props {
   user: User | null | undefined;
@@ -198,24 +199,10 @@ export default function PendingEvents({
   >({});
   const pageSize = 10;
 
-  const hasExternalData =
-    externalData !== undefined || externalIsLoading !== undefined;
-
-  const {
-    data: _internalData,
-    isLoading: _internalIsLoading,
-    error: _internalError
-  } = usePendingEvents({
-    name: searchQuery,
-    baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL!,
-    enabled: !hasExternalData
-  });
-
-  const pendingEventsResponse = hasExternalData ? externalData : _internalData;
-  const isPendingEventsLoading = hasExternalData
-    ? (externalIsLoading ?? false)
-    : _internalIsLoading;
-  const pendingEventsError = hasExternalData ? externalError : _internalError;
+  // Data, loading, and error are now always controlled by parent via props
+  const pendingEventsResponse = externalData;
+  const isPendingEventsLoading = externalIsLoading ?? false;
+  const pendingEventsError = externalError ?? null;
 
   const pendingEvents = useMemo<PendingEvent[]>(() => {
     const rawList = getEventListFromResponse(pendingEventsResponse);
@@ -337,6 +324,14 @@ export default function PendingEvents({
   const getUniqueValuesForKey = (key: ValueFilterKey) => {
     const unique = new Set<string>();
     pendingEvents.forEach((e) => unique.add(getFilterValueForKey(e, key)));
+    // For status, return array of values sorted by label
+    if (key === 'status') {
+      return Array.from(unique).sort((a, b) => {
+        const labelA = EVENT_STATUS_LABELS[a as EEventStatus] || a;
+        const labelB = EVENT_STATUS_LABELS[b as EEventStatus] || b;
+        return labelA.localeCompare(labelB, 'vi', { sensitivity: 'base' });
+      });
+    }
     return Array.from(unique).sort((a, b) =>
       a.localeCompare(b, 'vi', { sensitivity: 'base' })
     );
@@ -372,8 +367,14 @@ export default function PendingEvents({
       const q = normalizeText(search);
       if (!q) return values;
       const tokens = q.split(' ').filter(Boolean);
+      if (columnKey === 'status') {
+        return values.filter((v) => {
+          const nv = normalizeText(EVENT_STATUS_LABELS[v as EEventStatus] || v);
+          return tokens.every((t) => nv.includes(t));
+        });
+      }
       return values.filter((v) => {
-        const nv = normalizeText(v);
+        const nv = normalizeText(typeof v === 'string' ? v : '');
         return tokens.every((t) => nv.includes(t));
       });
     }, [values, search]);
@@ -493,6 +494,10 @@ export default function PendingEvents({
               ) : (
                 filteredValues.map((v) => {
                   const checked = localSelected.includes(v);
+                  const label =
+                    columnKey === 'status'
+                      ? EVENT_STATUS_LABELS[v as EEventStatus] || v
+                      : v;
                   return (
                     <button
                       key={v}
@@ -516,7 +521,7 @@ export default function PendingEvents({
                       >
                         {checked ? '✓' : ''}
                       </span>
-                      <span className="truncate">{v}</span>
+                      <span className="truncate">{label}</span>
                     </button>
                   );
                 })
@@ -534,6 +539,14 @@ export default function PendingEvents({
                 }}
               >
                 Hủy
+              </Button>
+              <Button
+                type="button"
+                variant="link"
+                className="h-auto p-0 text-sm"
+                onClick={() => setLocalSelected(filteredValues)}
+              >
+                Chọn tất cả {filteredValues.length ? filteredValues.length : ''}
               </Button>
               <Button
                 type="button"
@@ -724,14 +737,7 @@ export default function PendingEvents({
   };
 
   const filteredEvents = useMemo(() => {
-    const allowedStatuses =
-      statusFilters && statusFilters.length > 0
-        ? statusFilters
-        : [statusFilter];
-
-    let result = pendingEvents.filter((event) =>
-      allowedStatuses.includes(event.status)
-    );
+    let result = pendingEvents;
 
     const q = normalizeText(searchQuery.trim());
     if (q) {
@@ -962,7 +968,13 @@ export default function PendingEvents({
                   </div>
                 </TableHead>
                 <TableHead className="text-zinc-700">
-                  <span>Trạng thái</span>
+                  <div className="flex items-center justify-between gap-2">
+                    <span>Trạng thái</span>
+                    <ValueFilterDropdown
+                      columnKey="status"
+                      label="Trạng thái"
+                    />
+                  </div>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -1000,16 +1012,14 @@ export default function PendingEvents({
                     </TableCell>
                     <TableCell>
                       {(() => {
+                        // Always use label for text, and get class by status code or label
                         const text = badgeFromStatus
                           ? EVENT_STATUS_LABELS[event.status as EEventStatus] ||
                             event.status
                           : badgeText;
-                        const className =
-                          badgeFromStatus &&
-                          badgeClassNameByStatus?.[event.status]
-                            ? badgeClassNameByStatus[event.status]
-                            : badgeClassName;
-
+                        const className = badgeFromStatus
+                          ? getBadgeClassNameByStatus(event.status)
+                          : badgeClassName;
                         return <Badge className={className}>{text}</Badge>;
                       })()}
                     </TableCell>

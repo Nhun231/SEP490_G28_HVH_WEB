@@ -1,4 +1,4 @@
-import PendingEvents from '@/components/dashboard/pending-events';
+import ApprovedEventsClient from './ApprovedEventsClient';
 import { organizerRoutes } from '@/components/routes';
 import { createClient } from '@/utils/supabase/server';
 import { getUser, getUserDetails } from '@/utils/supabase/queries';
@@ -16,7 +16,7 @@ export default async function OrganizerApprovedEventsPage() {
   }
 
   return (
-    <PendingEvents
+    <ApprovedEventsClient
       user={user}
       userDetails={userDetails}
       detailBasePath="/organizer/approved-events"
@@ -32,7 +32,7 @@ export default async function OrganizerApprovedEventsPage() {
       ]}
       pageTitle="Sự kiện đã phê duyệt"
       pageDescription="Danh sách các sự kiện đã được phê duyệt"
-      emptyStateText="Không có sự kiện đã phê duyệt"
+      emptyStateText="Không có sự kiện đã được phê duyệt"
       badgeFromStatus={true}
       badgeClassName="rounded-full bg-zinc-500 text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150"
       badgeClassNameByStatus={{

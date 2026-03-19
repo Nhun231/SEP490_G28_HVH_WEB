@@ -708,7 +708,10 @@ export default function PendingEventDetail({
                   {/* Map hiển thị vị trí check-in */}
                   {typeof event.latCheckInLocation === 'number' &&
                     typeof event.lngCheckInLocation === 'number' && (
-                      <div className="mt-6 h-[300px] w-full rounded-lg overflow-hidden border border-zinc-200">
+                      <div
+                        className="mt-6 h-[300px] w-full rounded-lg overflow-hidden border border-zinc-200"
+                        style={{ position: 'relative', zIndex: 0 }}
+                      >
                         <MapSection
                           lat={event.latCheckInLocation}
                           lng={event.lngCheckInLocation}

@@ -26,7 +26,7 @@ export default function MapSection({ lat, lng, popupText }: MapSectionProps) {
     <MapContainer
       center={[lat, lng]}
       zoom={13}
-      style={{ height: '400px', width: '100%' }}
+      style={{ height: '400px', width: '100%', zIndex: 1 }}
     >
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

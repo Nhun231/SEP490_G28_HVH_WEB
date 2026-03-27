@@ -136,14 +136,7 @@ const splitEvidenceString = (value?: string | null) => {
     .filter(Boolean);
 };
 
-// Thêm hàm tiện ích để lấy full URL cho ảnh Supabase
-const SUPABASE_DOMAIN = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-function getFullUrl(url: string) {
-  if (!url) return '';
-  if (url.startsWith('http')) return url;
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  return supabaseUrl + '/storage/v1' + url;
-}
+import { getFullSupabaseImageUrl } from '@/utils/helpers';
 
 export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
   const router = useRouter();
@@ -306,11 +299,13 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
                         <button
                           key={url}
                           type="button"
-                          onClick={() => setPreviewImage(getFullUrl(url))}
+                          onClick={() =>
+                            setPreviewImage(getFullSupabaseImageUrl(url))
+                          }
                           className="focus:outline-none"
                         >
                           <img
-                            src={getFullUrl(url)}
+                            src={getFullSupabaseImageUrl(url)}
                             alt={`Giấy phép đăng ký ${idx + 1}`}
                             className="rounded-md border border-zinc-200 object-cover max-w-xs max-h-60 cursor-pointer hover:opacity-80 transition"
                           />
@@ -318,7 +313,7 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
                       ) : (
                         <a
                           key={url}
-                          href={getFullUrl(url)}
+                          href={getFullSupabaseImageUrl(url)}
                           target="_blank"
                           rel="noreferrer"
                           className="text-sm text-blue-600 hover:underline"
@@ -370,12 +365,14 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
                     <button
                       type="button"
                       onClick={() =>
-                        setPreviewImage(getFullUrl(detail.managerCidFrontUrl))
+                        setPreviewImage(
+                          getFullSupabaseImageUrl(detail.managerCidFrontUrl)
+                        )
                       }
                       className="w-full focus:outline-none"
                     >
                       <img
-                        src={getFullUrl(detail.managerCidFrontUrl)}
+                        src={getFullSupabaseImageUrl(detail.managerCidFrontUrl)}
                         alt="CCCD mặt trước"
                         className="mt-2 h-40 w-full rounded-md border border-zinc-200 object-cover cursor-pointer hover:opacity-80 transition"
                         loading="lazy"
@@ -395,12 +392,14 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
                     <button
                       type="button"
                       onClick={() =>
-                        setPreviewImage(getFullUrl(detail.managerCidBackUrl))
+                        setPreviewImage(
+                          getFullSupabaseImageUrl(detail.managerCidBackUrl)
+                        )
                       }
                       className="w-full focus:outline-none"
                     >
                       <img
-                        src={getFullUrl(detail.managerCidBackUrl)}
+                        src={getFullSupabaseImageUrl(detail.managerCidBackUrl)}
                         alt="CCCD mặt sau"
                         className="mt-2 h-40 w-full rounded-md border border-zinc-200 object-cover cursor-pointer hover:opacity-80 transition"
                         loading="lazy"
@@ -420,12 +419,16 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
                     <button
                       type="button"
                       onClick={() =>
-                        setPreviewImage(getFullUrl(detail.managerCidHoldingUrl))
+                        setPreviewImage(
+                          getFullSupabaseImageUrl(detail.managerCidHoldingUrl)
+                        )
                       }
                       className="w-full focus:outline-none"
                     >
                       <img
-                        src={getFullUrl(detail.managerCidHoldingUrl)}
+                        src={getFullSupabaseImageUrl(
+                          detail.managerCidHoldingUrl
+                        )}
                         alt="Ảnh cầm CCCD"
                         className="mt-2 h-40 w-full rounded-md border border-zinc-200 object-cover cursor-pointer hover:opacity-80 transition"
                         loading="lazy"
@@ -454,7 +457,7 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
                   {previewImage?.includes('managerCidHoldingUrl') &&
                     'Ảnh cầm CCCD'}
                   {detail?.legalDocumentsUrls?.some(
-                    (url) => previewImage === getFullUrl(url)
+                    (url) => previewImage === getFullSupabaseImageUrl(url)
                   ) && 'Giấy phép đăng ký'}
                   {!previewImage && 'Dialog Title'}
                 </DialogTitle>
@@ -463,7 +466,7 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
                     src={previewImage}
                     alt="Ảnh minh họa"
                     className="h-auto w-full rounded-md object-contain"
-                    style={{ maxHeight: '80vh' }}
+                    style={{ maxHeight: '80vh', maxWidth: '100vw' }}
                   />
                 )}
               </DialogContent>
@@ -549,11 +552,13 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
                       <button
                         key={url}
                         type="button"
-                        onClick={() => setPreviewImage(getFullUrl(url))}
+                        onClick={() =>
+                          setPreviewImage(getFullSupabaseImageUrl(url))
+                        }
                         className="focus:outline-none"
                       >
                         <img
-                          src={getFullUrl(url)}
+                          src={getFullSupabaseImageUrl(url)}
                           alt="Bằng chứng bổ sung"
                           className="rounded-md border border-zinc-200 object-cover max-w-xs max-h-60 cursor-pointer hover:opacity-80 transition"
                         />
@@ -561,7 +566,7 @@ export default function PendingOrgDetail({ user, userDetails, detail }: Props) {
                     ) : (
                       <a
                         key={url}
-                        href={getFullUrl(url)}
+                        href={getFullSupabaseImageUrl(url)}
                         target="_blank"
                         rel="noreferrer"
                         className="text-sm text-blue-600 hover:underline"

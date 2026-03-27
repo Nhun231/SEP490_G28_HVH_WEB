@@ -6,6 +6,7 @@ import DashboardLayout from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { getFullSupabaseImageUrl } from '@/utils/helpers';
 import {
   Dialog,
   DialogContent,
@@ -34,7 +35,12 @@ const renderValue = (value?: string | number | boolean | null) => {
   return String(value);
 };
 
-const renderCidImage = (src: string | null, label: string) => {
+// Custom image renderer to allow modal preview
+const renderCidImage = (
+  src: string | null,
+  label: string,
+  onClick?: (url: string) => void
+) => {
   if (!src) {
     return (
       <div className="mt-2 flex h-40 w-full items-center justify-center rounded-md border border-dashed border-zinc-200 bg-zinc-50 text-xs text-zinc-500">
@@ -42,14 +48,21 @@ const renderCidImage = (src: string | null, label: string) => {
       </div>
     );
   }
-
+  const url = getFullSupabaseImageUrl(src);
   return (
-    <img
-      src={src}
-      alt={label}
-      className="mt-2 h-40 w-full rounded-md border border-zinc-200 object-cover"
-      loading="lazy"
-    />
+    <button
+      type="button"
+      onClick={onClick ? () => onClick(url) : undefined}
+      className="w-full focus:outline-none"
+      style={{ background: 'none', padding: 0, border: 'none' }}
+    >
+      <img
+        src={url}
+        alt={label}
+        className="mt-2 h-40 w-full rounded-md border border-zinc-200 object-cover cursor-pointer hover:opacity-80 transition"
+        loading="lazy"
+      />
+    </button>
   );
 };
 
@@ -67,6 +80,8 @@ export default function PendingAccountDetail({
   const [rejectReason, setRejectReason] = useState('');
   const [accountName, setAccountName] = useState(defaultFullName ?? '');
   const isApproveEnabled = accountName.trim().length > 0;
+  // State for image preview modal
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   useEffect(() => {
     setAccountName(defaultFullName ?? '');
@@ -204,20 +219,48 @@ export default function PendingAccountDetail({
                   <p className="text-xs font-medium text-zinc-600">
                     CCCD mặt trước
                   </p>
-                  {renderCidImage(verification.cid_front, 'CCCD mặt trước')}
+                  {renderCidImage(
+                    verification.cid_front,
+                    'CCCD mặt trước',
+                    setPreviewImage
+                  )}
                 </div>
                 <div>
                   <p className="text-xs font-medium text-zinc-600">
                     CCCD mặt sau
                   </p>
-                  {renderCidImage(verification.cid_back, 'CCCD mặt sau')}
+                  {renderCidImage(
+                    verification.cid_back,
+                    'CCCD mặt sau',
+                    setPreviewImage
+                  )}
                 </div>
                 <div>
                   <p className="text-xs font-medium text-zinc-600">
                     Ảnh cầm CCCD
                   </p>
-                  {renderCidImage(verification.cid_holding, 'Ảnh cầm CCCD')}
+                  {renderCidImage(
+                    verification.cid_holding,
+                    'Ảnh cầm CCCD',
+                    setPreviewImage
+                  )}
                 </div>
+                {/* Modal xem ảnh lớn */}
+                <Dialog
+                  open={!!previewImage}
+                  onOpenChange={() => setPreviewImage(null)}
+                >
+                  <DialogContent className="max-w-4xl border-0 bg-transparent p-0 shadow-none">
+                    {previewImage && (
+                      <img
+                        src={previewImage}
+                        alt="Ảnh minh họa"
+                        className="h-auto w-full rounded-md object-contain"
+                        style={{ maxHeight: '80vh', maxWidth: '100vw' }}
+                      />
+                    )}
+                  </DialogContent>
+                </Dialog>
               </div>
             </Card>
 

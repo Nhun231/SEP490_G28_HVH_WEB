@@ -24,7 +24,7 @@ import type {
 } from '@/hooks/dto';
 import type { ActivityDomain, ActivitySubDomain } from '@/hooks/entity';
 import { User } from '@supabase/supabase-js';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Pencil } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -526,6 +526,18 @@ export default function EventSettings(props: Props) {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openEditModal(domain);
+                    }}
+                    aria-label="Chỉnh sửa lĩnh vực"
+                  >
+                    <Pencil className="h-4 w-4 text-zinc-500" />
+                  </Button>
                   <Switch
                     checked={domain.active}
                     onCheckedChange={() => handleSwitchDomain(domain)}

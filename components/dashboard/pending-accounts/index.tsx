@@ -14,6 +14,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem
+} from '@/components/ui/select';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -56,6 +63,7 @@ export default function PendingAccounts({ user, userDetails }: Props) {
 
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchType, setSearchType] = useState<'email' | 'cid'>('email');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
@@ -73,7 +81,7 @@ export default function PendingAccounts({ user, userDetails }: Props) {
     pageNumber: Math.max(0, currentPage - 1),
     pageSize,
     status: EAccountStatus.PENDING,
-    email: searchQuery,
+    email: '', // Không lọc theo email ở API nữa, chỉ lọc phía client
     baseUrl: apiBaseUrl
   });
 
@@ -82,7 +90,7 @@ export default function PendingAccounts({ user, userDetails }: Props) {
     return data.content.map((item) => ({
       id: item.id,
       email: item.email ?? null,
-      phone: null,
+      phone: 'phone' in item ? ((item.phone as string | null) ?? null) : null,
       cid: item.cid ?? null,
       status: item.status ?? null,
       createdAt: item.createdAt ?? null
@@ -90,10 +98,23 @@ export default function PendingAccounts({ user, userDetails }: Props) {
   }, [data]);
 
   const filteredAccounts = useMemo(() => {
-    return effectiveAccounts.filter(
+    let filtered = effectiveAccounts.filter(
       (account) => account.status === EAccountStatus.PENDING
     );
-  }, [effectiveAccounts]);
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      if (searchType === 'email') {
+        filtered = filtered.filter((acc) =>
+          (acc.email || '').toLowerCase().includes(q)
+        );
+      } else if (searchType === 'cid') {
+        filtered = filtered.filter((acc) =>
+          (acc.cid || '').toLowerCase().includes(q)
+        );
+      }
+    }
+    return filtered;
+  }, [effectiveAccounts, searchQuery, searchType]);
 
   const totalPages = data?.page?.totalPages
     ? Math.max(1, data.page.totalPages)
@@ -670,7 +691,7 @@ export default function PendingAccounts({ user, userDetails }: Props) {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery]);
+  }, [searchQuery, searchType]);
 
   return (
     <DashboardLayout
@@ -682,9 +703,25 @@ export default function PendingAccounts({ user, userDetails }: Props) {
       <div className="w-full max-w-none">
         <div className="mb-6"></div>
 
-        <div className="mb-6">
+        <div className="mb-6 flex gap-2 items-center">
+          <Select
+            value={searchType}
+            onValueChange={(v) => setSearchType(v as 'email' | 'cid')}
+          >
+            <SelectTrigger className="w-32">
+              <SelectValue>
+                {searchType === 'email' ? 'Email' : 'CCCD'}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="email">Email</SelectItem>
+              <SelectItem value="cid">CCCD</SelectItem>
+            </SelectContent>
+          </Select>
           <Input
-            placeholder="Tìm kiếm email..."
+            placeholder={
+              searchType === 'email' ? 'Tìm kiếm email...' : 'Tìm kiếm CCCD...'
+            }
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="bg-white border-zinc-200 text-zinc-900 placeholder:text-zinc-500 focus-visible:ring-0 focus-visible:ring-offset-0"

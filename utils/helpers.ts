@@ -1,3 +1,14 @@
+// Returns a full Supabase Storage image URL given a storage path or full URL
+export function getFullSupabaseImageUrl(
+  url: string | null | undefined
+): string {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  // Remove leading slashes if present
+  const normalized = url.startsWith('/') ? url : '/' + url;
+  return supabaseUrl + '/storage/v1' + normalized;
+}
 import { Database } from '@/types/types_db';
 
 type Price = Database['public']['Tables']['prices']['Row'];

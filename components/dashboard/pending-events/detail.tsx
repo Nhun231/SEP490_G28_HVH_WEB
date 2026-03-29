@@ -58,6 +58,45 @@ import { User } from '@supabase/supabase-js';
 import { Mail, Phone, UserRound } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+
+// Mock host data
+const mockHosts = [
+  {
+    id: 1,
+    name: 'Nguyễn Văn An',
+    email: 'nguyenvanan@email.com',
+    phone: '0901234567',
+    eventCount: 12
+  },
+  {
+    id: 2,
+    name: 'Lê Minh Cường',
+    email: 'leminhcuong@email.com',
+    phone: '0923456789',
+    eventCount: 8
+  },
+  {
+    id: 3,
+    name: 'Trần Thị Bích',
+    email: 'tranbich@email.com',
+    phone: '0912345678',
+    eventCount: 15
+  },
+  {
+    id: 4,
+    name: 'Phạm Thu Dung',
+    email: 'phamthudung@email.com',
+    phone: '0934567890',
+    eventCount: 6
+  },
+  {
+    id: 5,
+    name: 'Hoàng Văn Đức',
+    email: 'hoangvanduc@email.com',
+    phone: '0945678901',
+    eventCount: 9
+  }
+];
 import { toast } from 'sonner';
 import { useApproveEventByOrgManager } from '@/hooks/features/uc080-approve-reject-event-by-org-manager/useApprove';
 // No data fetching here; handled by container
@@ -459,6 +498,99 @@ export default function PendingEventDetail({
         event.status
       )
     : false;
+
+  // --- Host change dialog state (move to top level) ---
+  // Extended mock data for hosts (10+ entries)
+  const mockHosts = [
+    {
+      id: 1,
+      name: 'Nguyễn Văn An',
+      email: 'an.nguyen@example.com',
+      phone: '0901234567',
+      eventCount: 5
+    },
+    {
+      id: 2,
+      name: 'Trần Thị Bình',
+      email: 'binh.tran@example.com',
+      phone: '0912345678',
+      eventCount: 3
+    },
+    {
+      id: 3,
+      name: 'Lê Quốc Cường',
+      email: 'cuong.le@example.com',
+      phone: '0923456789',
+      eventCount: 7
+    },
+    {
+      id: 4,
+      name: 'Phạm Minh Dũng',
+      email: 'dung.pham@example.com',
+      phone: '0934567890',
+      eventCount: 2
+    },
+    {
+      id: 5,
+      name: 'Vũ Thị Hạnh',
+      email: 'hanh.vu@example.com',
+      phone: '0945678901',
+      eventCount: 4
+    },
+    {
+      id: 6,
+      name: 'Đỗ Văn Hòa',
+      email: 'hoa.do@example.com',
+      phone: '0956789012',
+      eventCount: 6
+    },
+    {
+      id: 7,
+      name: 'Ngô Thị Lan',
+      email: 'lan.ngo@example.com',
+      phone: '0967890123',
+      eventCount: 1
+    },
+    {
+      id: 8,
+      name: 'Bùi Quốc Minh',
+      email: 'minh.bui@example.com',
+      phone: '0978901234',
+      eventCount: 8
+    },
+    {
+      id: 9,
+      name: 'Lý Thị Ngọc',
+      email: 'ngoc.ly@example.com',
+      phone: '0989012345',
+      eventCount: 2
+    },
+    {
+      id: 10,
+      name: 'Trịnh Văn Phúc',
+      email: 'phuc.trinh@example.com',
+      phone: '0990123456',
+      eventCount: 5
+    },
+    {
+      id: 11,
+      name: 'Tạ Thị Quỳnh',
+      email: 'quynh.ta@example.com',
+      phone: '0902345678',
+      eventCount: 3
+    },
+    {
+      id: 12,
+      name: 'Phan Văn Sơn',
+      email: 'son.phan@example.com',
+      phone: '0913456789',
+      eventCount: 7
+    }
+  ];
+  const [hostDialogOpen, setHostDialogOpen] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [selectedHost, setSelectedHost] = useState<any>(null);
+  const [changingHost, setChangingHost] = useState(false);
 
   return (
     <>
@@ -874,12 +1006,111 @@ export default function PendingEventDetail({
                           type="button"
                           variant="ghost"
                           className="h-auto p-0 text-sm text-blue-600 hover:bg-transparent hover:text-blue-700"
-                          onClick={() => {
-                            // TODO: handle change host
-                          }}
+                          onClick={() => setHostDialogOpen(true)}
                         >
                           Thay đổi host
                         </Button>
+                        {/* Dialog chọn host mới */}
+                        <Dialog
+                          open={hostDialogOpen}
+                          onOpenChange={setHostDialogOpen}
+                        >
+                          <DialogContent className="max-w-md bg-white">
+                            <DialogHeader>
+                              <DialogTitle>Chọn host mới</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+                              {mockHosts.map((host) => (
+                                <button
+                                  key={host.id}
+                                  className="w-full flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 hover:bg-zinc-100 transition"
+                                  onClick={() => {
+                                    setSelectedHost(host);
+                                    setHostDialogOpen(false);
+                                    setTimeout(
+                                      () => setConfirmDialogOpen(true),
+                                      200
+                                    );
+                                  }}
+                                >
+                                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-500 text-white font-bold text-lg">
+                                    {host.name.charAt(0)}
+                                  </div>
+                                  <div className="flex-1 min-w-0 text-left">
+                                    <div className="font-semibold text-zinc-900 truncate">
+                                      {host.name}
+                                    </div>
+                                    <div className="text-xs text-zinc-600 truncate">
+                                      {host.email}
+                                    </div>
+                                    <div className="text-xs text-zinc-600">
+                                      {host.phone}
+                                    </div>
+                                    <div className="text-xs text-zinc-500 mt-1">
+                                      {host.eventCount} sự kiện
+                                    </div>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+
+                        {/* Dialog xác nhận thay đổi host */}
+                        <Dialog
+                          open={confirmDialogOpen}
+                          onOpenChange={setConfirmDialogOpen}
+                        >
+                          <DialogContent className="max-w-md bg-white">
+                            <DialogHeader>
+                              <DialogTitle>Xác nhận thay đổi host</DialogTitle>
+                            </DialogHeader>
+                            <div className="text-sm text-zinc-700 mb-4">
+                              Bạn có chắc chắn muốn thay đổi host từ:
+                              <br />
+                              <span className="font-semibold text-red-600">
+                                {event?.hostName}
+                              </span>
+                              <span className="mx-2">→</span>
+                              <span className="font-semibold text-green-600">
+                                {selectedHost?.name}
+                              </span>
+                              <br />
+                              cho sự kiện:{' '}
+                              <span className="font-semibold">
+                                "{event?.eventName}"
+                              </span>
+                            </div>
+                            <DialogFooter className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                className="bg-zinc-200 text-zinc-700 border-none hover:bg-zinc-300"
+                                onClick={() => setConfirmDialogOpen(false)}
+                                disabled={changingHost}
+                              >
+                                Hủy bỏ
+                              </Button>
+                              <Button
+                                className="bg-blue-600 text-white hover:bg-blue-700"
+                                disabled={changingHost}
+                                onClick={async () => {
+                                  setChangingHost(true);
+                                  // Giả lập đổi host, thực tế gọi API ở đây
+                                  setTimeout(() => {
+                                    setChangingHost(false);
+                                    setConfirmDialogOpen(false);
+                                    toast.success(
+                                      'Đã thay đổi host thành công!'
+                                    );
+                                    // Có thể reload lại trang hoặc cập nhật state event.hostName nếu muốn
+                                  }, 1200);
+                                }}
+                              >
+                                Xác nhận thay đổi
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
                       </div>
 
                       <div className="mt-4 grid gap-3">

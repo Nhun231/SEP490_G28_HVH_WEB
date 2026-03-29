@@ -27,6 +27,8 @@ import {
 import { useRegisterOrg } from '@/hooks/features/uc016-register-organization/useRegisterOrg';
 import { useSendRegisterOrgVerifyMail } from '@/hooks/features/uc016-register-organization/useSendRegisterOrgVerifyMail';
 import { useState, useMemo, useEffect } from 'react';
+// Giới hạn kích thước file 5MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 import { useUploadFiles } from '@/hooks/features/commons/bucket/useUploadFiles';
 import { useDropzone } from 'react-dropzone';
 
@@ -49,6 +51,14 @@ interface RegisterOrgFormState {
 }
 
 export default function RegisterOrgPage() {
+  // State cho cảnh báo file quá lớn
+  const [fileSizeErrors, setFileSizeErrors] = useState({
+    managerCidFront: false,
+    managerCidBack: false,
+    managerCidHolding: false,
+    activityLicense: [] as boolean[],
+    otherEvidences: [] as boolean[]
+  });
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL!;
   const { uploadFileToSignedUrl } = useUploadFiles();
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -91,6 +101,13 @@ export default function RegisterOrgPage() {
       onDrop: (files) => {
         const file = files[0];
         if (!file) return;
+        if (file.size > MAX_FILE_SIZE) {
+          setFileSizeErrors((prev) => ({ ...prev, managerCidFront: true }));
+          setForm((f) => ({ ...f, managerCidFront: null }));
+          return;
+        } else {
+          setFileSizeErrors((prev) => ({ ...prev, managerCidFront: false }));
+        }
         setForm((f) => ({
           ...f,
           managerCidFront: file
@@ -166,6 +183,13 @@ export default function RegisterOrgPage() {
       onDrop: (files) => {
         const file = files[0];
         if (!file) return;
+        if (file.size > MAX_FILE_SIZE) {
+          setFileSizeErrors((prev) => ({ ...prev, managerCidBack: true }));
+          setForm((f) => ({ ...f, managerCidBack: null }));
+          return;
+        } else {
+          setFileSizeErrors((prev) => ({ ...prev, managerCidBack: false }));
+        }
         setForm((f) => ({
           ...f,
           managerCidBack: file
@@ -181,6 +205,13 @@ export default function RegisterOrgPage() {
     onDrop: (files) => {
       const file = files[0];
       if (!file) return;
+      if (file.size > MAX_FILE_SIZE) {
+        setFileSizeErrors((prev) => ({ ...prev, managerCidHolding: true }));
+        setForm((f) => ({ ...f, managerCidHolding: null }));
+        return;
+      } else {
+        setFileSizeErrors((prev) => ({ ...prev, managerCidHolding: false }));
+      }
       setForm((f) => ({
         ...f,
         managerCidHolding: file
@@ -197,8 +228,12 @@ export default function RegisterOrgPage() {
     maxFiles: 10,
     onDrop: (files) => {
       if (!files || files.length === 0) return;
+      // Kiểm tra từng file
+      const errors = files.map((file) => file.size > MAX_FILE_SIZE);
+      setFileSizeErrors((prev) => ({ ...prev, activityLicense: errors }));
+      const validFiles = files.filter((file) => file.size <= MAX_FILE_SIZE);
       setForm((f) => {
-        const next = [...(f.activityLicense || []), ...files].slice(0, 10);
+        const next = [...(f.activityLicense || []), ...validFiles].slice(0, 10);
         return {
           ...f,
           activityLicense: next
@@ -213,8 +248,12 @@ export default function RegisterOrgPage() {
       maxFiles: 5,
       onDrop: (files) => {
         if (!files || files.length === 0) return;
+        // Kiểm tra từng file
+        const errors = files.map((file) => file.size > MAX_FILE_SIZE);
+        setFileSizeErrors((prev) => ({ ...prev, otherEvidences: errors }));
+        const validFiles = files.filter((file) => file.size <= MAX_FILE_SIZE);
         setForm((f) => {
-          const next = [...(f.otherEvidences || []), ...files].slice(0, 5);
+          const next = [...(f.otherEvidences || []), ...validFiles].slice(0, 5);
           return {
             ...f,
             otherEvidences: next
@@ -224,6 +263,16 @@ export default function RegisterOrgPage() {
     });
 
   // Required fields validation
+  // Kiểm tra có file nào vượt quá 5MB không
+  const hasFileSizeError =
+    fileSizeErrors.managerCidFront ||
+    fileSizeErrors.managerCidBack ||
+    fileSizeErrors.managerCidHolding ||
+    (fileSizeErrors.activityLicense &&
+      fileSizeErrors.activityLicense.some((e) => e)) ||
+    (fileSizeErrors.otherEvidences &&
+      fileSizeErrors.otherEvidences.some((e) => e));
+
   const isFormValid =
     form.name &&
     form.orgType &&
@@ -238,7 +287,8 @@ export default function RegisterOrgPage() {
     form.managerCidHolding &&
     form.activityLicense &&
     form.activityLicense.length > 0 &&
-    form.applicationReason;
+    form.applicationReason &&
+    !hasFileSizeError;
 
   // --- File preview URL memoization and cleanup ---
   // For single files (CMND/CCCD)
@@ -431,8 +481,7 @@ export default function RegisterOrgPage() {
               await Promise.all(uploads);
               toast('Đăng ký tổ chức thành công!', {
                 description:
-                  'Thông tin đã được gửi. Vui lòng chờ xác nhận qua email.',
-                action: { label: 'Đóng', onClick: () => {} }
+                  'Thông tin đã được gửi. Vui lòng chờ xác nhận qua email.'
               });
             } catch (err) {
               let lines: string[] = [];
@@ -788,6 +837,11 @@ export default function RegisterOrgPage() {
                   ) : (
                     <span className="text-xs text-slate-500">Mặt trước</span>
                   )}
+                  {fileSizeErrors.managerCidFront && (
+                    <div className="text-xs text-red-500 mt-1">
+                      File vượt quá 5MB!
+                    </div>
+                  )}
                 </div>
               </div>
               {/* Mặt sau */}
@@ -810,6 +864,11 @@ export default function RegisterOrgPage() {
                   ) : (
                     <span className="text-xs text-slate-500">Mặt sau</span>
                   )}
+                  {fileSizeErrors.managerCidBack && (
+                    <div className="text-xs text-red-500 mt-1">
+                      File vượt quá 5MB!
+                    </div>
+                  )}
                 </div>
               </div>
               {/* Cầm giấy tờ */}
@@ -831,6 +890,11 @@ export default function RegisterOrgPage() {
                     </>
                   ) : (
                     <span className="text-xs text-slate-500">Cầm giấy tờ</span>
+                  )}
+                  {fileSizeErrors.managerCidHolding && (
+                    <div className="text-xs text-red-500 mt-1">
+                      File vượt quá 5MB!
+                    </div>
                   )}
                 </div>
               </div>
@@ -861,6 +925,11 @@ export default function RegisterOrgPage() {
                         {f.name}
                       </span>
                     )}
+                    {fileSizeErrors.activityLicense[idx] && (
+                      <div className="text-xs text-red-500 mt-1">
+                        File vượt quá 5MB!
+                      </div>
+                    )}
                     <button
                       type="button"
                       className="absolute top-2 right-2 bg-blue-500 text-white rounded-full w-7 h-7 flex items-center justify-center text-base shadow hover:bg-blue-600 border-2 border-white"
@@ -868,6 +937,12 @@ export default function RegisterOrgPage() {
                       onClick={(e) => {
                         e.stopPropagation();
                         setForm((prev) => ({
+                          ...prev,
+                          activityLicense: prev.activityLicense.filter(
+                            (_, i) => i !== idx
+                          )
+                        }));
+                        setFileSizeErrors((prev) => ({
                           ...prev,
                           activityLicense: prev.activityLicense.filter(
                             (_, i) => i !== idx
@@ -910,6 +985,11 @@ export default function RegisterOrgPage() {
                         {f.name}
                       </span>
                     )}
+                    {fileSizeErrors.otherEvidences[idx] && (
+                      <div className="text-xs text-red-500 mt-1">
+                        File vượt quá 5MB!
+                      </div>
+                    )}
                     <button
                       type="button"
                       className="absolute top-2 right-2 bg-blue-500 text-white rounded-full w-7 h-7 flex items-center justify-center text-base shadow hover:bg-blue-600 border-2 border-white"
@@ -917,6 +997,12 @@ export default function RegisterOrgPage() {
                       onClick={(e) => {
                         e.stopPropagation();
                         setForm((prev) => ({
+                          ...prev,
+                          otherEvidences: prev.otherEvidences.filter(
+                            (_, i) => i !== idx
+                          )
+                        }));
+                        setFileSizeErrors((prev) => ({
                           ...prev,
                           otherEvidences: prev.otherEvidences.filter(
                             (_, i) => i !== idx

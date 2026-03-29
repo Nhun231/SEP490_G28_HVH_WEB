@@ -41,6 +41,7 @@ import {
   X
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import type { IRoute } from '@/types/types';
 
 interface Props {
@@ -140,6 +141,7 @@ export default function OrganizerHostManagement({
   type SortOrder = 'asc' | 'desc';
   type SortCriterion = { key: SortKey; order: SortOrder };
   type ValueFilterKey = 'name' | 'district' | 'email' | 'phone' | 'status';
+  const router = useRouter();
 
   const [hosts, setHosts] = useState<HostRow[]>(hostRows);
   const [searchQuery, setSearchQuery] = useState('');
@@ -548,7 +550,7 @@ export default function OrganizerHostManagement({
               Quản lý người phụ trách sự kiện
             </p>
           </div>
-          <Button className="bg-cyan-500 text-white hover:bg-cyan-600">
+          <Button className="bg-cyan-500 text-white hover:bg-cyan-600" onClick={() => router.push('/organizer/host-management/create-host')}>
             <Plus className="h-4 w-4" />
             Tạo Host mới
           </Button>
@@ -700,6 +702,17 @@ export default function OrganizerHostManagement({
                               align="end"
                               className="border border-zinc-200 bg-white text-zinc-900 shadow-lg"
                             >
+                              <DropdownMenuItem
+                                onSelect={(event) => {
+                                  event.preventDefault();
+                                  router.push(
+                                    `/organizer/host-management/${host.id}`
+                                  );
+                                }}
+                                className="cursor-pointer"
+                              >
+                                Xem chi tiết
+                              </DropdownMenuItem>
                               <DropdownMenuItem
                                 onSelect={(event) => {
                                   event.preventDefault();

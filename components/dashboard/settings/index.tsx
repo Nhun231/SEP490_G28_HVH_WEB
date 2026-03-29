@@ -219,9 +219,6 @@ export default function Settings(props: Props) {
               <h2 className="text-2xl font-extrabold text-zinc-900">
                 Thông tin tài khoản
               </h2>
-              <p className="mt-1 text-sm text-zinc-500">
-                Dữ liệu hiển thị được đồng bộ từ Supabase (Auth và bảng users).
-              </p>
             </div>
 
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

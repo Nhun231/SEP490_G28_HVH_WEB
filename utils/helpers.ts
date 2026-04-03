@@ -5,8 +5,13 @@ export function getFullSupabaseImageUrl(
   if (!url) return '';
   if (url.startsWith('http')) return url;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  // Remove leading slashes if present
-  const normalized = url.startsWith('/') ? url : '/' + url;
+  const normalized = url.startsWith('/') ? url : `/${url}`;
+  if (normalized.startsWith('/storage/v1/')) {
+    return supabaseUrl + normalized;
+  }
+  if (normalized.startsWith('/object/')) {
+    return supabaseUrl + '/storage/v1' + normalized;
+  }
   return supabaseUrl + '/storage/v1' + normalized;
 }
 import { Database } from '@/types/types_db';

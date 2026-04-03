@@ -21,7 +21,7 @@ export const EVENT_BADGE_CLASSNAME_BY_STATUS: Record<EEventStatus, string> = {
   [EEventStatus.ENDED]:
     'rounded-full bg-red-600 text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150 hover:bg-red-700',
   [EEventStatus.COMPLETED]:
-    'rounded-full bg-emerald-700 text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150 hover:bg-emerald-800',
+    'rounded-full bg-black text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150 hover:bg-zinc-900',
   [EEventStatus.CANCELLED]:
     'rounded-full bg-zinc-500 text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150 hover:bg-zinc-600'
 };

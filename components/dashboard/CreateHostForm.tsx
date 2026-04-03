@@ -209,6 +209,18 @@ export default function CreateHostForm({ user, userDetails, routes }) {
             <Button
               type="button"
               className="bg-red-500 hover:bg-red-600 text-white"
+              onClick={() =>
+                setForm({
+                  name: '',
+                  email: '',
+                  phone: '',
+                  dob: '',
+                  idNumber: '',
+                  ward: '',
+                  address: '',
+                  agree: false
+                })
+              }
             >
               Hủy
             </Button>

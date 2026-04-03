@@ -28,7 +28,8 @@ export default async function OrganizerApprovedEventsPage() {
         'Đang tuyển quân',
         'Đã đóng đơn',
         'Đang diễn ra',
-        'Đã kết thúc'
+        'Đã kết thúc',
+        'Hoàn thành'
       ]}
       pageTitle="Sự kiện đã phê duyệt"
       pageDescription="Danh sách các sự kiện đã được phê duyệt"
@@ -43,7 +44,9 @@ export default async function OrganizerApprovedEventsPage() {
         'Đang diễn ra':
           'rounded-full bg-green-600 text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150 hover:bg-green-500',
         'Đã kết thúc':
-          'rounded-full bg-red-600 text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150 hover:bg-red-500'
+          'rounded-full bg-red-600 text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150 hover:bg-red-500',
+        'Hoàn thành':
+          'rounded-full bg-gray-600 text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150 hover:bg-gray-500'
       }}
     />
   );

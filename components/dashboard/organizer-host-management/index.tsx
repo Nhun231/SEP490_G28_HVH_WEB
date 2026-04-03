@@ -43,6 +43,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { IRoute } from '@/types/types';
+import { useViewHostList } from '@/hooks/features/uc065-view-host-list/useViewHostList';
 
 interface Props {
   user: User | null | undefined;
@@ -55,7 +56,7 @@ interface Props {
 type HostStatus = 'Hoạt động' | 'Ngừng hoạt động';
 
 type HostRow = {
-  id: number;
+  id: string;
   name: string;
   district: string;
   email: string;
@@ -65,70 +66,7 @@ type HostRow = {
   hours: number;
 };
 
-const hostRows: HostRow[] = [
-  {
-    id: 1,
-    name: 'Bùi Minh Tuấn',
-    district: 'Quận Nam Từ Liêm, Hà Nội',
-    email: 'buiminhtuan@email.com',
-    phone: '0990123456',
-    status: 'Hoạt động',
-    eventCount: 26,
-    hours: 1680
-  },
-  {
-    id: 2,
-    name: 'Đặng Văn Long',
-    district: 'Quận Tây Hồ, Hà Nội',
-    email: 'dangvanlong@email.com',
-    phone: '0978901234',
-    status: 'Hoạt động',
-    eventCount: 28,
-    hours: 1820
-  },
-  {
-    id: 3,
-    name: 'Hoàng Đức Thắng',
-    district: 'Quận Cầu Giấy, Hà Nội',
-    email: 'hoangducthang@email.com',
-    phone: '0956789012',
-    status: 'Hoạt động',
-    eventCount: 22,
-    hours: 1560
-  },
-  {
-    id: 4,
-    name: 'Lê Minh Cường',
-    district: 'Quận Đống Đa, Hà Nội',
-    email: 'leminhcuong@email.com',
-    phone: '0934567890',
-    status: 'Hoạt động',
-    eventCount: 31,
-    hours: 2100
-  },
-  {
-    id: 5,
-    name: 'Nguyễn Văn An',
-    district: 'Quận Ba Đình, Hà Nội',
-    email: 'nguyenvanan@email.com',
-    phone: '0912345678',
-    status: 'Hoạt động',
-    eventCount: 24,
-    hours: 1450
-  },
-  {
-    id: 6,
-    name: 'Phạm Thu Hà',
-    district: 'Quận Hai Bà Trưng, Hà Nội',
-    email: 'phamthuha@email.com',
-    phone: '0945678901',
-    status: 'Ngừng hoạt động',
-    eventCount: 15,
-    hours: 720
-  }
-];
-
-const pageSize = 6;
+const pageSize = 10;
 
 export default function OrganizerHostManagement({
   user,
@@ -143,16 +81,49 @@ export default function OrganizerHostManagement({
   type ValueFilterKey = 'name' | 'district' | 'email' | 'phone' | 'status';
   const router = useRouter();
 
-  const [hosts, setHosts] = useState<HostRow[]>(hostRows);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [sortCriteria, setSortCriteria] = useState<SortCriterion[]>([]);
   const [columnValueFilters, setColumnValueFilters] = useState<
     Partial<Record<ValueFilterKey, string[]>>
   >({});
+  const [statusOverrides, setStatusOverrides] = useState<
+    Partial<Record<string, HostStatus>>
+  >({});
   const [confirmActionHost, setConfirmActionHost] = useState<HostRow | null>(
     null
   );
+
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
+
+  const {
+    data: hostListData,
+    isLoading: isHostListLoading,
+    error: hostListError
+  } = useViewHostList({
+    pageNumber: Math.max(0, currentPage - 1),
+    pageSize,
+    baseUrl,
+    enabled: Boolean(user)
+  });
+
+  const mapApiStatusToHostStatus = (status: string | null): HostStatus =>
+    status === 'APPROVED' ? 'Hoạt động' : 'Ngừng hoạt động';
+
+  const hosts = useMemo<HostRow[]>(() => {
+    const content = hostListData?.content ?? [];
+
+    return content.map((item) => ({
+      id: item.id,
+      name: item.fullName?.trim() || 'Chưa cập nhật',
+      district: item.address?.trim() || '-',
+      email: item.email?.trim() || '-',
+      phone: item.phone?.trim() || '-',
+      status: statusOverrides[item.id] ?? mapApiStatusToHostStatus(item.status),
+      eventCount: item.hostedEventCount,
+      hours: 0
+    }));
+  }, [hostListData?.content, statusOverrides]);
 
   const setSortForKey = (key: SortKey, order: SortOrder) => {
     setSortCriteria((prev) => {
@@ -200,26 +171,26 @@ export default function OrganizerHostManagement({
     []
   );
 
-  const getUniqueValuesForKey = (key: ValueFilterKey) => {
-    const unique = new Set<string>();
-    hosts.forEach((host) => unique.add(getFilterValueForKey(host, key)));
-    return Array.from(unique).sort((a, b) =>
-      a.localeCompare(b, 'vi', { sensitivity: 'base' })
-    );
-  };
+  const getUniqueValuesForKey = useCallback(
+    (key: ValueFilterKey) => {
+      const unique = new Set<string>();
+      hosts.forEach((host) => unique.add(getFilterValueForKey(host, key)));
+      return Array.from(unique).sort((a, b) =>
+        a.localeCompare(b, 'vi', { sensitivity: 'base' })
+      );
+    },
+    [getFilterValueForKey, hosts]
+  );
 
-  const toggleHostStatus = (hostId: number) => {
-    setHosts((prev) =>
-      prev.map((host) =>
-        host.id === hostId
-          ? {
-              ...host,
-              status:
-                host.status === 'Hoạt động' ? 'Ngừng hoạt động' : 'Hoạt động'
-            }
-          : host
-      )
-    );
+  const toggleHostStatus = (hostId: string) => {
+    const targetHost = hosts.find((host) => host.id === hostId);
+    if (!targetHost) return;
+
+    setStatusOverrides((prev) => ({
+      ...prev,
+      [hostId]:
+        targetHost.status === 'Hoạt động' ? 'Ngừng hoạt động' : 'Hoạt động'
+    }));
   };
 
   const confirmActionText =
@@ -240,8 +211,7 @@ export default function OrganizerHostManagement({
     const { columnKey, label } = props;
     const values = useMemo(
       () => getUniqueValuesForKey(columnKey),
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      []
+      [columnKey, getUniqueValuesForKey]
     );
     const applied = columnValueFilters[columnKey] ?? [];
     const hasActiveFilter = applied.length > 0;
@@ -513,20 +483,19 @@ export default function OrganizerHostManagement({
     sortCriteria
   ]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredHosts.length / pageSize));
+  const totalPages = Math.max(1, hostListData?.page.totalPages ?? 1);
   const safeCurrentPage = Math.min(currentPage, totalPages);
-  const paginatedHosts = useMemo(
-    () =>
-      filteredHosts.slice(
-        (safeCurrentPage - 1) * pageSize,
-        safeCurrentPage * pageSize
-      ),
-    [filteredHosts, safeCurrentPage]
-  );
+  const paginatedHosts = filteredHosts;
 
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, columnValueFilters, sortCriteria]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const statusBadgeClassName = (status: HostStatus) =>
     status === 'Hoạt động'
@@ -550,7 +519,12 @@ export default function OrganizerHostManagement({
               Quản lý người phụ trách sự kiện
             </p>
           </div>
-          <Button className="bg-cyan-500 text-white hover:bg-cyan-600" onClick={() => router.push('/organizer/host-management/create-host')}>
+          <Button
+            className="bg-cyan-500 text-white hover:bg-cyan-600"
+            onClick={() =>
+              router.push('/organizer/host-management/create-host')
+            }
+          >
             <Plus className="h-4 w-4" />
             Tạo Host mới
           </Button>
@@ -615,17 +589,34 @@ export default function OrganizerHostManagement({
                       />
                     </div>
                   </TableHead>
-                  <TableHead className="text-zinc-700">
+                  <TableHead className="text-center text-zinc-700">
                     Sự kiện đã host
                   </TableHead>
-                  <TableHead className="text-zinc-700">Giờ phục vụ</TableHead>
                   <TableHead className="w-16 text-right text-zinc-700">
                     Thao tác
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedHosts.length > 0 ? (
+                {isHostListLoading ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={7}
+                      className="py-8 text-center text-zinc-500"
+                    >
+                      Đang tải danh sách host...
+                    </TableCell>
+                  </TableRow>
+                ) : hostListError ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={7}
+                      className="py-8 text-center text-rose-500"
+                    >
+                      Không thể tải danh sách host. Vui lòng thử lại.
+                    </TableCell>
+                  </TableRow>
+                ) : paginatedHosts.length > 0 ? (
                   paginatedHosts.map((host) => {
                     const initials = host.name
                       .split(' ')
@@ -681,11 +672,8 @@ export default function OrganizerHostManagement({
                             {host.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-zinc-600">
+                        <TableCell className="text-center text-zinc-600">
                           {host.eventCount}
-                        </TableCell>
-                        <TableCell className="text-zinc-600">
-                          {host.hours}h
                         </TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
@@ -733,7 +721,7 @@ export default function OrganizerHostManagement({
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={8}
+                      colSpan={7}
                       className="py-8 text-center text-zinc-500"
                     >
                       Không tìm thấy host phù hợp với bộ lọc hiện tại.

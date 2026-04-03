@@ -86,6 +86,7 @@
     "firebase": "^12.10.0",
     "framer-motion": "^11.2.6",
     "geojson": "^0.5.0",
+    "heic2any": "^0.0.4",
     "input-otp": "^1.4.2",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.379.0",

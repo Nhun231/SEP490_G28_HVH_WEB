@@ -12,15 +12,8 @@ const MapSection = dynamic(
   { ssr: false }
 );
 import ReverseGeocode from './ReverseGeocode';
-// ...existing code...
+import { getFullSupabaseImageUrl } from '@/utils/helpers';
 /* eslint-disable @next/next/no-img-element */
-// Helper to get full image URL for Supabase Storage
-function getFullImageUrl(url: string) {
-  if (!url) return '';
-  if (url.startsWith('http')) return url;
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  return supabaseUrl + '/storage/v1' + url;
-}
 
 import DashboardLayout from '@/components/layout';
 import { Badge } from '@/components/ui/badge';
@@ -55,9 +48,9 @@ import type {
 import { useRejectEventByOrgManager } from '@/hooks/features/uc080-approve-reject-event-by-org-manager/useReject';
 import type { IRoute } from '@/types/types';
 import { User } from '@supabase/supabase-js';
-import { Mail, Phone, UserRound } from 'lucide-react';
+import { AlertCircle, Mail, Phone, UserRound } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // Mock host data
 const mockHosts = [
@@ -100,6 +93,108 @@ const mockHosts = [
 import { toast } from 'sonner';
 import { useApproveEventByOrgManager } from '@/hooks/features/uc080-approve-reject-event-by-org-manager/useApprove';
 // No data fetching here; handled by container
+
+const isHeicImageUrl = (src: string) => /\.(heic|heif)(\?|$)/i.test(src);
+const isHeicMimeType = (value: string | null | undefined) =>
+  !!value && /heic|heif/i.test(value);
+
+function EventImage({
+  src,
+  alt,
+  className,
+  onClick,
+  interactive = true
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+  onClick?: () => void;
+  interactive?: boolean;
+}) {
+  const [displaySrc, setDisplaySrc] = useState(src);
+  const convertedObjectUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (convertedObjectUrlRef.current) {
+      URL.revokeObjectURL(convertedObjectUrlRef.current);
+      convertedObjectUrlRef.current = null;
+    }
+
+    setDisplaySrc(src);
+
+    const convertHeicToJpeg = async () => {
+      try {
+        const { default: heic2any } = await import('heic2any');
+        const response = await fetch(src);
+        if (!response.ok) {
+          throw new Error(`Failed to load image: ${response.status}`);
+        }
+        const blob = await response.blob();
+        const contentType = response.headers.get('content-type') || blob.type;
+        const shouldConvert =
+          isHeicImageUrl(src) ||
+          isHeicMimeType(contentType) ||
+          isHeicMimeType(blob.type);
+
+        if (!shouldConvert) {
+          if (!cancelled) {
+            setDisplaySrc(src);
+          }
+          return;
+        }
+
+        const converted = await heic2any({
+          blob,
+          toType: 'image/jpeg',
+          quality: 0.92
+        });
+        const convertedBlob = Array.isArray(converted)
+          ? converted[0]
+          : converted;
+        const objectUrl = URL.createObjectURL(convertedBlob as Blob);
+        convertedObjectUrlRef.current = objectUrl;
+
+        if (!cancelled) {
+          setDisplaySrc(objectUrl);
+        } else {
+          URL.revokeObjectURL(objectUrl);
+        }
+      } catch {
+        if (!cancelled) {
+          setDisplaySrc(src);
+        }
+      }
+    };
+
+    convertHeicToJpeg();
+
+    return () => {
+      cancelled = true;
+      if (convertedObjectUrlRef.current) {
+        URL.revokeObjectURL(convertedObjectUrlRef.current);
+        convertedObjectUrlRef.current = null;
+      }
+    };
+  }, [src]);
+
+  const image = (
+    <div className="overflow-hidden rounded-lg border border-zinc-200">
+      <img src={displaySrc} alt={alt} className={className} loading="lazy" />
+    </div>
+  );
+
+  if (!interactive) {
+    return image;
+  }
+
+  return (
+    <button type="button" className="w-full" onClick={onClick} aria-label={alt}>
+      {image}
+    </button>
+  );
+}
 
 type Props = {
   user: User | null | undefined;
@@ -505,6 +600,17 @@ export default function PendingEventDetail({
       )
     : false;
 
+  const canShowChangeHostButton = event
+    ? [
+        EEventStatus.RECRUITING,
+        EEventStatus.UPCOMING,
+        EEventStatus.ONGOING,
+        'Đang tuyển quân',
+        'Sắp diễn ra',
+        'Đang diễn ra'
+      ].includes(event.status as EEventStatus | string)
+    : false;
+
   // Extended mock data for hosts (10+ entries)
   const mockHosts = [
     {
@@ -701,27 +807,18 @@ export default function PendingEventDetail({
                       <Carousel opts={{ align: 'start' }}>
                         <CarouselContent>
                           {event.images?.map((src, index) => {
-                            const fullImageUrl = getFullImageUrl(src);
+                            const fullImageUrl = getFullSupabaseImageUrl(src);
                             return (
                               <CarouselItem
                                 key={`${event.id}-img-${index}`}
                                 className="basis-full sm:basis-1/2 lg:basis-1/3"
                               >
-                                <button
-                                  type="button"
-                                  className="w-full"
+                                <EventImage
+                                  src={fullImageUrl}
+                                  alt={`${event.eventName} - ảnh ${index + 1}`}
+                                  className="h-56 w-full object-cover"
                                   onClick={() => setPreviewImage(fullImageUrl)}
-                                  aria-label={`Xem ảnh ${index + 1}`}
-                                >
-                                  <div className="overflow-hidden rounded-lg border border-zinc-200">
-                                    <img
-                                      src={fullImageUrl}
-                                      alt={`${event.eventName} - ảnh ${index + 1}`}
-                                      className="h-56 w-full object-cover"
-                                      loading="lazy"
-                                    />
-                                  </div>
-                                </button>
+                                />
                               </CarouselItem>
                             );
                           })}
@@ -1003,115 +1100,121 @@ export default function PendingEventDetail({
                         <h2 className="text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
                           Thông tin host
                         </h2>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="h-auto p-0 text-sm text-blue-600 hover:bg-transparent hover:text-blue-700"
-                          onClick={() => setHostDialogOpen(true)}
-                        >
-                          Thay đổi host
-                        </Button>
-                        {/* Dialog chọn host mới */}
-                        <Dialog
-                          open={hostDialogOpen}
-                          onOpenChange={setHostDialogOpen}
-                        >
-                          <DialogContent className="max-w-md bg-white">
-                            <DialogHeader>
-                              <DialogTitle>Chọn host mới</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-3 max-h-[60vh] overflow-y-auto">
-                              {mockHosts.map((host) => (
-                                <button
-                                  key={host.id}
-                                  className="w-full flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 hover:bg-zinc-100 transition"
-                                  onClick={() => {
-                                    setSelectedHost(host);
-                                    setHostDialogOpen(false);
-                                    setTimeout(
-                                      () => setConfirmDialogOpen(true),
-                                      200
-                                    );
-                                  }}
-                                >
-                                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-500 text-white font-bold text-lg">
-                                    {host.name.charAt(0)}
-                                  </div>
-                                  <div className="flex-1 min-w-0 text-left">
-                                    <div className="font-semibold text-zinc-900 truncate">
-                                      {host.name}
-                                    </div>
-                                    <div className="text-xs text-zinc-600 truncate">
-                                      {host.email}
-                                    </div>
-                                    <div className="text-xs text-zinc-600">
-                                      {host.phone}
-                                    </div>
-                                    <div className="text-xs text-zinc-500 mt-1">
-                                      {host.eventCount} sự kiện
-                                    </div>
-                                  </div>
-                                </button>
-                              ))}
-                            </div>
-                          </DialogContent>
-                        </Dialog>
+                        {canShowChangeHostButton && (
+                          <>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              className="h-auto p-0 text-sm text-blue-600 hover:bg-transparent hover:text-blue-700"
+                              onClick={() => setHostDialogOpen(true)}
+                            >
+                              Thay đổi host
+                            </Button>
+                            {/* Dialog chọn host mới */}
+                            <Dialog
+                              open={hostDialogOpen}
+                              onOpenChange={setHostDialogOpen}
+                            >
+                              <DialogContent className="max-w-md bg-white">
+                                <DialogHeader>
+                                  <DialogTitle>Chọn host mới</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+                                  {mockHosts.map((host) => (
+                                    <button
+                                      key={host.id}
+                                      className="w-full flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 hover:bg-zinc-100 transition"
+                                      onClick={() => {
+                                        setSelectedHost(host);
+                                        setHostDialogOpen(false);
+                                        setTimeout(
+                                          () => setConfirmDialogOpen(true),
+                                          200
+                                        );
+                                      }}
+                                    >
+                                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-500 text-white font-bold text-lg">
+                                        {host.name.charAt(0)}
+                                      </div>
+                                      <div className="flex-1 min-w-0 text-left">
+                                        <div className="font-semibold text-zinc-900 truncate">
+                                          {host.name}
+                                        </div>
+                                        <div className="text-xs text-zinc-600 truncate">
+                                          {host.email}
+                                        </div>
+                                        <div className="text-xs text-zinc-600">
+                                          {host.phone}
+                                        </div>
+                                        <div className="text-xs text-zinc-500 mt-1">
+                                          {host.eventCount} sự kiện
+                                        </div>
+                                      </div>
+                                    </button>
+                                  ))}
+                                </div>
+                              </DialogContent>
+                            </Dialog>
 
-                        {/* Dialog xác nhận thay đổi host */}
-                        <Dialog
-                          open={confirmDialogOpen}
-                          onOpenChange={setConfirmDialogOpen}
-                        >
-                          <DialogContent className="max-w-md bg-white">
-                            <DialogHeader>
-                              <DialogTitle>Xác nhận thay đổi host</DialogTitle>
-                            </DialogHeader>
-                            <div className="text-sm text-zinc-700 mb-4">
-                              Bạn có chắc chắn muốn thay đổi host từ:
-                              <br />
-                              <span className="font-semibold text-red-600">
-                                {event?.hostName}
-                              </span>
-                              <span className="mx-2">→</span>
-                              <span className="font-semibold text-green-600">
-                                {selectedHost?.name}
-                              </span>
-                              <br />
-                              cho sự kiện:{' '}
-                              <span className="font-semibold">
-                                &quot;{event?.eventName}&quot;
-                              </span>
-                            </div>
-                            <DialogFooter className="flex gap-2">
-                              <Button
-                                variant="outline"
-                                className="bg-zinc-200 text-zinc-700 border-none hover:bg-zinc-300"
-                                onClick={() => setConfirmDialogOpen(false)}
-                                disabled={changingHost}
-                              >
-                                Hủy bỏ
-                              </Button>
-                              <Button
-                                className="bg-blue-600 text-white hover:bg-blue-700"
-                                disabled={changingHost}
-                                onClick={async () => {
-                                  setChangingHost(true);
-                                  // Giả lập đổi host, thực tế gọi API ở đây
-                                  setTimeout(() => {
-                                    setChangingHost(false);
-                                    setConfirmDialogOpen(false);
-                                    toast.success(
-                                      'Đã thay đổi host thành công!'
-                                    );
-                                    // Có thể reload lại trang hoặc cập nhật state event.hostName nếu muốn
-                                  }, 1200);
-                                }}
-                              >
-                                Xác nhận thay đổi
-                              </Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
+                            {/* Dialog xác nhận thay đổi host */}
+                            <Dialog
+                              open={confirmDialogOpen}
+                              onOpenChange={setConfirmDialogOpen}
+                            >
+                              <DialogContent className="max-w-md bg-white">
+                                <DialogHeader>
+                                  <DialogTitle>
+                                    Xác nhận thay đổi host
+                                  </DialogTitle>
+                                </DialogHeader>
+                                <div className="text-sm text-zinc-700 mb-4">
+                                  Bạn có chắc chắn muốn thay đổi host từ:
+                                  <br />
+                                  <span className="font-semibold text-red-600">
+                                    {event?.hostName}
+                                  </span>
+                                  <span className="mx-2">→</span>
+                                  <span className="font-semibold text-green-600">
+                                    {selectedHost?.name}
+                                  </span>
+                                  <br />
+                                  cho sự kiện:{' '}
+                                  <span className="font-semibold">
+                                    &quot;{event?.eventName}&quot;
+                                  </span>
+                                </div>
+                                <DialogFooter className="flex gap-2">
+                                  <Button
+                                    variant="outline"
+                                    className="bg-red-500 border-none hover:bg-red-600 text-white hover:text-white"
+                                    onClick={() => setConfirmDialogOpen(false)}
+                                    disabled={changingHost}
+                                  >
+                                    Hủy bỏ
+                                  </Button>
+                                  <Button
+                                    className="bg-blue-600 text-white hover:bg-blue-700"
+                                    disabled={changingHost}
+                                    onClick={async () => {
+                                      setChangingHost(true);
+                                      // Giả lập đổi host, thực tế gọi API ở đây
+                                      setTimeout(() => {
+                                        setChangingHost(false);
+                                        setConfirmDialogOpen(false);
+                                        toast.success(
+                                          'Đã thay đổi host thành công!'
+                                        );
+                                        // Có thể reload lại trang hoặc cập nhật state event.hostName nếu muốn
+                                      }, 1200);
+                                    }}
+                                  >
+                                    Xác nhận thay đổi
+                                  </Button>
+                                </DialogFooter>
+                              </DialogContent>
+                            </Dialog>
+                          </>
+                        )}
                       </div>
 
                       <div className="mt-4 grid gap-3">
@@ -1166,14 +1269,21 @@ export default function PendingEventDetail({
                       {displayValue(event.description)}
                     </p>
                     {event.note !== '-' && (
-                      <>
-                        <p className="mt-4 text-sm font-medium text-zinc-800">
-                          Ghi chú
-                        </p>
-                        <p className="mt-1 text-sm text-zinc-700">
-                          {event.note}
-                        </p>
-                      </>
+                      <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+                        <div className="flex items-start gap-3">
+                          <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                            <AlertCircle className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-amber-900">
+                              Ghi chú quan trọng
+                            </p>
+                            <p className="mt-1 whitespace-pre-line text-sm leading-6 text-amber-950">
+                              {event.note}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     )}
                   </Card>
 
@@ -1303,10 +1413,11 @@ export default function PendingEventDetail({
       >
         <DialogContent className="max-w-4xl border-0 bg-transparent p-0 shadow-none">
           {previewImage && (
-            <img
+            <EventImage
               src={previewImage}
               alt="Ảnh minh họa"
-              className="h-auto w-full rounded-md object-contain"
+              className="h-auto max-h-[85vh] w-auto max-w-[90vw] rounded-md object-contain"
+              interactive={false}
             />
           )}
         </DialogContent>

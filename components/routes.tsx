@@ -1,6 +1,12 @@
 // Auth Imports
 import { IRoute } from '@/types/types';
-import { Building, CircleCheckBig, Loader, Settings } from 'lucide-react';
+import {
+  Building,
+  CircleCheckBig,
+  Loader,
+  Settings,
+  MessageSquare
+} from 'lucide-react';
 import {
   HiOutlineCpuChip,
   HiOutlineDocumentText,
@@ -40,6 +46,12 @@ export const routes: IRoute[] = [
     name: 'Quản lý tổ chức',
     path: '/dashboard/organizations',
     icon: <Building className="-mt-[7px] h-4 w-4 stroke-2 text-inherit" />,
+    collapse: false
+  },
+  {
+    name: 'Quản lý bài đăng',
+    path: '/dashboard/posts',
+    icon: <MessageSquare className="-mt-[7px] h-4 w-4 stroke-2 text-inherit" />,
     collapse: false
   },
   {

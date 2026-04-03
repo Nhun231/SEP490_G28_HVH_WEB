@@ -7,10 +7,10 @@ export default function Footer(props: {
 }) {
   const colorVariant = props.colorVariant ?? 'admin';
   const footerTextClassName =
-    colorVariant === 'organizer' ? 'text-[#3A4163]' : 'text-slate-400';
+    colorVariant === 'organizer' ? 'text-[#1E3A8A]' : 'text-slate-400';
   const footerLinkClassName =
     colorVariant === 'organizer'
-      ? 'text-sm font-medium text-[#3A4163] hover:text-[#1D2737]'
+      ? 'text-sm font-medium text-[#1E3A8A] hover:text-[#1D4ED8]'
       : 'text-sm font-medium text-slate-400 hover:text-[#E8EEF7]';
 
   return (

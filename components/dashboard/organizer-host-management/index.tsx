@@ -81,6 +81,7 @@ export default function OrganizerHostManagement({
   type ValueFilterKey = 'name' | 'district' | 'email' | 'phone' | 'status';
   const router = useRouter();
 
+  const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [sortCriteria, setSortCriteria] = useState<SortCriterion[]>([]);
@@ -93,6 +94,10 @@ export default function OrganizerHostManagement({
   const [confirmActionHost, setConfirmActionHost] = useState<HostRow | null>(
     null
   );
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
 
@@ -108,7 +113,7 @@ export default function OrganizerHostManagement({
   });
 
   const mapApiStatusToHostStatus = (status: string | null): HostStatus =>
-    status === 'APPROVED' ? 'Hoạt động' : 'Ngừng hoạt động';
+    status === 'ACTIVE' ? 'Hoạt động' : 'Ngừng hoạt động';
 
   const hosts = useMemo<HostRow[]>(() => {
     const content = hostListData?.content ?? [];
@@ -520,7 +525,7 @@ export default function OrganizerHostManagement({
             </p>
           </div>
           <Button
-            className="bg-cyan-500 text-white hover:bg-cyan-600"
+            className="bg-blue-600 text-white hover:bg-blue-700"
             onClick={() =>
               router.push('/organizer/host-management/create-host')
             }
@@ -598,7 +603,16 @@ export default function OrganizerHostManagement({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isHostListLoading ? (
+                {!mounted ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={7}
+                      className="py-8 text-center text-zinc-500"
+                    >
+                      &nbsp;
+                    </TableCell>
+                  </TableRow>
+                ) : isHostListLoading ? (
                   <TableRow>
                     <TableCell
                       colSpan={7}
@@ -633,7 +647,7 @@ export default function OrganizerHostManagement({
                         <TableCell className="font-medium text-zinc-900">
                           <div className="flex items-center gap-4">
                             <Avatar className="h-12 w-12 border border-slate-200 shadow-sm">
-                              <AvatarFallback className="bg-gradient-to-br from-cyan-500 to-teal-400 text-sm font-semibold text-white">
+                              <AvatarFallback className="bg-gradient-to-br from-blue-600 to-indigo-500 text-sm font-semibold text-white">
                                 {initials}
                               </AvatarFallback>
                             </Avatar>
@@ -742,6 +756,7 @@ export default function OrganizerHostManagement({
             <Button
               variant="outline"
               size="sm"
+              className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800 disabled:border-blue-100 disabled:bg-blue-50/40 disabled:text-blue-300"
               disabled={safeCurrentPage === 1}
               onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
             >
@@ -754,6 +769,11 @@ export default function OrganizerHostManagement({
                   key={page}
                   variant={page === safeCurrentPage ? 'default' : 'outline'}
                   size="sm"
+                  className={cn(
+                    page === safeCurrentPage
+                      ? 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800'
+                  )}
                   onClick={() => setCurrentPage(page)}
                 >
                   {page}
@@ -764,6 +784,7 @@ export default function OrganizerHostManagement({
             <Button
               variant="outline"
               size="sm"
+              className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800 disabled:border-blue-100 disabled:bg-blue-50/40 disabled:text-blue-300"
               disabled={safeCurrentPage === totalPages}
               onClick={() =>
                 setCurrentPage((page) => Math.min(totalPages, page + 1))

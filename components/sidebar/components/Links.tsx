@@ -99,7 +99,7 @@ export function SidebarLinks(props: SidebarLinksProps) {
               }
               className={`flex w-full max-w-full items-center justify-between rounded-lg py-3 pl-8 font-medium ${
                 colorVariant === 'organizer'
-                  ? 'text-[#EDF3FB] hover:bg-white/12 hover:text-white'
+                  ? 'text-[#DBEAFE] hover:bg-white/14 hover:text-white'
                   : 'text-slate-300 hover:bg-[#1A2434]/80 hover:text-white'
               }`}
             >
@@ -107,7 +107,7 @@ export function SidebarLinks(props: SidebarLinksProps) {
                 <div
                   className={`text mr-3 mt-1.5 ${
                     colorVariant === 'organizer'
-                      ? 'text-[#EDF3FB]'
+                      ? 'text-[#DBEAFE]'
                       : 'text-slate-300'
                   }`}
                 >
@@ -135,8 +135,8 @@ export function SidebarLinks(props: SidebarLinksProps) {
         const itemBase =
           colorVariant === 'organizer'
             ? isActive
-              ? 'border-l-4 border-[#FFFFFF] bg-gradient-to-r from-[#FFFFFF]/30 to-[#CBE3EF]/18 font-semibold text-white shadow-[0_10px_24px_rgba(58,65,99,0.18)]'
-              : 'font-medium text-[#EDF3FB] hover:bg-white/12 hover:text-white'
+              ? 'border-l-4 border-[#BFDBFE] bg-gradient-to-r from-[#EFF6FF]/25 to-[#93C5FD]/20 font-semibold text-white shadow-[0_10px_24px_rgba(30,64,175,0.26)]'
+              : 'font-medium text-[#DBEAFE] hover:bg-white/14 hover:text-white'
             : isActive
               ? 'bg-gradient-to-r from-[#121A26] to-[#1A2434] font-semibold text-white border-l-4 border-[#1E2939] shadow-[0_10px_24px_rgba(10,16,28,0.25)]'
               : 'font-medium text-slate-300 hover:bg-[#1A2434]/80 hover:text-white';
@@ -145,7 +145,7 @@ export function SidebarLinks(props: SidebarLinksProps) {
           colorVariant === 'organizer'
             ? isActive
               ? 'font-semibold text-white'
-              : 'text-[#EDF3FB]'
+              : 'text-[#DBEAFE]'
             : isActive
               ? 'font-semibold text-white'
               : 'text-slate-300';
@@ -154,7 +154,7 @@ export function SidebarLinks(props: SidebarLinksProps) {
           colorVariant === 'organizer'
             ? isActive
               ? 'font-semibold text-white'
-              : 'font-medium text-[#EDF3FB]'
+              : 'font-medium text-[#DBEAFE]'
             : isActive
               ? 'font-semibold text-white'
               : 'font-medium text-slate-300';

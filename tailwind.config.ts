@@ -100,14 +100,14 @@ const config = {
           ring: 'hsl(var(--sidebar-ring))'
         },
         organizer: {
-          primary: 'rgb(66 164 245 / <alpha-value>)',
+          primary: 'rgb(37 99 235 / <alpha-value>)',
           secondary: {
-            50: 'rgb(100 181 246 / <alpha-value>)',
-            100: 'rgb(144 202 249 / <alpha-value>)'
+            50: 'rgb(96 165 250 / <alpha-value>)',
+            100: 'rgb(147 197 253 / <alpha-value>)'
           },
           light: {
-            50: 'rgb(187 222 251 / <alpha-value>)',
-            100: 'rgb(227 242 253 / <alpha-value>)'
+            50: 'rgb(191 219 254 / <alpha-value>)',
+            100: 'rgb(239 246 255 / <alpha-value>)'
           }
         }
       },

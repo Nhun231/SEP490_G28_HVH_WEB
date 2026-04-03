@@ -55,6 +55,16 @@ export interface HostListResponse {
   };
 }
 
+export interface HostActivitiesListResponse {
+  content: HostActivitiesResponse[];
+  page: {
+    size: number;
+    number: number;
+    totalElements: number;
+    totalPages: number;
+  };
+}
+
 export type HostListItem = HostSimpleResponseForManager;
 
 export const CID_REGEX = /^\d{12}$/;

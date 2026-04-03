@@ -1050,6 +1050,10 @@ export default function PendingEvents({
             <Button
               variant="outline"
               size="sm"
+              className={cn(
+                colorVariant === 'organizer' &&
+                  'border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800 disabled:border-blue-100 disabled:bg-blue-50/40 disabled:text-blue-300'
+              )}
               disabled={currentPage === 1}
               onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
             >
@@ -1063,6 +1067,12 @@ export default function PendingEvents({
                   key={page}
                   variant={isActive ? 'default' : 'outline'}
                   size="sm"
+                  className={cn(
+                    colorVariant === 'organizer' &&
+                      (isActive
+                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                        : 'border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800')
+                  )}
                   onClick={() => setCurrentPage(page)}
                 >
                   {page}
@@ -1072,6 +1082,10 @@ export default function PendingEvents({
             <Button
               variant="outline"
               size="sm"
+              className={cn(
+                colorVariant === 'organizer' &&
+                  'border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800 disabled:border-blue-100 disabled:bg-blue-50/40 disabled:text-blue-300'
+              )}
               disabled={currentPage === totalPages}
               onClick={() =>
                 setCurrentPage((prev) => Math.min(totalPages, prev + 1))

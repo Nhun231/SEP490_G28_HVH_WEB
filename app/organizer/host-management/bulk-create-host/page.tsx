@@ -568,7 +568,7 @@ export default function BulkCreateHostPage({ user, userDetails, routes }: any) {
               <Button
                 type="button"
                 size="sm"
-                className="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold flex items-center gap-2"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center gap-2"
                 onClick={handleDownloadTemplate}
               >
                 <Upload className="w-4 h-4" />
@@ -576,7 +576,7 @@ export default function BulkCreateHostPage({ user, userDetails, routes }: any) {
               </Button>
             </div>
             <div className="mb-6">
-              <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 w-full">
+              <div className="bg-blue-50 p-6 rounded-lg border border-blue-200/90 w-full">
                 <div className="font-medium mb-2 text-zinc-800 flex items-center gap-2">
                   Tải lên file Excel
                 </div>

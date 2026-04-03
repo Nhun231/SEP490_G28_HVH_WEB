@@ -106,10 +106,10 @@ function Sidebar(props: SidebarProps) {
   // SIDEBAR
   const sidebarBgClass =
     colorVariant === 'organizer'
-      ? 'bg-gradient-to-b from-[#5AA8D6] via-[#4A89B5] to-[#3A4163]'
+      ? 'bg-gradient-to-b from-[#3B82F6] via-[#2563EB] to-[#1D4ED8]'
       : 'bg-gradient-to-b from-[#121A2A] via-[#1A2434] to-[#1D2737]';
   const dividerClass =
-    colorVariant === 'organizer' ? 'bg-[#CBE3EF]/45' : 'bg-[#1E2939]';
+    colorVariant === 'organizer' ? 'bg-[#BFDBFE]/55' : 'bg-[#1E2939]';
 
   return (
     <div
@@ -147,8 +147,8 @@ function Sidebar(props: SidebarProps) {
                 </h5>
               </div>
               {colorVariant === 'organizer' && (
-                <div className="mx-auto mt-4 w-[92%] max-w-[260px] rounded-xl border border-[#CBE3EF]/70 bg-white/18 px-4 py-2.5 text-center shadow-lg shadow-[#3A4163]/20 backdrop-blur-sm">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#EDF3FB]">
+                <div className="mx-auto mt-4 w-[92%] max-w-[260px] rounded-xl border border-[#BFDBFE]/70 bg-white/15 px-4 py-2.5 text-center shadow-lg shadow-[#1E40AF]/25 backdrop-blur-sm">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#DBEAFE]">
                     Tổ chức
                   </p>
                   <p className="mt-0.5 truncate text-base font-extrabold tracking-[0.01em] text-white">

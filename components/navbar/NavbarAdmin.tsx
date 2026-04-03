@@ -16,27 +16,27 @@ export default function AdminNavbar(props: {
 
   const navClassName =
     colorVariant === 'organizer'
-      ? 'border border-[#CBE3EF] bg-[#FFFFFF]/90 shadow-[0_10px_24px_rgba(90,168,214,0.18)]'
+      ? 'border border-[#BFDBFE] bg-[#FFFFFF]/90 shadow-[0_10px_24px_rgba(59,130,246,0.18)]'
       : 'border border-[#1E2939]/80 bg-[#121A2A]/88 shadow-[0_10px_30px_rgba(10,16,28,0.28)]';
   const navEffectClassName =
     colorVariant === 'organizer' ? 'backdrop-blur-0' : 'backdrop-blur-xl';
   const crumbBaseClassName =
     colorVariant === 'organizer'
-      ? 'text-xs font-normal text-[#3A4163] hover:underline hover:text-[#1D2737]'
+      ? 'text-xs font-normal text-[#1E3A8A] hover:underline hover:text-[#1D4ED8]'
       : 'text-xs font-normal text-slate-300 hover:underline hover:text-[#F4F7FB]';
   const crumbSlashClassName =
-    colorVariant === 'organizer' ? 'text-[#5AA8D6]' : 'text-slate-500';
+    colorVariant === 'organizer' ? 'text-[#3B82F6]' : 'text-slate-500';
   const brandLinkClassName =
     colorVariant === 'organizer'
-      ? 'text-xs font-normal capitalize text-[#3A4163] hover:underline hover:text-[#1D2737]'
+      ? 'text-xs font-normal capitalize text-[#1E3A8A] hover:underline hover:text-[#1D4ED8]'
       : 'text-xs font-normal capitalize text-slate-300 hover:underline hover:text-[#F4F7FB]';
   const brandTitleWrapperClassName =
     colorVariant === 'organizer'
-      ? 'text-md shrink capitalize text-[#3A4163] md:text-3xl'
+      ? 'text-md shrink capitalize text-[#1E3A8A] md:text-3xl'
       : 'text-md shrink capitalize text-white md:text-3xl';
   const brandTitleLinkClassName =
     colorVariant === 'organizer'
-      ? 'font-bold capitalize hover:text-[#1D2737]'
+      ? 'font-bold capitalize hover:text-[#1D4ED8]'
       : 'font-bold capitalize hover:text-[#E8EEF7]';
 
   return (

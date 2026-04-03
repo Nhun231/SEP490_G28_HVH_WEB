@@ -67,7 +67,7 @@ export default function HeaderLinks(props: {
 
   const iconButtonClassName =
     colorVariant === 'organizer'
-      ? 'flex h-9 min-w-9 cursor-pointer rounded-full border-[#CBE3EF] bg-[#EDF3FB]/95 p-0 text-xl text-[#3A4163] hover:bg-white hover:text-[#1D2737] md:min-h-10 md:min-w-10'
+      ? 'flex h-9 min-w-9 cursor-pointer rounded-full border-[#BFDBFE] bg-[#EFF6FF]/95 p-0 text-xl text-[#1E3A8A] hover:bg-[#DBEAFE] hover:text-[#1D4ED8] md:min-h-10 md:min-w-10'
       : 'flex h-9 min-w-9 cursor-pointer rounded-full border-[#1E2939] bg-[#1A2434]/90 p-0 text-xl text-slate-200 hover:bg-[#1D2737] hover:text-white md:min-h-10 md:min-w-10';
   const menuButtonClassName =
     colorVariant === 'organizer'
@@ -75,7 +75,7 @@ export default function HeaderLinks(props: {
       : `${iconButtonClassName} xl:hidden`;
   const signOutIconClassName =
     colorVariant === 'organizer'
-      ? 'h-4 w-4 stroke-2 text-[#3A4163]'
+      ? 'h-4 w-4 stroke-2 text-[#1E3A8A]'
       : 'h-4 w-4 stroke-2 text-[#E5ECF5]';
 
   return (

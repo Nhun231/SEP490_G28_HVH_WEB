@@ -82,7 +82,7 @@ export default function CreateHostForm({ user, userDetails, routes }) {
           <Button
             type="button"
             variant="outline"
-            className="font-semibold border-blue-500 text-blue-600 hover:bg-blue-50 flex items-center gap-2 shadow"
+            className="font-semibold border-blue-600 text-blue-700 hover:bg-blue-50 hover:text-blue-800 flex items-center gap-2 shadow"
             onClick={() =>
               router.push('/organizer/host-management/bulk-create-host')
             }

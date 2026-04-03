@@ -35,7 +35,7 @@ const DashboardLayout: React.FC<Props> = (props: Props) => {
   const shellClassName =
     props.shellClassName ??
     (colorVariant === 'organizer'
-      ? 'bg-gradient-to-br from-[#FFFFFF] via-[#EDF3FB] to-[#CBE3EF]'
+      ? 'bg-gradient-to-br from-[#F8FBFF] via-[#EAF2FF] to-[#D7E7FF]'
       : 'bg-gradient-to-br from-[#121A26] via-[#121A2A] to-[#1E2939]');
   const signInPath =
     props.signInPath ??

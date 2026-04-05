@@ -44,7 +44,7 @@ import {
   ShieldCheck,
   X
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -52,210 +52,13 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
+import { useViewVolunteerList } from '@/hooks/features/uc029-view-volunteer-account-list/useViewVolunteerList';
+import { useGetVolunteerActivities } from '@/hooks/features/uc030-get-volunteer-details/useGetVolunteerActivities';
 
 interface Props {
   user: User | null | undefined;
   userDetails: { [x: string]: any } | null;
 }
-
-// Mock data for demonstration
-const mockUsers = [
-  {
-    id: 1,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=1',
-    fullName: 'Nguyễn Văn An',
-    cccd: '001234567890',
-    phone: '0912345678',
-    email: 'nguyenvanan@example.com',
-    dob: '15/05/1990',
-    events: 12,
-    rating: 4.5,
-    reputation: 85,
-    status: 'active'
-  },
-  {
-    id: 2,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=2',
-    fullName: 'Trần Thị Bình',
-    cccd: '001234567891',
-    phone: '0987654321',
-    email: 'tranthibinh@example.com',
-    dob: '20/08/1995',
-    events: 8,
-    rating: 4.8,
-    reputation: 92,
-    status: 'active'
-  },
-  {
-    id: 3,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=3',
-    fullName: 'Lê Hoàng Cường',
-    cccd: '001234567892',
-    phone: '0901234567',
-    email: 'lehoangcuong@example.com',
-    dob: '10/12/1988',
-    events: 5,
-    rating: 4.2,
-    reputation: 78,
-    status: 'inactive'
-  },
-  {
-    id: 4,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=4',
-    fullName: 'Phạm Thị Dung',
-    cccd: '001234567893',
-    phone: '0923456789',
-    email: 'phamthidung@example.com',
-    dob: '25/03/1992',
-    events: 15,
-    rating: 4.9,
-    reputation: 95,
-    status: 'active'
-  },
-  {
-    id: 5,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=5',
-    fullName: 'Hoàng Văn Em',
-    cccd: '001234567894',
-    phone: '0934567890',
-    email: 'hoangvanem@example.com',
-    dob: '05/07/1993',
-    events: 3,
-    rating: 3.8,
-    reputation: 65,
-    status: 'locked'
-  },
-  {
-    id: 6,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=6',
-    fullName: 'Vũ Minh Phúc',
-    cccd: '001234567895',
-    phone: '0945678901',
-    email: 'vuminhphuc@example.com',
-    dob: '12/11/1991',
-    events: 9,
-    rating: 4.1,
-    reputation: 80,
-    status: 'active'
-  },
-  {
-    id: 7,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=7',
-    fullName: 'Đặng Thị Hạnh',
-    cccd: '001234567896',
-    phone: '0956789012',
-    email: 'dangthihanh@example.com',
-    dob: '09/02/1994',
-    events: 6,
-    rating: 4.3,
-    reputation: 82,
-    status: 'active'
-  },
-  {
-    id: 8,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=8',
-    fullName: 'Bùi Quốc Huy',
-    cccd: '001234567897',
-    phone: '0967890123',
-    email: 'buiquochuy@example.com',
-    dob: '22/09/1989',
-    events: 4,
-    rating: 3.9,
-    reputation: 70,
-    status: 'inactive'
-  },
-  {
-    id: 9,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=9',
-    fullName: 'Phan Thị Lan',
-    cccd: '001234567898',
-    phone: '0978901234',
-    email: 'phanthilan@example.com',
-    dob: '18/01/1996',
-    events: 11,
-    rating: 4.6,
-    reputation: 88,
-    status: 'active'
-  },
-  {
-    id: 10,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=10',
-    fullName: 'Đỗ Đức Long',
-    cccd: '001234567899',
-    phone: '0989012345',
-    email: 'doducbllong@example.com',
-    dob: '03/06/1990',
-    events: 7,
-    rating: 4.0,
-    reputation: 76,
-    status: 'active'
-  },
-  {
-    id: 11,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=11',
-    fullName: 'Lý Thị Mai',
-    cccd: '001234567900',
-    phone: '0911122233',
-    email: 'lythimai@example.com',
-    dob: '30/10/1997',
-    events: 2,
-    rating: 3.7,
-    reputation: 60,
-    status: 'inactive'
-  },
-  {
-    id: 12,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=12',
-    fullName: 'Ngô Quang Nam',
-    cccd: '001234567901',
-    phone: '0922233344',
-    email: 'ngoquangnam@example.com',
-    dob: '14/04/1987',
-    events: 14,
-    rating: 4.7,
-    reputation: 93,
-    status: 'active'
-  },
-  {
-    id: 13,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=13',
-    fullName: 'Tạ Thị Quyên',
-    cccd: '001234567902',
-    phone: '0933344455',
-    email: 'tathiquyen@example.com',
-    dob: '27/08/1993',
-    events: 10,
-    rating: 4.4,
-    reputation: 86,
-    status: 'active'
-  },
-  {
-    id: 14,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=14',
-    fullName: 'Trương Minh Khoa',
-    cccd: '001234567903',
-    phone: '0944455566',
-    email: 'truongminhkhoa@example.com',
-    dob: '16/12/1992',
-    events: 1,
-    rating: 3.6,
-    reputation: 58,
-    status: 'locked'
-  },
-  {
-    id: 15,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=15',
-    fullName: 'Nguyễn Thị Oanh',
-    cccd: '001234567904',
-    phone: '0955566677',
-    email: 'nguyenthioanh@example.com',
-    dob: '08/03/1998',
-    events: 13,
-    rating: 4.9,
-    reputation: 97,
-    status: 'active'
-  }
-];
 
 type VolunteerActivityStatus = 'completed' | 'ongoing' | 'cancelled';
 
@@ -264,49 +67,25 @@ type VolunteerActivity = {
   eventName: string;
   date: string;
   location: string;
-  role: string;
   rating: number;
   reputationGain: number;
   status: VolunteerActivityStatus;
 };
 
-const mockVolunteerActivitiesByUserId: Record<number, VolunteerActivity[]> = {
-  1: [
-    {
-      id: 'v1-1',
-      eventName: 'Chuong trinh Mua he xanh 2025',
-      date: '15/06/2025',
-      location: 'Huyen Binh Chanh, TP.HCM',
-      role: 'Tinh nguyen vien',
-      rating: 4.5,
-      reputationGain: 4,
-      status: 'completed'
-    },
-    {
-      id: 'v1-2',
-      eventName: 'Hien mau nhan dao',
-      date: '20/08/2025',
-      location: 'Benh vien Cho Ray',
-      role: 'Tinh nguyen vien',
-      rating: 4.8,
-      reputationGain: 3,
-      status: 'completed'
-    },
-    {
-      id: 'v1-3',
-      eventName: 'Trong cay xanh tai khu vuc noi thanh',
-      date: '10/01/2026',
-      location: 'Cong vien Tao Dan, Quan 1',
-      role: 'Truong nhom',
-      rating: 4.8,
-      reputationGain: 5,
-      status: 'completed'
-    }
-  ]
-};
-
 export default function VolunteersList(props: Props) {
-  type Volunteer = (typeof mockUsers)[0];
+  type Volunteer = {
+    id: string;
+    avatar: string;
+    fullName: string;
+    cccd: string;
+    phone: string;
+    email: string;
+    dob: string;
+    events: number;
+    rating: number;
+    reputation: number;
+    status: 'active' | 'inactive' | 'locked';
+  };
   type SortKey =
     | 'none'
     | 'id'
@@ -323,7 +102,18 @@ export default function VolunteersList(props: Props) {
   type SortCriterion = { key: Exclude<SortKey, 'none'>; order: SortOrder };
   type ValueFilterKey = 'fullName' | 'cccd' | 'phone' | 'email' | 'status';
 
-  const [users, setUsers] = useState(mockUsers);
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
+  const {
+    data: volunteerListData,
+    isLoading,
+    error
+  } = useViewVolunteerList({
+    pageNumber: 0,
+    pageSize: 100,
+    baseUrl,
+    enabled: true
+  });
+  const [users, setUsers] = useState<Volunteer[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState<Volunteer | null>(null);
   const [openDetailModal, setOpenDetailModal] = useState(false);
@@ -365,6 +155,94 @@ export default function VolunteersList(props: Props) {
     Partial<Record<ValueFilterKey, string[]>>
   >({});
   const pageSize = 10;
+  const {
+    data: volunteerActivitiesData,
+    isLoading: isLoadingActivities,
+    error: activitiesError
+  } = useGetVolunteerActivities({
+    id: selectedUser?.id,
+    baseUrl,
+    enabled: openDetailModal && Boolean(selectedUser?.id)
+  });
+
+  const mapAccountStatus = (
+    status: string | null | undefined
+  ): Volunteer['status'] => {
+    if (status === 'ACTIVE') return 'active';
+    return 'locked';
+  };
+
+  const formatDateForDisplay = (value: string | null | undefined) => {
+    if (!value) return 'Chưa cập nhật';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return new Intl.DateTimeFormat('vi-VN').format(date);
+  };
+
+  const formatDateTimeForDisplay = (value: string | null | undefined) => {
+    if (!value) return 'Chưa cập nhật';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Chưa cập nhật';
+
+    return new Intl.DateTimeFormat('vi-VN', {
+      dateStyle: 'short',
+      timeStyle: 'short'
+    }).format(date);
+  };
+
+  const mapActivityStatus = (
+    applicationStatus: string | null | undefined,
+    eventStatus: string | null | undefined
+  ): VolunteerActivityStatus => {
+    const normalizedApplicationStatus = applicationStatus?.toUpperCase();
+    const normalizedEventStatus = eventStatus?.toUpperCase();
+
+    if (
+      normalizedApplicationStatus === 'REJECTED' ||
+      normalizedApplicationStatus === 'CANCELLED' ||
+      normalizedEventStatus === 'CANCELLED'
+    ) {
+      return 'cancelled';
+    }
+
+    if (
+      normalizedApplicationStatus === 'COMPLETED' ||
+      normalizedApplicationStatus === 'APPROVED' ||
+      normalizedEventStatus === 'COMPLETED' ||
+      normalizedEventStatus === 'ENDED'
+    ) {
+      return 'completed';
+    }
+
+    return 'ongoing';
+  };
+
+  const shortenId = (id: string) => {
+    if (!id) return '';
+    if (id.length <= 14) return id;
+    return `${id.slice(0, 8)}...${id.slice(-4)}`;
+  };
+
+  useEffect(() => {
+    const content = volunteerListData?.content ?? [];
+    const mappedUsers = content.map((item, index) => ({
+      id: item.id,
+      avatar:
+        item.avatarUrl ??
+        `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(item.fullName ?? item.vid ?? String(index + 1))}`,
+      fullName: item.fullName ?? 'Chưa cập nhật',
+      cccd: item.cid ?? 'Chưa cập nhật',
+      phone: item.phone ?? 'Chưa cập nhật',
+      email: item.email ?? 'Chưa cập nhật',
+      dob: formatDateForDisplay(item.dob),
+      events: item.activityCount ?? 0,
+      rating: item.avgRating ?? 0,
+      reputation: item.creditScore ?? 0,
+      status: mapAccountStatus(item.status)
+    }));
+
+    setUsers(mappedUsers);
+  }, [volunteerListData]);
 
   const setSortForKey = (key: SortKey, order: SortOrder) => {
     if (key === 'none') return;
@@ -904,7 +782,7 @@ export default function VolunteersList(props: Props) {
 
       switch (searchField) {
         case 'id':
-          return String(user.id).includes(query);
+          return String(user.id).toLowerCase().includes(query);
         case 'name':
           return user.fullName.toLowerCase().includes(query);
         case 'cccd':
@@ -943,7 +821,7 @@ export default function VolunteersList(props: Props) {
           const key = criterion.key;
 
           if (key === 'id') {
-            const diff = a.id - b.id;
+            const diff = a.id.localeCompare(b.id);
             if (diff !== 0) return diff * order;
             continue;
           }
@@ -1016,9 +894,26 @@ export default function VolunteersList(props: Props) {
   );
 
   const volunteerActivities = useMemo(() => {
-    if (!selectedUser) return [];
-    return mockVolunteerActivitiesByUserId[selectedUser.id] ?? [];
-  }, [selectedUser]);
+    const activities = Array.isArray(volunteerActivitiesData)
+      ? volunteerActivitiesData
+      : (volunteerActivitiesData?.content ?? []);
+
+    return activities.map((activity, index) => ({
+      id: activity.sessionId || `${activity.eventId}-${index}`,
+      eventName: activity.eventName ?? 'Sự kiện chưa cập nhật',
+      date: formatDateTimeForDisplay(activity.sessionStartTime),
+      location:
+        [activity.eventDetailAddress, activity.eventAddress]
+          .filter(Boolean)
+          .join(', ') || 'Chưa cập nhật',
+      rating: activity.sessionRating ?? 0,
+      reputationGain: activity.sessionCreditHour ?? 0,
+      status: mapActivityStatus(
+        activity.applicationStatus,
+        activity.eventStatus
+      )
+    }));
+  }, [volunteerActivitiesData]);
 
   const filteredVolunteerActivities = useMemo(() => {
     const query = activityQuery.trim().toLowerCase();
@@ -1036,7 +931,7 @@ export default function VolunteersList(props: Props) {
     });
   }, [activityQuery, activityStatusFilter, volunteerActivities]);
 
-  const handleView = (userId: number) => {
+  const handleView = (userId: string) => {
     const user = users.find((u) => u.id === userId);
     if (user) {
       setSelectedUser(user);
@@ -1046,7 +941,7 @@ export default function VolunteersList(props: Props) {
     }
   };
 
-  const handleLock = (userId: number) => {
+  const handleLock = (userId: string) => {
     const user = users.find((u) => u.id === userId);
     if (user) {
       setSelectedLockUser(user);
@@ -1054,7 +949,7 @@ export default function VolunteersList(props: Props) {
     }
   };
 
-  const handleEdit = (userId: number) => {
+  const handleEdit = (userId: string) => {
     const user = users.find((u) => u.id === userId);
     if (!user) return;
     setSelectedEditUser(user);
@@ -1115,8 +1010,8 @@ export default function VolunteersList(props: Props) {
       return;
     }
 
-    const newUser = {
-      id: Math.max(...users.map((u) => u.id), 0) + 1,
+    const newUser: Volunteer = {
+      id: crypto.randomUUID(),
       avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${Math.random()}`,
       fullName: newVolunteer.fullName,
       cccd: newVolunteer.cccd,
@@ -1146,16 +1041,14 @@ export default function VolunteersList(props: Props) {
     switch (status) {
       case 'active':
         return (
-          <Badge className="bg-green-500 hover:bg-green-600">active</Badge>
-        );
-      case 'inactive':
-        return (
-          <Badge className="bg-gray-500 hover:bg-gray-600">inactive</Badge>
+          <Badge className="bg-emerald-500 hover:bg-emerald-600">
+            Kích hoạt
+          </Badge>
         );
       case 'locked':
-        return <Badge className="bg-red-500 hover:bg-red-600">locked</Badge>;
+        return <Badge className="bg-rose-500 hover:bg-rose-600">Khóa</Badge>;
       default:
-        return <Badge>{status}</Badge>;
+        return <Badge className="bg-rose-500 hover:bg-rose-600">Khóa</Badge>;
     }
   };
 
@@ -1208,6 +1101,16 @@ export default function VolunteersList(props: Props) {
           </div>
         </div>
         <div className="rounded-lg border border-zinc-200 bg-white text-zinc-950 shadow-sm overflow-hidden">
+          {isLoading && (
+            <div className="px-6 py-8 text-center text-sm text-zinc-500">
+              Đang tải danh sách tình nguyện viên...
+            </div>
+          )}
+          {error && (
+            <div className="px-6 py-8 text-center text-sm text-rose-500">
+              Không thể tải danh sách tình nguyện viên.
+            </div>
+          )}
           <div className="w-full overflow-x-auto">
             <Table className="min-w-[1200px] bg-white">
               <TableHeader className="bg-white">
@@ -1295,65 +1198,71 @@ export default function VolunteersList(props: Props) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedUsers.map((user) => (
-                  <TableRow key={user.id} className="hover:bg-zinc-50">
-                    <TableCell className="font-medium">{user.id}</TableCell>
-                    <TableCell>
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={user.avatar} alt={user.fullName} />
-                        <AvatarFallback>
-                          {user.fullName.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {user.fullName}
-                    </TableCell>
-                    <TableCell>{user.cccd}</TableCell>
-                    <TableCell>{user.phone}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.dob}</TableCell>
-                    <TableCell className="text-center">{user.events}</TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <span className="font-semibold">{user.rating}</span>
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <span className="font-semibold">{user.reputation}</span>
-                    </TableCell>
-                    <TableCell>{getStatusBadge(user.status)}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => handleView(user.id)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => handleEdit(user.id)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => handleLock(user.id)}
-                        >
-                          <Lock className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {!isLoading &&
+                  !error &&
+                  paginatedUsers.map((user) => (
+                    <TableRow key={user.id} className="hover:bg-zinc-50">
+                      <TableCell className="font-medium" title={user.id}>
+                        {shortenId(user.id)}
+                      </TableCell>
+                      <TableCell>
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={user.avatar} alt={user.fullName} />
+                          <AvatarFallback>
+                            {user.fullName.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {user.fullName}
+                      </TableCell>
+                      <TableCell>{user.cccd}</TableCell>
+                      <TableCell>{user.phone}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.dob}</TableCell>
+                      <TableCell className="text-center">
+                        {user.events}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <span className="font-semibold">{user.rating}</span>
+                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className="font-semibold">{user.reputation}</span>
+                      </TableCell>
+                      <TableCell>{getStatusBadge(user.status)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleView(user.id)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleEdit(user.id)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleLock(user.id)}
+                          >
+                            <Lock className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
               </TableBody>
             </Table>
           </div>
@@ -1437,16 +1346,10 @@ export default function VolunteersList(props: Props) {
                       className={`mt-3 rounded-full px-3 py-1 ${
                         selectedUser.status === 'active'
                           ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
-                          : selectedUser.status === 'locked'
-                            ? 'border border-rose-200 bg-rose-50 text-rose-700'
-                            : 'border border-amber-200 bg-amber-50 text-amber-700'
+                          : 'border border-rose-200 bg-rose-50 text-rose-700'
                       }`}
                     >
-                      {selectedUser.status === 'active'
-                        ? 'Hoạt động'
-                        : selectedUser.status === 'locked'
-                          ? 'Bị khóa'
-                          : 'Không hoạt động'}
+                      {selectedUser.status === 'active' ? 'Kích hoạt' : 'Khóa'}
                     </Badge>
                   </div>
 
@@ -1516,7 +1419,15 @@ export default function VolunteersList(props: Props) {
                   </div>
 
                   <div className="mt-4 space-y-3 max-h-[420px] overflow-y-auto pr-1">
-                    {filteredVolunteerActivities.length === 0 ? (
+                    {isLoadingActivities ? (
+                      <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-500">
+                        Đang tải lịch sử hoạt động...
+                      </div>
+                    ) : activitiesError ? (
+                      <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-600">
+                        Không thể tải lịch sử hoạt động.
+                      </div>
+                    ) : filteredVolunteerActivities.length === 0 ? (
                       <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-500">
                         Không có hoạt động phù hợp.
                       </div>

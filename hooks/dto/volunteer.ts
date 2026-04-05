@@ -1,6 +1,8 @@
 // Volunteer Registration DTOs
 
 import type { SystemAdmin } from '@/hooks/entity';
+import { EAccountStatus } from '@/constants/account-status';
+import { EEventStatus } from '@/constants/event-status';
 
 export enum EVolunteerVerificationStatus {
   PENDING = 'PENDING',
@@ -48,4 +50,57 @@ export interface VolunteerRegistrationVerifyRequest {
   approve: boolean;
   rejectionReason: string | null;
   fullName: string;
+}
+
+export interface VolunteerSimpleResponseForAdmin {
+  id: string;
+  vid: string;
+  avatarUrl: string | null;
+  fullName: string | null;
+  cid: string | null;
+  phone: string | null;
+  email: string | null;
+  dob: string | null;
+  activityCount: number | null;
+  avgRating: number | null;
+  creditScore: number | null;
+  status: EAccountStatus | null;
+  address: string | null;
+  detailAddress: string | null;
+}
+
+export interface VolunteerListResponseForAdmin {
+  content: VolunteerSimpleResponseForAdmin[];
+  page: {
+    size: number;
+    number: number;
+    totalElements: number;
+    totalPages: number;
+  };
+}
+
+export type VolunteerListItemForAdmin = VolunteerSimpleResponseForAdmin;
+
+export interface VolunteerActivitiesResponseForAdmin {
+  eventId: string;
+  eventName: string | null;
+  eventAddress: string | null;
+  eventDetailAddress: string | null;
+  eventStatus: EEventStatus | null;
+  sessionId: string;
+  sessionStartTime: string | null;
+  sessionEndTime: string | null;
+  sessionRating: number | null;
+  applicationStatus: string | null;
+  sessionCreditHour: number | null;
+}
+
+export interface VolunteerActivitiesListResponseForAdmin {
+  content: VolunteerActivitiesResponseForAdmin[];
+  page: {
+    size: number;
+    number: number;
+    totalElements: number;
+    totalPages: number;
+  };
 }

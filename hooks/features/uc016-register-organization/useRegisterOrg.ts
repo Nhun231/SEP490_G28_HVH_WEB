@@ -4,7 +4,7 @@ import { RegisterOrganizationRequest } from '@/hooks/dto';
 
 export function useRegisterOrg(baseUrl?: string) {
   const apiBase = baseUrl || process.env.NEXT_PUBLIC_API_BASE_URL || '';
-  const url = `${apiBase}/organization/register-org`;
+  const url = `${apiBase}/organizations/register-org`;
   return useSWRMutation<any, Error, string, RegisterOrganizationRequest>(
     url,
     (url, { arg }) =>

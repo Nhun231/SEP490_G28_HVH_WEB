@@ -4,7 +4,7 @@ import { RegisterTokenRequest } from '@/hooks/dto';
 
 export function useRegisterToken(baseUrl?: string) {
   const apiBase = baseUrl || process.env.NEXT_PUBLIC_API_BASE_URL || '';
-  const url = `${apiBase}/notification/register-token`;
+  const url = `${apiBase}/notifications/register-token`;
 
   return useSWRMutation<any, Error, string, RegisterTokenRequest>(
     url,

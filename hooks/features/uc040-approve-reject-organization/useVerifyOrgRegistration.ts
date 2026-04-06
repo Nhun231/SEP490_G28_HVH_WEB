@@ -8,7 +8,7 @@ interface Params {
 }
 
 export const useVerifyOrgRegistration = ({ id, baseUrl = '' }: Params) => {
-  const path = `/organization/registrations/${id}/verify`;
+  const path = `/sys-admin/organizations/registrations/${id}/verify`;
   const url = baseUrl ? `${baseUrl}${path}` : path;
 
   return useSWRMutation<

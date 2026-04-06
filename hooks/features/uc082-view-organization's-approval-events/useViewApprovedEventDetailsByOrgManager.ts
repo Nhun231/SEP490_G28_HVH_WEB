@@ -12,7 +12,7 @@ export const useViewApprovedEventDetailsByOrgManager = ({
   baseUrl = ''
 }: Params) => {
   const url = useMemo(() => {
-    const path = `/org-manager/event/event-details/${id}`;
+    const path = `/org-manager/events/event-details/${id}`;
     return id ? (baseUrl ? `${baseUrl}${path}` : path) : null;
   }, [id, baseUrl]);
 

@@ -19,7 +19,7 @@ interface Params {
 }
 
 export const useVerifyIdentity = ({ id, baseUrl = '' }: Params) => {
-  const path = `/volunteer/registrations/${id}/verify`;
+  const path = `/sys-admin/volunteers/registrations/${id}/verify`;
   const url = baseUrl ? `${baseUrl}${path}` : path;
 
   return useSWRMutation<

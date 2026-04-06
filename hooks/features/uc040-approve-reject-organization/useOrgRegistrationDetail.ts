@@ -10,7 +10,7 @@ interface Params {
 export const useOrgRegistrationDetail = ({ id, baseUrl = '' }: Params) => {
   const detailUrl = useMemo(() => {
     if (!id) return null;
-    const path = `/organization/registrations/${id}`;
+    const path = `/sys-admin/organizations/registrations/${id}`;
     return baseUrl ? `${baseUrl}${path}` : path;
   }, [baseUrl, id]);
 

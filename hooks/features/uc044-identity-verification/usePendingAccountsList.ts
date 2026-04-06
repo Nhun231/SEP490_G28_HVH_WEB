@@ -40,7 +40,7 @@ export const usePendingAccounts = ({
       email: email.trim()
     });
 
-    const path = `/volunteer/registrations?${queryParams.toString()}`;
+    const path = `/sys-admin/volunteers/registrations?${queryParams.toString()}`;
     return baseUrl ? `${baseUrl}${path}` : path;
   }, [baseUrl, email, pageNumber, pageSize, status]);
 

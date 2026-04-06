@@ -9,7 +9,7 @@ interface Params {
 
 export const useViewEventDetailsBySysAdmin = ({ id, baseUrl = '' }: Params) => {
   const url = useMemo(() => {
-    const path = `/sys-admin/event/event-details/${id}`;
+    const path = `/sys-admin/events/event-details/${id}`;
     return id ? (baseUrl ? `${baseUrl}${path}` : path) : null;
   }, [id, baseUrl]);
 

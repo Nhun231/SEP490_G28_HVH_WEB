@@ -38,7 +38,7 @@ export const useOrgRegistrationsList = ({
       queryParams.append('email', email);
     }
 
-    const path = `/organization/registrations?${queryParams.toString()}`;
+    const path = `/sys-admin/organizations/registrations?${queryParams.toString()}`;
     return baseUrl ? `${baseUrl}${path}` : path;
   }, [baseUrl, email, pageNumber, pageSize, status]);
 

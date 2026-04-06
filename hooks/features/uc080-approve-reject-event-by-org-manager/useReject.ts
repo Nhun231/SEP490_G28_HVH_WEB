@@ -8,7 +8,7 @@ interface Params {
 }
 
 export const useRejectEventByOrgManager = ({ id, baseUrl = '' }: Params) => {
-  const path = `/org-manager/event/${id}/reject`;
+  const path = `/org-manager/events/${id}/reject`;
   const url = id ? (baseUrl ? `${baseUrl}${path}` : path) : null;
   return useSWRMutation<void, Error, string, RejectEventRequest>(
     url,

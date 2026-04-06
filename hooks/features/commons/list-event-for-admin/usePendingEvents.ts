@@ -28,7 +28,7 @@ export const usePendingEvents = ({
       queryParams.append('name', name.trim());
     }
 
-    const path = `/sys-admin/event/pending?${queryParams.toString()}`;
+    const path = `/sys-admin/events/pending?${queryParams.toString()}`;
 
     return baseUrl ? `${baseUrl}${path}` : path;
   }, [baseUrl, enabled, name, pageNumber, pageSize]);

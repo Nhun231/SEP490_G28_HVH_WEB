@@ -25,7 +25,7 @@ export const useApprovalEventsList = ({
       queryParams.append('name', name.trim());
     }
 
-    const path = `/org-manager/event/approved?${queryParams.toString()}`;
+    const path = `/org-manager/events/approved?${queryParams.toString()}`;
     return baseUrl ? `${baseUrl}${path}` : path;
   }, [baseUrl, name, pageNumber, pageSize]);
 

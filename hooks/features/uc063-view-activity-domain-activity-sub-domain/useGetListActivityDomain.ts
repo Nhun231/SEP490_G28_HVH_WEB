@@ -35,7 +35,7 @@ export const useGetListActivityDomain = ({
       queryParams.append('name', name.trim());
     }
 
-    const path = `/activity-domain/activity-domains?${queryParams.toString()}`;
+    const path = `/activity-domains?${queryParams.toString()}`;
     return baseUrl ? `${baseUrl}${path}` : path;
   }, [baseUrl, inputActive, name, pageNumber, pageSize]);
 

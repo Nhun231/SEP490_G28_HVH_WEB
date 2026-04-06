@@ -10,7 +10,7 @@ interface Params {
 }
 
 export const useCreateActivityDomain = ({ baseUrl }: Params) => {
-  const path = '/activity-domain/create';
+  const path = '/sys-admin/activity-domains/create';
   const url = baseUrl ? `${baseUrl}${path}` : path;
 
   return useSWRMutation<

@@ -11,25 +11,9 @@ import useSWRMutation from 'swr/mutation';
 import { swrFetcher } from '@/utils/swr-fetcher';
 import type { CreateHostAccountRequest } from '@/hooks/dto/host';
 import * as XLSX from 'xlsx';
+import { useCreateHostAccount } from '@/hooks/features/uc067-create-host-account/useCreateHostAccount';
 
-const NEXT_PUBLIC_API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api/v1';
-
-function useCreateHostAccount({ baseUrl = '' }: { baseUrl?: string } = {}) {
-  const path = '/host/create-account';
-  const url = baseUrl ? `${baseUrl}${path}` : path;
-  return useSWRMutation<any, Error, string, CreateHostAccountRequest>(
-    url,
-    (url, { arg }) =>
-      swrFetcher(url, {
-        method: 'POST',
-        body: JSON.stringify(arg),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-  );
-}
+const NEXT_PUBLIC_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
 
 export default function BulkCreateHostPage({ user, userDetails, routes }: any) {
   const fileInputRef = useRef<HTMLInputElement>(null);

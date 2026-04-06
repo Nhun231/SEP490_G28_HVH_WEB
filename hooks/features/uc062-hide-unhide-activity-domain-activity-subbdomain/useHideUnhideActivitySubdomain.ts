@@ -14,7 +14,7 @@ export const useHideUnhideActivitySubdomain = ({
   id,
   baseUrl = ''
 }: Params) => {
-  const path = `/activity-domain/activity-subdomain/${id}/change-visibility`;
+  const path = `/sys-admin/activity-domains/activity-subdomains/${id}/change-visibility`;
   const url = baseUrl ? `${baseUrl}${path}` : path;
 
   return useSWRMutation<

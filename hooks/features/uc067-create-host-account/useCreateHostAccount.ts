@@ -7,7 +7,7 @@ interface Params {
 }
 
 export const useCreateHostAccount = ({ baseUrl = '' }: Params = {}) => {
-  const path = '/host/create-account';
+  const path = '/org-manager/hosts';
   const url = baseUrl ? `${baseUrl}${path}` : path;
 
   return useSWRMutation<any, Error, string, CreateHostAccountRequest>(

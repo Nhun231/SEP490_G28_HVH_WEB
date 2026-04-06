@@ -11,7 +11,7 @@ interface Params {
 }
 
 export const useHideUnhideActivityDomain = ({ id, baseUrl = '' }: Params) => {
-  const path = `/activity-domain/${id}/change-visibility`;
+  const path = `/sys-admin/activity-domains/${id}/change-visibility`;
   const url = baseUrl ? `${baseUrl}${path}` : path;
 
   return useSWRMutation<

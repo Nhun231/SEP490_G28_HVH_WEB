@@ -7,7 +7,7 @@ interface Params {
 }
 
 export const useApproveEventByAdmin = ({ id, baseUrl = '' }: Params) => {
-  const path = `/sys-admin/event/${id}/approve`;
+  const path = `/sys-admin/events/${id}/approve`;
   const url = id ? (baseUrl ? `${baseUrl}${path}` : path) : null;
   return useSWRMutation(url, (url) =>
     swrFetcher(url, {

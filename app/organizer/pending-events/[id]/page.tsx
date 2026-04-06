@@ -2,7 +2,7 @@
 
 import PendingEventDetail from '@/components/dashboard/pending-events/detail';
 import { organizerRoutes } from '@/components/routes';
-import { useViewPendingEventDetailsByOrgManager } from '@/hooks/features/uc090-view-pending-event-details-by-org-manager/useViewPendingEventDetailsByOrgManger';
+import { useViewPendingEventDetailsByOrgManager } from "@/hooks/features/uc090-view-organization's-pending-events/useViewPendingEventDetailsByOrgManger";
 import { createClient } from '@/utils/supabase/client';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';

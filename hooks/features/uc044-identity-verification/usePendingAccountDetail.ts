@@ -26,7 +26,7 @@ interface Params {
 export const usePendingAccountDetail = ({ id, baseUrl = '' }: Params) => {
   const detailUrl = useMemo(() => {
     if (!id) return null;
-    const path = `/volunteer/registrations/${id}`;
+    const path = `/sys-admin/volunteers/registrations/${id}`;
     return baseUrl ? `${baseUrl}${path}` : path;
   }, [baseUrl, id]);
 

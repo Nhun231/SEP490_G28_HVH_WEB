@@ -24,6 +24,7 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useGetEventMomentsFeed } from '@/hooks/features/uc086-view-moments-feed/useGetEventMomentsFeed';
 
 interface Post {
   id: string;
@@ -35,66 +36,10 @@ interface Post {
 }
 
 interface PostsManagementProps {
-  posts?: Post[];
+  eventId?: string;
 }
 
 const CLIENT_PAGE_SIZE = 8;
-const TARGET_MOCK_POSTS = 72;
-
-const MOCK_IMAGE_POOL = [
-  'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&h=700&fit=crop',
-  'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=1200&h=700&fit=crop',
-  'https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&h=700&fit=crop',
-  'https://images.unsplash.com/photo-1517457373614-b7152f800fd1?w=1200&h=700&fit=crop',
-  'https://images.unsplash.com/photo-1506776592495-42f7739f1f19?w=1200&h=700&fit=crop',
-  'https://images.unsplash.com/photo-1469571486292-b53601020b1f?w=1200&h=700&fit=crop',
-  'https://images.unsplash.com/photo-1459180129673-eefb56f79b45?w=1200&h=700&fit=crop',
-  'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=1200&h=700&fit=crop'
-];
-
-const MOCK_TIME_LABELS = [
-  'Hôm nay',
-  '1 ngày trước',
-  '2 ngày trước',
-  '3 ngày trước',
-  '5 ngày trước',
-  '1 tuần trước',
-  '2 tuần trước',
-  '3 tuần trước'
-];
-
-const expandMockPosts = (seedPosts: Post[], totalPosts: number): Post[] => {
-  if (!seedPosts.length) {
-    return [];
-  }
-
-  return Array.from({ length: totalPosts }, (_, index) => {
-    const seed = seedPosts[index % seedPosts.length];
-    const imageMode = index % 6;
-    let imageUrls: string[] | undefined;
-
-    if (imageMode === 0) {
-      imageUrls = undefined;
-    } else {
-      const imageCount = imageMode;
-      imageUrls = Array.from({ length: imageCount }, (_, imageIndex) => {
-        const poolIndex = (index + imageIndex) % MOCK_IMAGE_POOL.length;
-        return MOCK_IMAGE_POOL[poolIndex];
-      });
-    }
-
-    return {
-      id: `mock-post-${index + 1}`,
-      authorName: `${seed.authorName}`,
-      authorAvatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
-        `${seed.authorName}-${index + 1}`
-      )}`,
-      createdAt: MOCK_TIME_LABELS[index % MOCK_TIME_LABELS.length],
-      content: `${seed.content} #BàiĐăng${index + 1}`,
-      imageUrls
-    };
-  });
-};
 
 // Component hiển thị gallery ảnh (Facebook style)
 function ImageGallery({ images }: { images: string[] }) {
@@ -536,104 +481,38 @@ function ImageGallery({ images }: { images: string[] }) {
   );
 }
 
-export default function PostsManagement({ posts }: PostsManagementProps) {
-  // Mock data - thay bằng data thực khi có API
-  const [postList, setPostList] = useState<Post[]>(() => {
-    const seedPosts = posts || [
-      {
-        id: '1',
-        authorName: 'Nguyễn Thị Mai',
-        authorAvatar:
-          'https://api.dicebear.com/7.x/avataaars/svg?seed=NguyenThiMai',
-        createdAt: '2 ngày trước',
-        content:
-          'Hôm nay chúng em tham gia tình nguyện dạy dỏ cho trẻ em vùng cao. Các cô cậu khá thông minh, nhất là toán 😊 Cảm ơn những người đã đồng hành cùng chúng mình! 💙',
-        imageUrls: [
-          'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&h=500&fit=crop'
-        ]
-      },
-      {
-        id: '2',
-        authorName: 'Trần Văn Bình',
-        authorAvatar:
-          'https://api.dicebear.com/7.x/avataaars/svg?seed=TranVanBinh',
-        createdAt: '5 ngày trước',
-        content:
-          'Sáng nay vệ sinh khu phố lân cận xong. Mọi người hãy giữ gìn môi trường sạch đẹp nhé!',
-        imageUrls: undefined
-      },
-      {
-        id: '3',
-        authorName: 'Lê Quốc Cường',
-        authorAvatar:
-          'https://api.dicebear.com/7.x/avataaars/svg?seed=LeQuocCuong',
-        createdAt: '3 ngày trước',
-        content:
-          'Buổi mưa chiều mai chúng ta sẽ tiếp tục làm sạch công viên Tao Đàn. Mọi người chuẩn bị đồng phục và dụng cụ nhé! 🧹',
-        imageUrls: [
-          'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=1200&h=500&fit=crop'
-        ]
-      },
-      {
-        id: '4',
-        authorName: 'Phạm Thu Dung',
-        authorAvatar:
-          'https://api.dicebear.com/7.x/avataaars/svg?seed=PhamThuDung',
-        createdAt: '1 tuần trước',
-        content:
-          'Thành công hoàn thành chương trình "Mỗi ngày một tháng tốt" tại trường THPT Phan Bội Châu. Cảm ơn các bạn tình nguyện viên đã tham gia! Chúng ta sẽ tiếp tục trong tháng tới 🌟',
-        imageUrls: [
-          'https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&h=500&fit=crop',
-          'https://images.unsplash.com/photo-1517457373614-b7152f800fd1?w=1200&h=500&fit=crop',
-          'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=1200&h=500&fit=crop'
-        ]
-      },
-      {
-        id: '5',
-        authorName: 'Vũ Thị Hạnh',
-        authorAvatar:
-          'https://api.dicebear.com/7.x/avataaars/svg?seed=VuThiHanh',
-        createdAt: '6 ngày trước',
-        content:
-          'Donate lần này chúng tôi thu được 2 tấn sách, 500 bộ quần áo và muôn vàn niềm vui từ cô trò trường A. Tình yêu thương thật sự tuyệt vời! 📚❤️',
-        imageUrls: [
-          'https://images.unsplash.com/photo-1506776592495-42f7739f1f19?w=1200&h=500&fit=crop',
-          'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&h=500&fit=crop'
-        ]
-      },
-      {
-        id: '6',
-        authorName: 'Đỗ Văn Hòa',
-        authorAvatar:
-          'https://api.dicebear.com/7.x/avataaars/svg?seed=DoVanHoa',
-        createdAt: '10 ngày trước',
-        content:
-          'Các bạn tình nguyện viên đã giúp xây dựng lại 2 căn nhà cho gia đình khó khăn ở huyện Ba Vì. Công việc vất vả nhưng cảm giác giúp được người khác thật là tuyệt! 🏡',
-        imageUrls: [
-          'https://images.unsplash.com/photo-1517457373614-b7152f800fd1?w=1200&h=500&fit=crop',
-          'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=1200&h=500&fit=crop',
-          'https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&h=500&fit=crop',
-          'https://images.unsplash.com/photo-1506776592495-42f7739f1f19?w=1200&h=500&fit=crop'
-        ]
-      },
-      {
-        id: '7',
-        authorName: 'Ngô Thị Lan',
-        authorAvatar:
-          'https://api.dicebear.com/7.x/avataaars/svg?seed=NgoThiLan',
-        createdAt: '2 tuần trước',
-        content:
-          'Cảm ơn tất cả mọi người đã tham gia chương trình khám sức khỏe miễn phí cho người cao tuổi tại các phường quận Hoàn Kiếm. Sức khỏe cộng đồng là trách nhiệm của chúng ta! 💊',
-        imageUrls: undefined
-      }
-    ];
+export default function PostsManagement({ eventId }: PostsManagementProps) {
+  const [pageNumber, setPageNumber] = useState(0);
+  const [pageSize, setPageSize] = useState(100);
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
 
-    if (posts && posts.length > 0) {
-      return seedPosts;
-    }
-
-    return expandMockPosts(seedPosts, TARGET_MOCK_POSTS);
+  const {
+    data: feedResponse,
+    isLoading,
+    error
+  } = useGetEventMomentsFeed({
+    pageNumber,
+    pageSize,
+    eventId: eventId || '',
+    baseUrl
   });
+
+  const [postList, setPostList] = useState<Post[]>([]);
+
+  useEffect(() => {
+    if (feedResponse?.content) {
+      const mappedPosts: Post[] = feedResponse.content.map((moment) => ({
+        id: moment.eventMomentId,
+        authorName: moment.volName || moment.volNickName || 'Ẩn danh',
+        authorAvatar: moment.avatarUrl,
+        createdAt: new Date(moment.createdAt).toLocaleDateString('vi-VN'),
+        content: moment.momentContent,
+        imageUrls: moment.momentPicturesUrls
+      }));
+
+      setPostList(mappedPosts);
+    }
+  }, [feedResponse]);
 
   const [postIdToDelete, setPostIdToDelete] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -809,15 +688,32 @@ export default function PostsManagement({ posts }: PostsManagementProps) {
           </h1>
           <p className="mt-1 text-sm text-zinc-300">
             Xem và quản lý bài viết
-            <span className="ml-2 inline-block rounded-full bg-zinc-700 px-3 py-1 text-sm font-medium text-zinc-100">
-              {postList.length} bài viết
-            </span>
+            {isLoading ? (
+              <span className="ml-2 inline-block rounded-full bg-zinc-700 px-3 py-1 text-sm font-medium text-zinc-100 animate-pulse">
+                Đang tải...
+              </span>
+            ) : (
+              <span className="ml-2 inline-block rounded-full bg-zinc-700 px-3 py-1 text-sm font-medium text-zinc-100">
+                {postList.length} bài viết
+              </span>
+            )}
           </p>
+          {error && (
+            <p className="mt-2 text-sm text-red-400">
+              Không thể tải bài viết. Vui lòng thử lại sau.
+            </p>
+          )}
         </div>
 
         <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
           <div className="xl:col-span-1">
-            {filteredPosts.length === 0 ? (
+            {isLoading ? (
+              <div className="flex h-96 items-center justify-center rounded-lg border border-dashed border-zinc-700 bg-zinc-900/40">
+                <p className="text-center text-zinc-300">
+                  Đang tải bài viết...
+                </p>
+              </div>
+            ) : filteredPosts.length === 0 ? (
               <div className="flex h-96 items-center justify-center rounded-lg border border-dashed border-zinc-700 bg-zinc-900/40">
                 <p className="text-center text-zinc-300">
                   Không tìm thấy bài đăng phù hợp với bộ lọc hiện tại
@@ -1059,8 +955,8 @@ export default function PostsManagement({ posts }: PostsManagementProps) {
                   </div>
                 </div>
                 <p className="mt-3 text-xs text-zinc-500">
-                  Mẹo: chọn &quot;Ưu tiên bài có ảnh&quot; để rà soát nội dung nổi bật
-                  nhanh như luồng feed mạng xã hội.
+                  Mẹo: chọn &quot;Ưu tiên bài có ảnh&quot; để rà soát nội dung
+                  nổi bật nhanh như luồng feed mạng xã hội.
                 </p>
               </div>
             </div>

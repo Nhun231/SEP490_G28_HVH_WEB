@@ -8,11 +8,9 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 export function useReplaceFiles() {
   const replaceFile = useCallback(
     async (oldFilePath: string, newFile: File, bucket: string) => {
-      // 1. Tải file mới lên trước với tên duy nhất
       const ext = newFile.name.split('.').pop()?.toLowerCase();
       const newPath = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
 
-      // ...existing code...
       const { error: uploadError } = await supabase.storage
         .from(bucket)
         .upload(newPath, newFile);
@@ -21,7 +19,6 @@ export function useReplaceFiles() {
         return { success: false, error: uploadError.message };
       }
 
-      // 2. Xóa file cũ nếu tồn tại
       if (oldFilePath) {
         const removeRes = await supabase.storage
           .from(bucket)

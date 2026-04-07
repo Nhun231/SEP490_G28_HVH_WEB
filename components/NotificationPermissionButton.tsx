@@ -7,8 +7,7 @@ export function NotificationPermissionButton() {
     useNotificationPermission();
 
   const handleRequestPermission = async () => {
-    const result = await requestPermission();
-    // ...existing code...
+    await requestPermission();
   };
 
   const getButtonText = () => {

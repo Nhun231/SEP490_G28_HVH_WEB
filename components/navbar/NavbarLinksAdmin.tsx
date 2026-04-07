@@ -42,7 +42,6 @@ export default function HeaderLinks(props: {
     setOpen(false);
   };
 
-  // Ensures this component is rendered only on the client
   useEffect(() => {
     setMounted(true);
   }, []);

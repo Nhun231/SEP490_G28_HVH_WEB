@@ -67,7 +67,6 @@ export async function POST(req: Request) {
           throw new Error('Unhandled relevant event!');
       }
     } catch (error) {
-      // ...existing code...
       return new Response(
         'Webhook handler failed. View your nextjs function logs.',
         {

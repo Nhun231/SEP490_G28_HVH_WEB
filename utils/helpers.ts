@@ -23,15 +23,12 @@ export const getURL = (path?: string) => {
     process?.env?.NEXT_PUBLIC_SITE_URL ?? // Set this to your site URL in production env.
     process?.env?.NEXT_PUBLIC_VERCEL_URL ?? // Automatically set by Vercel.
     'http://localhost:3000/';
-  // Make sure to include `https://` when not localhost.
   url = url.includes('http') ? url : `https://${url}`;
-  // Make sure to including trailing `/`.
   url = url.charAt(url.length - 1) === '/' ? url : `${url}/`;
 
   if (path) {
     path = path.replace(/^\/+/, '');
 
-    // Concatenate the URL and the path.
     return path ? `${url}/${path}` : url;
   }
 
@@ -60,7 +57,7 @@ export const postData = async ({
 };
 
 export const toDateTime = (secs: number) => {
-  var t = new Date('1970-01-01T00:30:00Z'); // Unix epoch start.
+  var t = new Date('1970-01-01T00:30:00Z');
   t.setSeconds(secs);
   return t;
 };
@@ -68,7 +65,6 @@ export const toDateTime = (secs: number) => {
 export const calculateTrialEndUnixTimestamp = (
   trialPeriodDays: number | null | undefined
 ) => {
-  // Check if trialPeriodDays is null, undefined, or less than 2 days
   if (
     trialPeriodDays === null ||
     trialPeriodDays === undefined ||
@@ -77,11 +73,11 @@ export const calculateTrialEndUnixTimestamp = (
     return undefined;
   }
 
-  const currentDate = new Date(); // Current date and time
+  const currentDate = new Date();
   const trialEnd = new Date(
     currentDate.getTime() + (trialPeriodDays + 1) * 24 * 60 * 60 * 1000
-  ); // Add trial days
-  return Math.floor(trialEnd.getTime() / 1000); // Convert to Unix timestamp in seconds
+  );
+  return Math.floor(trialEnd.getTime() / 1000);
 };
 
 const toastKeyMap: { [key: string]: string[] } = {

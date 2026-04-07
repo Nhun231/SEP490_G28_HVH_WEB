@@ -4,8 +4,6 @@ import { EServedTarget } from '@/constants/served-target';
 import { EServingPlaceType } from '@/constants/serving-place-type';
 export interface EventSessionDetailsResponse {
   endDateTime: string;
-  // Define the structure of EventSessionDetailsResponse here
-  // Example:
   id: string;
   name: string;
   startTime: string;
@@ -91,4 +89,26 @@ export interface EventDetailsResponseForSystemAdmin {
   numberOfJoinedVolunteers: number;
   numberOfCheckedInVolunteers: number;
   averageRating: number;
+}
+
+export interface EventMomentResponse {
+  id: string;
+  eventId: string;
+  description: string;
+  imageUrls: string[];
+  createdAt: string;
+  updatedAt?: string;
+  volunteerCount?: number;
+  likeCount?: number;
+  isLiked?: boolean;
+}
+
+export interface EventMomentsFeedResponse {
+  content: EventMomentResponse[];
+  page: {
+    size: number;
+    number: number;
+    totalElements: number;
+    totalPages: number;
+  };
 }

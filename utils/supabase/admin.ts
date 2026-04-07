@@ -15,7 +15,6 @@ type PublicPostgrestClient = PostgrestClient<
   Database['public']
 >;
 
-// Change to control trial period length
 const TRIAL_PERIOD_DAYS = 0;
 
 // Note: supabaseAdmin uses the SERVICE_ROLE_KEY which you must only use in a secure server-side context
@@ -41,7 +40,6 @@ const upsertProductRecord = async (product: Stripe.Product) => {
     .upsert([productData]);
   if (upsertError)
     throw new Error(`Product insert/update failed: ${upsertError.message}`);
-  // ...existing code...
 };
 
 const upsertPriceRecord = async (
@@ -69,7 +67,6 @@ const upsertPriceRecord = async (
 
   if (upsertError?.message.includes('foreign key constraint')) {
     if (retryCount < maxRetries) {
-      // ...existing code...
       await new Promise((resolve) => setTimeout(resolve, 2000));
       await upsertPriceRecord(price, retryCount + 1, maxRetries);
     } else {
@@ -80,7 +77,6 @@ const upsertPriceRecord = async (
   } else if (upsertError) {
     throw new Error(`Price insert/update failed: ${upsertError.message}`);
   } else {
-    // ...existing code...
   }
 };
 
@@ -91,7 +87,6 @@ const deleteProductRecord = async (product: Stripe.Product) => {
     .eq('id', product.id);
   if (deletionError)
     throw new Error(`Product deletion failed: ${deletionError.message}`);
-  // ...existing code...
 };
 
 const deletePriceRecord = async (price: Stripe.Price) => {
@@ -101,7 +96,6 @@ const deletePriceRecord = async (price: Stripe.Price) => {
     .eq('id', price.id);
   if (deletionError)
     throw new Error(`Price deletion failed: ${deletionError.message}`);
-  // ...existing code...
 };
 
 const upsertCustomerToSupabase = async (uuid: string, customerId: string) => {
@@ -144,7 +138,6 @@ const createOrRetrieveCustomer = async ({
     throw new Error(`Supabase customer lookup failed: ${queryError.message}`);
   }
 
-  // Retrieve the Stripe customer ID using the Supabase customer ID, with email fallback
   let stripeCustomerId: string | undefined;
   if (existingSupabaseCustomer?.stripe_customer_id) {
     const existingStripeCustomer = await stripe.customers.retrieve(
@@ -152,20 +145,17 @@ const createOrRetrieveCustomer = async ({
     );
     stripeCustomerId = existingStripeCustomer.id;
   } else {
-    // If Stripe ID is missing from Supabase, try to retrieve Stripe customer ID by email
     const stripeCustomers = await stripe.customers.list({ email: email });
     stripeCustomerId =
       stripeCustomers.data.length > 0 ? stripeCustomers.data[0].id : undefined;
   }
 
-  // If still no stripeCustomerId, create a new customer in Stripe
   const stripeIdToInsert = stripeCustomerId
     ? stripeCustomerId
     : await createCustomerInStripe(uuid, email);
   if (!stripeIdToInsert) throw new Error('Stripe customer creation failed.');
 
   if (existingSupabaseCustomer && stripeCustomerId) {
-    // If Supabase has a record but doesn't match Stripe, update Supabase record
     if (existingSupabaseCustomer.stripe_customer_id !== stripeCustomerId) {
       const { error: updateError } = await publicAdmin
         .from('customers')
@@ -176,14 +166,9 @@ const createOrRetrieveCustomer = async ({
         throw new Error(
           `Supabase customer record update failed: ${updateError.message}`
         );
-      // ...existing code...
     }
-    // If Supabase has a record and matches Stripe, return Stripe customer ID
     return stripeCustomerId;
   } else {
-    // ...existing code...
-
-    // If Supabase has no record, create a new record and return Stripe customer ID
     const upsertedStripeCustomer = await upsertCustomerToSupabase(
       uuid,
       stripeIdToInsert
@@ -202,11 +187,9 @@ const copyBillingDetailsToCustomer = async (
   uuid: string,
   payment_method: Stripe.PaymentMethod
 ) => {
-  //Todo: check this assertion
   const customer = payment_method.customer as string;
   const { name, phone, address } = payment_method.billing_details;
   if (!name || !phone || !address) return;
-  //@ts-ignore
   await stripe.customers.update(customer, { name, phone, address });
   const { error: updateError } = await publicAdmin
     .from('users')
@@ -246,7 +229,6 @@ const manageSubscriptionStatusChange = async (
     metadata: subscription.metadata,
     status: subscription.status,
     price_id: subscription.items.data[0].price.id,
-    //TODO check quantity on subscription
     // @ts-ignore
     quantity: subscription.quantity,
     cancel_at_period_end: subscription.cancel_at_period_end,
@@ -281,7 +263,6 @@ const manageSubscriptionStatusChange = async (
     throw new Error(
       `Subscription insert/update failed: ${upsertError.message}`
     );
-  // ...existing code...
 
   // For a new subscription copy the billing details to the customer object.
   // NOTE: This is a costly operation and should happen at the very end.

@@ -9,7 +9,6 @@ export default async function Home() {
   if (!user) {
     return redirect('/signin/password_signin');
   } else {
-    // Redirect to organizer view (you can create organizer main page later)
     redirect('/organizer/main');
   }
 }

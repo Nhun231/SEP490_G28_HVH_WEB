@@ -51,7 +51,6 @@ interface RegisterOrgFormState {
 }
 
 export default function RegisterOrgPage() {
-  // State cho cảnh báo file quá lớn
   const [fileSizeErrors, setFileSizeErrors] = useState({
     managerCidFront: false,
     managerCidBack: false,
@@ -93,7 +92,6 @@ export default function RegisterOrgPage() {
     otherEvidences: [] as File[]
   });
 
-  // Dropzone for CMND/CCCD mặt trước
   const { getRootProps: getFrontRootProps, getInputProps: getFrontInputProps } =
     useDropzone({
       accept: { 'image/*': [] },
@@ -144,7 +142,6 @@ export default function RegisterOrgPage() {
     }
   };
 
-  // Join all extensions (including duplicates) with spaces, in order
   const formatLicenseExtensions = (files: Array<File | null>) => {
     return files
       .map((file) => getFileExtension(file))
@@ -152,7 +149,6 @@ export default function RegisterOrgPage() {
       .join(' ');
   };
 
-  // Join all extensions (including duplicates) with spaces, in order
   const formatEvidenceExtensions = (files: Array<File | null>) => {
     return files
       .map((file) => getFileExtension(file))
@@ -219,7 +215,6 @@ export default function RegisterOrgPage() {
     }
   });
 
-  // Dropzone for operating license
   const {
     getRootProps: getLicenseRootProps,
     getInputProps: getLicenseInputProps
@@ -228,7 +223,6 @@ export default function RegisterOrgPage() {
     maxFiles: 10,
     onDrop: (files) => {
       if (!files || files.length === 0) return;
-      // Kiểm tra từng file
       const errors = files.map((file) => file.size > MAX_FILE_SIZE);
       setFileSizeErrors((prev) => ({ ...prev, activityLicense: errors }));
       const validFiles = files.filter((file) => file.size <= MAX_FILE_SIZE);
@@ -241,14 +235,12 @@ export default function RegisterOrgPage() {
       });
     }
   });
-  // Dropzone for other evidences
   const { getRootProps: getOtherRootProps, getInputProps: getOtherInputProps } =
     useDropzone({
       accept: { 'image/*': [], 'application/pdf': [] },
       maxFiles: 5,
       onDrop: (files) => {
         if (!files || files.length === 0) return;
-        // Kiểm tra từng file
         const errors = files.map((file) => file.size > MAX_FILE_SIZE);
         setFileSizeErrors((prev) => ({ ...prev, otherEvidences: errors }));
         const validFiles = files.filter((file) => file.size <= MAX_FILE_SIZE);
@@ -262,8 +254,6 @@ export default function RegisterOrgPage() {
       }
     });
 
-  // Required fields validation
-  // Kiểm tra có file nào vượt quá 5MB không
   const hasFileSizeError =
     fileSizeErrors.managerCidFront ||
     fileSizeErrors.managerCidBack ||
@@ -290,8 +280,6 @@ export default function RegisterOrgPage() {
     form.applicationReason &&
     !hasFileSizeError;
 
-  // --- File preview URL memoization and cleanup ---
-  // For single files (CMND/CCCD)
   const managerCidFrontUrl = useMemo(() => {
     if (!form.managerCidFront) return '';
     return URL.createObjectURL(form.managerCidFront);
@@ -322,7 +310,6 @@ export default function RegisterOrgPage() {
     };
   }, [managerCidHoldingUrl]);
 
-  // For array files (activityLicense, otherEvidences)
   const activityLicenseUrls = useMemo(() => {
     return (form.activityLicense || []).map((file) =>
       file ? URL.createObjectURL(file) : ''
@@ -398,20 +385,17 @@ export default function RegisterOrgPage() {
                 applicationReason: form.applicationReason
               });
 
-              // FE uploads files to Supabase using signed URLs from BE
               const uploadInfo: any =
                 registerRes && typeof registerRes === 'object'
                   ? (registerRes as any).uploadUrls || registerRes
                   : {};
 
-              // Helper nối domain nếu là path
               const joinSupabaseUrl = (url) => {
                 if (!url) return '';
                 if (url.startsWith('http')) return url;
                 return SUPABASE_URL?.replace(/\/$/, '') + url;
               };
 
-              // CMND/CCCD
               const frontUrl = joinSupabaseUrl(
                 uploadInfo.managerCidFrontUrl ||
                   uploadInfo.managerCidFrontUploadUrl
@@ -425,7 +409,6 @@ export default function RegisterOrgPage() {
                   uploadInfo.managerCidHoldingUploadUrl
               );
 
-              // Giấy phép hoạt động (array)
               const licenseUrlsRaw: string[] =
                 uploadInfo.legalDocumentsUploadUrls ||
                 uploadInfo.legalDocumentUploadUrls ||
@@ -434,7 +417,6 @@ export default function RegisterOrgPage() {
               const licenseUrls = licenseUrlsRaw.map(joinSupabaseUrl);
               const licenseFiles = form.activityLicense || [];
 
-              // Tài liệu chứng minh khác (array)
               const otherUrlsRaw: string[] =
                 uploadInfo.otherEvidencesUploadUrls ||
                 uploadInfo.otherEvidencesUrls ||
@@ -445,7 +427,6 @@ export default function RegisterOrgPage() {
               const expectedOtherFiles = form.otherEvidences || [];
 
               const uploads: Array<Promise<any>> = [];
-              // Upload từng file lên đúng signed URL
               if (form.managerCidFront && frontUrl) {
                 uploads.push(
                   uploadFileToSignedUrl(form.managerCidFront, frontUrl)
@@ -461,7 +442,6 @@ export default function RegisterOrgPage() {
                   uploadFileToSignedUrl(form.managerCidHolding, holdingUrl)
                 );
               }
-              // Giấy phép hoạt động
               for (let i = 0; i < licenseFiles.length; i++) {
                 const file = licenseFiles[i];
                 const url = licenseUrls[i];
@@ -469,7 +449,6 @@ export default function RegisterOrgPage() {
                   uploads.push(uploadFileToSignedUrl(file, url));
                 }
               }
-              // Tài liệu chứng minh khác
               for (let i = 0; i < expectedOtherFiles.length; i++) {
                 const file = expectedOtherFiles[i];
                 const url = otherUrls[i];

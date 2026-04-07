@@ -21,7 +21,6 @@ export default async function SignIn({
   const viewTypes = getViewTypes();
   const redirectMethod = getRedirectMethod();
 
-  // Await dynamic params and searchParams
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
 
@@ -47,10 +46,8 @@ export default async function SignIn({
       : undefined;
   const disableButton = resolvedSearchParams.disable_button === 'true';
 
-  // Declare 'viewProp' and initialize with the default value
   let viewProp: string;
 
-  // Assign url id to 'viewProp' if it's a valid string and ViewTypes includes it
   if (
     typeof resolvedParams.id === 'string' &&
     viewTypes.includes(resolvedParams.id)
@@ -64,7 +61,6 @@ export default async function SignIn({
     return redirect(`/signin/${viewProp}`);
   }
 
-  // Check if the user is already logged in and redirect to the organizer page
   const supabase = await createClient();
 
   const {

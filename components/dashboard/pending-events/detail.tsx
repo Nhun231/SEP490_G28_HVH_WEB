@@ -213,15 +213,12 @@ export default function PendingEventDetail({
   showHostInfo,
   onRefetchEventDetails
 }: Props) {
-  // Host dialog state hooks (must be at top level)
   const [hostDialogOpen, setHostDialogOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [selectedHost, setSelectedHost] = useState<HostCandidate | null>(null);
   const [assignedHostOverride, setAssignedHostOverride] =
     useState<HostDisplayInfo | null>(null);
   const lastResolvedEventIdRef = useRef<string | null>(null);
-  // --- Host change dialog state (must be at top level) ---
-  // --- Safe event handlers for approve/reject (no setState/toast in render) ---
   const handleRejectEvent = async () => {
     setRejectError('');
     setRejectSuccess('');
@@ -289,23 +286,18 @@ export default function PendingEventDetail({
   }, [eventId]);
 
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
-  // Role-based approve/reject hooks
   const isAdmin = effectiveVariant === 'admin';
   const isOrganizer = effectiveVariant === 'organizer';
-  // Import hooks for admin
   const {
     useApproveEventByAdmin
   } = require('@/hooks/features/uc038-approve-reject-event-by-admin/useApprove');
-  // Đảm bảo hook reject cho admin dùng endpoint /sys-admin/event/{id}/reject
   const {
     useRejectEventByAdmin
   } = require('@/hooks/features/uc038-approve-reject-event-by-admin/useReject');
-  // Organizer hooks already imported
   const { trigger: rejectEventByOrg, isMutating: isRejectingOrg } =
     useRejectEventByOrgManager({ id: eventId, baseUrl });
   const { trigger: approveEventByOrg, isMutating: isApprovingOrg } =
     useApproveEventByOrgManager({ id: eventId, baseUrl });
-  // Admin hooks (chuẩn endpoint /sys-admin/event/{id}/reject)
   const { trigger: rejectEventByAdmin, isMutating: isRejectingAdmin } =
     useRejectEventByAdmin({ id: eventId, baseUrl });
   const { trigger: approveEventByAdmin, isMutating: isApprovingAdmin } =
@@ -361,8 +353,6 @@ export default function PendingEventDetail({
       toast.error(err?.message || 'Không thể thay đổi host.');
     }
   };
-  // (Đã chuyển toàn bộ logic phụ thuộc event vào trong IIFE ở phần render, không còn khai báo ngoài hàm render)
-
   interface EventData {
     id: string;
     eventName: string;
@@ -1379,9 +1369,7 @@ export default function PendingEventDetail({
                     <div className="flex flex-wrap items-center justify-end gap-2">
                       <Button
                         className="bg-red-600 text-white hover:bg-red-700"
-                        onClick={() => {
-                          // TODO: handle cancel event
-                        }}
+                        onClick={() => {}}
                       >
                         Hủy sự kiện
                       </Button>

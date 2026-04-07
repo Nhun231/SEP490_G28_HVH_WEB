@@ -5,7 +5,6 @@ const allowPassword = true;
 // (Currently set to false because screen sometimes flickers with server redirects)
 const allowServerRedirect = false;
 
-// Ensure password sign-in is enabled
 if (!allowPassword) throw new Error('Password sign-in must be enabled');
 
 export const getAuthTypes = () => {
@@ -13,7 +12,6 @@ export const getAuthTypes = () => {
 };
 
 export const getViewTypes = () => {
-  // Define the valid view types
   let viewTypes: string[] = [];
   if (allowPassword) {
     viewTypes = [
@@ -28,7 +26,6 @@ export const getViewTypes = () => {
 };
 
 export const getDefaultSignInView = (preferredSignInView: string | null) => {
-  // Define the default sign in view
   let defaultView = 'password_signin';
   if (preferredSignInView && getViewTypes().includes(preferredSignInView)) {
     defaultView = preferredSignInView;

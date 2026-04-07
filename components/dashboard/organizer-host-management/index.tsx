@@ -209,10 +209,7 @@ export default function OrganizerHostManagement({
     label: string;
   }) => {
     const { columnKey, label } = props;
-    const values = useMemo(
-      () => getUniqueValuesForKey(columnKey),
-      [columnKey]
-    );
+    const values = useMemo(() => getUniqueValuesForKey(columnKey), [columnKey]);
     const applied = columnValueFilters[columnKey] ?? [];
     const hasActiveFilter = applied.length > 0;
     const isSearchFilteringThisColumn =

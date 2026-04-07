@@ -50,7 +50,6 @@ export default function CreateHostForm({ user, userDetails, routes }) {
     try {
       const res = await trigger(payload);
       toast.success('Tạo tài khoản Host thành công!');
-      // TODO: reset form hoặc chuyển trang nếu cần
     } catch (err: any) {
       toast.error(err?.message || 'Tạo tài khoản Host thất bại!');
     }

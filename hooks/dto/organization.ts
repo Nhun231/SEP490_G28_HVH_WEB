@@ -48,6 +48,44 @@ export interface OrganizationManagerInfo {
   updatedAt: string | null;
 }
 
+export interface OrganizationDetailsResponseForSystemAdmin {
+  id: string;
+  name: string;
+  dhaRegistered: boolean;
+  orgType: EOrgType;
+  orgIntroduction: string;
+  avatarImageUrl: string;
+  coverImageUrl: string;
+  legalDocumentUrls: string[];
+  otherEvidencesUrls: string[];
+  createdAt: string;
+  managerId: string;
+  managerName: string;
+  managerEmail: string;
+  managerPhone: string;
+  managerCID: string;
+  totalHosts: number;
+  totalHonorHours: number;
+  note: string;
+}
+
+export interface OrganizationSimpleResponse {
+  id: string;
+  name: string;
+  orgType: EOrgType | null;
+  numberOfHostedEvents: number;
+}
+
+export interface OrganizationListResponseForAdmin {
+  content: OrganizationSimpleResponse[];
+  page: {
+    size: number;
+    number: number;
+    totalElements: number;
+    totalPages: number;
+  };
+}
+
 export interface OrganizationRegistrationDetailsResponse {
   legalDocumentsUrls: null;
   id: string;

@@ -26,11 +26,9 @@ export default function SupabaseProvider({
     const {
       data: { subscription }
     } = supabase.auth.onAuthStateChange(async (event) => {
-      if (
-        event === 'SIGNED_IN' ||
-        event === 'SIGNED_OUT' ||
-        event === 'INITIAL_SESSION'
-      ) {
+      // Avoid refreshing on SIGNED_OUT to prevent racing against explicit
+      // logout redirects from the UI (navbar/sidebar).
+      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
         router.refresh();
       }
     });

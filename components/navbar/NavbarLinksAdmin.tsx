@@ -36,7 +36,11 @@ export default function HeaderLinks(props: {
   const router = useRouter();
   const { trigger: unregisterToken } = useUnregisterToken();
   const colorVariant = props.colorVariant ?? 'admin';
-  const signInPath = props.signInPath ?? '/dashboard/signin';
+  const signInPath =
+    props.signInPath ??
+    (colorVariant === 'organizer'
+      ? '/signin/password_signin'
+      : '/dashboard/signin/password_signin');
   const settingsPath = props.settingsPath ?? '/dashboard/settings';
   const onOpen = () => {
     setOpen(false);

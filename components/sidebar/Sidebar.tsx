@@ -41,7 +41,11 @@ function Sidebar(props: SidebarProps) {
   const redirectMethod = getRedirectMethod();
   const { routes } = props;
   const colorVariant = props.colorVariant ?? 'admin';
-  const signInPath = props.signInPath ?? '/dashboard/signin';
+  const signInPath =
+    props.signInPath ??
+    (colorVariant === 'organizer'
+      ? '/signin/password_signin'
+      : '/dashboard/signin/password_signin');
 
   const user = useContext(UserContext);
   const userDetails = useContext(UserDetailsContext);

@@ -21,7 +21,7 @@ export default async function OrganizerMain() {
       userDetails={userDetails}
       title="Bảng điều khiển tổ chức"
       description="Theo dõi năng suất Host và luồng phê duyệt nội bộ"
-      signInPath="/organizer/signin"
+      signInPath="/signin/password_signin"
     />
   );
 }

@@ -190,7 +190,7 @@ export default function OrganizerMainDashboard(props: Props) {
       description={props.description ?? 'Hiệu suất vận hành và nhân sự nội bộ'}
       routes={props.routes ?? organizerRoutes}
       colorVariant="organizer"
-      signInPath={props.signInPath ?? '/organizer/signin'}
+      signInPath={props.signInPath ?? '/signin/password_signin'}
     >
       <div className="mx-auto w-full max-w-7xl pb-10">
         <Card className="border-zinc-200 bg-white p-5 shadow-sm">

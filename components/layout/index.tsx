@@ -41,7 +41,7 @@ const DashboardLayout: React.FC<Props> = (props: Props) => {
     props.signInPath ??
     (colorVariant === 'organizer'
       ? '/signin/password_signin'
-      : '/dashboard/signin');
+      : '/dashboard/signin/password_signin');
 
   return (
     <UserContext.Provider value={props.user}>

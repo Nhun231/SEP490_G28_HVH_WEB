@@ -39,11 +39,26 @@ export const updateSession = async (request: NextRequest) => {
     const path = request.nextUrl.pathname;
     const isLoggedIn = !!user.data?.user;
 
+    // Backward compatibility: old clients may still navigate to this legacy
+    // organizer sign-in route after logout.
+    if (path === '/organizer/signin' || path.startsWith('/organizer/signin/')) {
+      return NextResponse.redirect(
+        new URL('/signin/password_signin', request.url)
+      );
+    }
+
     const isDashboardSignin = path.startsWith('/dashboard/signin');
+    const isOrganizerRoute = path.startsWith('/organizer');
 
     if (path.startsWith('/dashboard') && !isDashboardSignin && !isLoggedIn) {
       return NextResponse.redirect(
         new URL('/dashboard/signin/password_signin', request.url)
+      );
+    }
+
+    if (isOrganizerRoute && !isLoggedIn) {
+      return NextResponse.redirect(
+        new URL('/signin/password_signin', request.url)
       );
     }
 

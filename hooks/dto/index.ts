@@ -6,3 +6,4 @@ export * from './notification';
 export * from './event';
 export * from './host';
 export * from './eventMoment';
+export * from './certificate';

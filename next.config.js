@@ -28,7 +28,7 @@ const nextConfig = {
         has: [
           {
             type: 'host',
-            value: 'adm.hvh.homes'
+            value: 'admin.hvh.homes'
           }
         ],
         destination: '/dashboard',

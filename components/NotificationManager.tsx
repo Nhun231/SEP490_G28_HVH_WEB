@@ -1,5 +1,6 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef } from 'react';
 import { useNotificationPermission } from '@/hooks/use-notification-permission';
 import { useSupabase } from '@/app/supabase-provider';
@@ -8,6 +9,7 @@ const NOTIFICATION_REGISTERED_USER_KEY = 'notification_registered_user_id';
 
 export default function NotificationManager() {
   const { supabase } = useSupabase();
+  const pathname = usePathname();
   const { requestPermission } = useNotificationPermission();
   const hasTriggeredRef = useRef(false);
   const isProcessingRef = useRef(false);
@@ -35,9 +37,16 @@ export default function NotificationManager() {
     }
   }, []);
 
+  const getAuthenticatedUserId = useCallback(async () => {
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    return user?.id ?? null;
+  }, [supabase]);
+
   const syncRegistrationState = useCallback(
-    (session: { user?: { id?: string } } | null) => {
-      const currentUserId = session?.user?.id ?? null;
+    (currentUserId: string | null) => {
       const storedUserId = getStoredRegisteredUserId();
 
       if (!currentUserId) {
@@ -76,13 +85,20 @@ export default function NotificationManager() {
     sessionStorage.setItem(NOTIFICATION_REGISTERED_USER_KEY, userId);
   };
 
+  const shouldHandleNotifications =
+    pathname.startsWith('/dashboard') || pathname.startsWith('/organizer');
+
   useEffect(() => {
+    if (!shouldHandleNotifications) {
+      return;
+    }
+
     const triggerNotificationRegistration = async (
-      incomingSession?: { user?: { id?: string } } | null
+      incomingUserId?: string | null
     ) => {
-      const activeSession =
-        incomingSession ?? (await supabase.auth.getSession()).data.session;
-      const currentUserId = syncRegistrationState(activeSession);
+      const currentUserId = syncRegistrationState(
+        incomingUserId ?? (await getAuthenticatedUserId())
+      );
 
       if (!currentUserId) {
         return;
@@ -118,78 +134,50 @@ export default function NotificationManager() {
 
     // Immediate session check
     const checkSessionImmediately = async () => {
-      const {
-        data: { session }
-      } = await supabase.auth.getSession();
-      syncRegistrationState(session);
+      const currentUserId = await getAuthenticatedUserId();
+      syncRegistrationState(currentUserId);
 
-      if (session && isMounted) {
-        await triggerNotificationRegistration();
+      if (currentUserId && isMounted) {
+        await triggerNotificationRegistration(currentUserId);
       }
     };
 
     // Auth state listener
     const {
       data: { subscription }
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event) => {
       if (!isMounted) {
         return;
       }
 
-      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-        const currentUserId = syncRegistrationState(session);
+      if (event === 'SIGNED_IN') {
+        const currentUserId = syncRegistrationState(
+          await getAuthenticatedUserId()
+        );
 
         if (!currentUserId) {
           return;
         }
 
-        setTimeout(async () => {
-          if (isMounted) {
-            await triggerNotificationRegistration(session);
-          }
-        }, 1000);
+        await triggerNotificationRegistration(currentUserId);
       } else if (event === 'SIGNED_OUT') {
         resetRegistrationState('signed out');
       }
     });
 
-    // Start immediate check
-    setTimeout(() => {
-      if (isMounted) {
-        checkSessionImmediately();
-      }
-    }, 500);
-
-    // Polling backup
-    let pollCount = 0;
-    const maxPolls = 10;
-
-    const pollInterval = setInterval(async () => {
-      if (!isMounted) {
-        clearInterval(pollInterval);
-        return;
-      }
-
-      pollCount++;
-      const {
-        data: { session }
-      } = await supabase.auth.getSession();
-      const currentUserId = syncRegistrationState(session);
-
-      if (session && currentUserId && !hasTriggeredRef.current) {
-        clearInterval(pollInterval);
-        await triggerNotificationRegistration(session);
-      } else if (pollCount >= maxPolls) {
-        clearInterval(pollInterval);
-      }
-    }, 2000);
+    checkSessionImmediately();
 
     return () => {
       isMounted = false;
       subscription.unsubscribe();
-      clearInterval(pollInterval);
     };
-  }, [supabase, resetRegistrationState, syncRegistrationState]);
+  }, [
+    supabase,
+    getAuthenticatedUserId,
+    resetRegistrationState,
+    shouldHandleNotifications,
+    syncRegistrationState
+  ]);
 
   return null;
 }

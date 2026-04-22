@@ -172,7 +172,6 @@ export default function OrganizationEditPage({
   };
 
   const handleSave = () => {
-    // Placeholder save flow for mock data screen.
     router.push(`/dashboard/organizations/${orgId}`);
   };
 

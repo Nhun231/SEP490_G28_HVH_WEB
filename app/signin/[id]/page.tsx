@@ -5,9 +5,9 @@ import { createClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
 import {
   getAuthTypes,
-  getViewTypes,
   getDefaultSignInView,
-  getRedirectMethod
+  getRedirectMethod,
+  isSignInView
 } from '@/utils/auth-helpers/settings';
 
 export default async function SignIn({
@@ -18,7 +18,6 @@ export default async function SignIn({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { allowPassword } = getAuthTypes();
-  const viewTypes = getViewTypes();
   const redirectMethod = getRedirectMethod();
 
   const resolvedParams = await params;
@@ -48,10 +47,7 @@ export default async function SignIn({
 
   let viewProp: string;
 
-  if (
-    typeof resolvedParams.id === 'string' &&
-    viewTypes.includes(resolvedParams.id)
-  ) {
+  if (isSignInView(resolvedParams.id)) {
     viewProp = resolvedParams.id;
   } else {
     const cookieStore = await cookies();

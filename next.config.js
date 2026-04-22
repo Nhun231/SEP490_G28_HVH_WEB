@@ -1,12 +1,28 @@
 const nextConfig = {
-  reactStrictMode: false, // changed this to false
+  reactStrictMode: false,
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'react-icons/hi2']
+  },
   images: {
-    domains: [
-      'images.unsplash.com',
-      'i.ibb.co',
-      'scontent.fotp8-1.fna.fbcdn.net'
-    ],
     remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        port: '',
+        pathname: '/**'
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.ibb.co',
+        port: '',
+        pathname: '/**'
+      },
+      {
+        protocol: 'https',
+        hostname: 'scontent.fotp8-1.fna.fbcdn.net',
+        port: '',
+        pathname: '/**'
+      },
       {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com',

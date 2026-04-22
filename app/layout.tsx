@@ -1,9 +1,8 @@
 import SupabaseProvider from './supabase-provider';
-import NotificationManager from '@/components/NotificationManager';
 import { PropsWithChildren } from 'react';
 import { Roboto } from 'next/font/google';
-import '@/styles/globals.css';
-import { Toaster } from '@/components/ui/sonner';
+import '../styles/globals.css';
+import AppClientServices from '@/components/AppClientServices';
 
 const roboto = Roboto({
   subsets: ['latin'],
@@ -11,13 +10,7 @@ const roboto = Roboto({
   display: 'swap'
 });
 
-export const dynamic = 'force-dynamic';
-
-export default function RootLayout({
-  // Layouts must accept a children prop.
-  // This will be populated with nested layouts or pages
-  children
-}: PropsWithChildren) {
+export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -26,55 +19,36 @@ export default function RootLayout({
           thiện
         </title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        {/* <!--  Social tags   --> */}
         <meta
           name="keywords"
-          content="Add here your main keywords and separate them with a comma"
+          content="Hà Nội Thiện Nguyện, thiện nguyện, tình nguyện viên, tổ chức từ thiện, cộng đồng"
         />
-        <meta name="description" content="Add here your website description" />
-        {/* <!-- Schema.org markup for Google+ --> */}
-        <meta itemProp="name" content="Add here your website name / title" />
+        <meta
+          name="description"
+          content="Nền tảng kết nối tình nguyện viên với các tổ chức từ thiện và chương trình cộng đồng tại Hà Nội."
+        />
+        <meta itemProp="name" content="Hà Nội Thiện Nguyện" />
         <meta
           itemProp="description"
-          content="Add here your website description"
+          content="Nền tảng kết nối hoạt động thiện nguyện, tình nguyện và tổ chức từ thiện."
         />
-        <meta
-          itemProp="image"
-          content="Add here the link for your website SEO image"
-        />
-        {/* <!-- Twitter Card data --> */}
+        <meta itemProp="image" content="/img/apple-touch-icon.png" />
         <meta name="twitter:card" content="product" />
-        <meta
-          name="twitter:title"
-          content="Add here your website name / title"
-        />
+        <meta name="twitter:title" content="Hà Nội Thiện Nguyện" />
         <meta
           name="twitter:description"
-          content="Add here your website description"
+          content="Nền tảng kết nối tình nguyện viên với các tổ chức từ thiện và chương trình cộng đồng tại Hà Nội."
         />
-        <meta
-          name="twitter:image"
-          content="Add here the link for your website SEO image"
-        />
-        {/* <!-- Open Graph data --> */}
-        <meta
-          property="og:title"
-          content="Add here your website name / title"
-        />
+        <meta name="twitter:image" content="/img/apple-touch-icon.png" />
+        <meta property="og:title" content="Hà Nội Thiện Nguyện" />
         <meta property="og:type" content="product" />
         <meta property="og:url" content="https://your-website.com" />
-        <meta
-          property="og:image"
-          content="Add here the link for your website SEO image"
-        />
+        <meta property="og:image" content="/img/apple-touch-icon.png" />
         <meta
           property="og:description"
-          content="Add here your website description"
+          content="Nền tảng kết nối tình nguyện viên với các tổ chức từ thiện và chương trình cộng đồng tại Hà Nội."
         />
-        <meta
-          property="og:site_name"
-          content="Add here your website name / title"
-        />
+        <meta property="og:site_name" content="Hà Nội Thiện Nguyện" />
         <link rel="canonical" href="https://your-website.com" />
         <link rel="icon" href="/img/favicon.ico" />
         <link
@@ -101,8 +75,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <SupabaseProvider>
-          <NotificationManager />
-          <Toaster />
+          <AppClientServices />
           <main id="skip">{children}</main>
         </SupabaseProvider>
       </body>

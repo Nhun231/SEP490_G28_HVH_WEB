@@ -1,7 +1,7 @@
 'use client';
 
 import { createClient } from '@/utils/supabase/client';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { SWRConfig } from 'swr';
 import { swrFetcher } from '@/utils/swr-fetcher';
@@ -21,14 +21,31 @@ export default function SupabaseProvider({
 }) {
   const [supabase] = useState(createClient);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     const {
       data: { subscription }
     } = supabase.auth.onAuthStateChange(async (event) => {
-      // Avoid refreshing on SIGNED_OUT to prevent racing against explicit
-      // logout redirects from the UI (navbar/sidebar).
-      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+      if (event === 'SIGNED_IN') {
+        router.refresh();
+        return;
+      }
+
+      if (event === 'SIGNED_OUT') {
+        const isProtectedPath =
+          pathname.startsWith('/dashboard') ||
+          pathname.startsWith('/organizer');
+
+        if (!isProtectedPath) {
+          return;
+        }
+
+        const signInPath = pathname.startsWith('/dashboard')
+          ? '/dashboard/signin/password_signin'
+          : '/signin/password_signin';
+
+        router.replace(signInPath);
         router.refresh();
       }
     });
@@ -36,7 +53,7 @@ export default function SupabaseProvider({
     return () => {
       subscription.unsubscribe();
     };
-  }, [router, supabase]);
+  }, [pathname, router, supabase]);
 
   return (
     <Context.Provider value={{ supabase }}>
@@ -44,7 +61,10 @@ export default function SupabaseProvider({
         value={{
           fetcher: swrFetcher,
           shouldRetryOnError: false,
-          revalidateOnFocus: false
+          revalidateOnFocus: false,
+          revalidateOnReconnect: false,
+          dedupingInterval: 10000,
+          focusThrottleInterval: 5000
         }}
       >
         {children}

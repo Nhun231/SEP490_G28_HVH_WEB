@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from '@/utils/supabase/server';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getURL, getErrorRedirect, getStatusRedirect } from '@/utils/helpers';
 
@@ -12,6 +12,31 @@ function isValidEmail(email: string) {
 
 export async function redirectToPath(path: string) {
   return redirect(path);
+}
+
+async function getRequestURL(path?: string) {
+  const headerStore = await headers();
+  const host =
+    headerStore.get('x-forwarded-host') ?? headerStore.get('host');
+  const proto =
+    headerStore.get('x-forwarded-proto') ??
+    (host?.includes('localhost') ? 'http' : 'https');
+
+  if (!host) {
+    return getURL(path);
+  }
+
+  const origin = `${proto}://${host}`;
+  const normalizedOrigin = origin.endsWith('/') ? origin : `${origin}/`;
+
+  if (!path) {
+    return normalizedOrigin;
+  }
+
+  const normalizedPath = path.replace(/^\/+/, '');
+  return normalizedPath
+    ? `${normalizedOrigin}${normalizedPath}`
+    : normalizedOrigin;
 }
 
 export async function SignOut(formData: FormData) {
@@ -37,7 +62,7 @@ export async function requestPasswordUpdate(formData: FormData) {
   const nextPath = isAdmin
     ? '/dashboard/signin/update_password'
     : '/signin/update_password';
-  const callbackURL = getURL(
+  const callbackURL = await getRequestURL(
     `/auth/reset_password?next=${encodeURIComponent(nextPath)}`
   );
 
@@ -50,6 +75,7 @@ export async function requestPasswordUpdate(formData: FormData) {
       'Email không hợp lệ.',
       'Vui lòng thử lại.'
     );
+    return redirectPath;
   }
 
   const supabase = await createClient();
@@ -190,7 +216,7 @@ export async function updateEmail(formData: FormData) {
 
   const supabase = await createClient();
 
-  const callbackUrl = getURL(
+  const callbackUrl = await getRequestURL(
     getStatusRedirect(
       '/dashboard/settings',
       'Success!',

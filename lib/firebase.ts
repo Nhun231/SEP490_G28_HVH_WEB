@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getMessaging, getToken } from 'firebase/messaging';
+import { getMessaging, getToken, isSupported } from 'firebase/messaging';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -14,34 +14,47 @@ const app = initializeApp(firebaseConfig);
 
 let messaging: ReturnType<typeof getMessaging> | null = null;
 let swRegistration: ServiceWorkerRegistration | null = null;
-if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-  navigator.serviceWorker
-    .register('/firebase-messaging-sw.js')
-    .then((registration) => {
-      swRegistration = registration;
-      console.log('Service Worker registered with scope:', registration.scope);
-    })
-    .catch((error) => {
-      console.error('Service Worker registration failed:', error);
-    });
 
-  messaging = getMessaging(app);
-} else {
-  console.warn('Firebase messaging is not supported in this environment.');
-}
+const ensureMessagingReady = async () => {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+    return null;
+  }
+
+  if (!(await isSupported())) {
+    return null;
+  }
+
+  if (!swRegistration) {
+    try {
+      swRegistration = await navigator.serviceWorker.register(
+        '/firebase-messaging-sw.js'
+      );
+      console.log(
+        'Service Worker registered with scope:',
+        swRegistration.scope
+      );
+    } catch (error) {
+      console.error('Service Worker registration failed:', error);
+      return null;
+    }
+  }
+
+  if (!messaging) {
+    messaging = getMessaging(app);
+  }
+
+  return messaging;
+};
 
 export const requestFirebaseToken = async (): Promise<string | null> => {
   try {
-    if (!messaging) {
-      console.warn('Firebase messaging is not initialized.');
+    const activeMessaging = await ensureMessagingReady();
+
+    if (!activeMessaging) {
       return null;
     }
 
-    if (!swRegistration && 'serviceWorker' in navigator) {
-      swRegistration = await navigator.serviceWorker.ready;
-    }
-
-    const token = await getToken(messaging, {
+    const token = await getToken(activeMessaging, {
       serviceWorkerRegistration: swRegistration ?? undefined,
       vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
     });

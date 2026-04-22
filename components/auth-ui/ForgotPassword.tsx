@@ -36,10 +36,17 @@ export default function ForgotPassword({
         className="mb-4"
         onSubmit={(e) => handleSubmit(e)}
       >
-        <input type="hidden" name="isAdmin" value={isAdmin ? 'true' : 'false'} />
+        <input
+          type="hidden"
+          name="isAdmin"
+          value={isAdmin ? 'true' : 'false'}
+        />
         <div className="grid gap-2">
           <div className="grid gap-1">
-            <label className="text-sm font-medium text-foreground" htmlFor="email">
+            <label
+              className="text-sm font-medium text-foreground"
+              htmlFor="email"
+            >
               Email
             </label>
             <Input
@@ -67,9 +74,7 @@ export default function ForgotPassword({
                 aria-hidden="true"
                 role="status"
                 className={`mr-2 inline h-4 w-4 animate-spin duration-500 ${
-                  isAdmin
-                    ? 'text-white/80'
-                    : 'text-primary-foreground/80'
+                  isAdmin ? 'text-white/80' : 'text-primary-foreground/80'
                 }`}
                 viewBox="0 0 100 101"
                 fill="none"
@@ -92,7 +97,11 @@ export default function ForgotPassword({
       </form>
       <p>
         <Link
-          href="/dashboard/signin/password_signin"
+          href={
+            isAdmin
+              ? '/dashboard/signin/password_signin'
+              : '/signin/password_signin'
+          }
           className="text-sm font-medium text-foreground hover:text-primary"
         >
           Đăng nhập bằng email và mật khẩu

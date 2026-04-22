@@ -1,16 +1,43 @@
-import { Database } from '@/types/types_db';
 import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
 
 export const updateSession = async (request: NextRequest) => {
   try {
+    const path = request.nextUrl.pathname;
+    const isDashboardRoute = path.startsWith('/dashboard');
+    const isDashboardSignin = path.startsWith('/dashboard/signin');
+    const isOrganizerRoute = path.startsWith('/organizer');
+    const isHomeAlias = path === '/' || path === '/home' || path === '/index';
+
+    if (path === '/organizer/signin' || path.startsWith('/organizer/signin/')) {
+      return NextResponse.redirect(
+        new URL('/signin/password_signin', request.url)
+      );
+    }
+
+    if (!isDashboardRoute && !isOrganizerRoute && !isHomeAlias) {
+      return NextResponse.next({
+        request: {
+          headers: request.headers
+        }
+      });
+    }
+
+    if (isDashboardSignin) {
+      return NextResponse.next({
+        request: {
+          headers: request.headers
+        }
+      });
+    }
+
     let response = NextResponse.next({
       request: {
         headers: request.headers
       }
     });
 
-    const supabase = createServerClient<Database, 'public', Database['public']>(
+    const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
@@ -33,20 +60,16 @@ export const updateSession = async (request: NextRequest) => {
       }
     );
 
-    const user = await supabase.auth.getUser();
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
 
-    const userRole = user.data?.user?.app_metadata?.role;
-    const path = request.nextUrl.pathname;
-    const isLoggedIn = !!user.data?.user;
+    const currentUser = session
+      ? (await supabase.auth.getUser()).data.user
+      : null;
 
-    if (path === '/organizer/signin' || path.startsWith('/organizer/signin/')) {
-      return NextResponse.redirect(
-        new URL('/signin/password_signin', request.url)
-      );
-    }
-
-    const isDashboardSignin = path.startsWith('/dashboard/signin');
-    const isOrganizerRoute = path.startsWith('/organizer');
+    const userRole = currentUser?.app_metadata?.role;
+    const isLoggedIn = !!currentUser;
 
     if (path.startsWith('/dashboard') && !isDashboardSignin && !isLoggedIn) {
       return NextResponse.redirect(

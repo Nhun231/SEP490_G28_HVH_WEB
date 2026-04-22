@@ -1041,7 +1041,7 @@ export default function EventSettings(props: Props) {
                       {confirmingDomain.activitySubDomains?.length || 0} lĩnh
                       vực con
                     </span>{' '}
-                    và các kỹ năng bên trong cũng sẽ bị ẩn.
+                    bên trong cũng sẽ bị ẩn.
                     <br />
                     <span className="font-medium text-[#DC2626]">
                       Người dùng sẽ không thể xem hoặc chọn lĩnh vực này.
@@ -1054,7 +1054,7 @@ export default function EventSettings(props: Props) {
                       {confirmingDomain.activitySubDomains?.length || 0} lĩnh
                       vực con
                     </span>{' '}
-                    và các kỹ năng bên trong sẽ được hiển thị trở lại.
+                    bên trong sẽ được hiển thị trở lại.
                     <br />
                     <span className="font-medium text-[#16A34A]">
                       Người dùng có thể xem và chọn lĩnh vực này.

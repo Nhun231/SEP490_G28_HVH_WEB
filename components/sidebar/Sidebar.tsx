@@ -100,11 +100,17 @@ function Sidebar(props: SidebarProps) {
       }
     }
 
-    await supabase.auth.signOut();
-    if (redirectMethod === 'client') {
-      router.push(signInPath);
-    } else {
-      window.location.href = signInPath;
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Sign out failed:', error);
+    } finally {
+      if (redirectMethod === 'client') {
+        router.replace(signInPath);
+        router.refresh();
+      } else {
+        window.location.href = signInPath;
+      }
     }
   };
   // SIDEBAR

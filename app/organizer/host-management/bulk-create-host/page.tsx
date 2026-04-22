@@ -5,12 +5,9 @@ import { organizerRoutes } from '@/components/routes';
 import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useRef, useState, useMemo } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
-import useSWRMutation from 'swr/mutation';
-import { swrFetcher } from '@/utils/swr-fetcher';
 import type { CreateHostAccountRequest } from '@/hooks/dto/host';
-import * as XLSX from 'xlsx';
 import { useCreateHostAccount } from '@/hooks/features/uc067-create-host-account/useCreateHostAccount';
 
 const NEXT_PUBLIC_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
@@ -232,9 +229,10 @@ export default function BulkCreateHostPage({ user, userDetails, routes }: any) {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       const reader = new FileReader();
-      reader.onload = (evt) => {
+      reader.onload = async (evt) => {
         const data = evt.target?.result;
         if (!data) return;
+        const XLSX = await import('xlsx');
         const workbook = XLSX.read(data, { type: 'binary' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
@@ -453,6 +451,7 @@ export default function BulkCreateHostPage({ user, userDetails, routes }: any) {
     setUploading(false);
     // Export result Excel
     try {
+      const XLSX = await import('xlsx');
       const exportHeaders = [...EXPECTED_HEADERS, 'Kết quả tạo tài khoản'];
       const exportData = [exportHeaders, ...resultRows];
       const ws = XLSX.utils.aoa_to_sheet(exportData);

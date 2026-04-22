@@ -59,7 +59,6 @@ interface Props {
   userDetails: { [x: string]: any } | null;
 }
 
-// Mock data for registered organizations
 const mockRegisteredOrganizations = [
   { id: 1, name: 'Tổ chức A' },
   { id: 2, name: 'Tổ chức B' },
@@ -78,7 +77,6 @@ const mockRegisteredOrganizations = [
   { id: 15, name: 'Tổ chức O' }
 ];
 
-// Mock data for demonstration
 const mockOrganizers = [
   {
     id: 1,

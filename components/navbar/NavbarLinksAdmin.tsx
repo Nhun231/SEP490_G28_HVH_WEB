@@ -63,8 +63,14 @@ export default function HeaderLinks(props: {
       }
     }
 
-    await supabase.auth.signOut();
-    router.push(signInPath);
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Sign out failed:', error);
+    } finally {
+      router.replace(signInPath);
+      router.refresh();
+    }
   };
   if (!mounted) return null;
 

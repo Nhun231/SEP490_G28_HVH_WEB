@@ -152,6 +152,31 @@ function EventImage({
     return image;
   }
 
+  const isAdmin = false;
+  const event: { status?: string } | null = null;
+
+  const canShowCancelEventButton = isAdmin
+    ? [
+        EEventStatus.RECRUITING,
+        EEventStatus.UPCOMING,
+        EEventStatus.ONGOING,
+        'Đang tuyển quân',
+        'Sắp diễn ra',
+        'Đang diễn ra'
+      ].includes(event?.status as EEventStatus | string)
+    : false;
+
+  const canShowCancelEventButtonForAdmin = isAdmin
+    ? [
+        EEventStatus.RECRUITING,
+        EEventStatus.UPCOMING,
+        EEventStatus.ONGOING,
+        'Đang tuyển quân',
+        'Sắp diễn ra',
+        'Đang diễn ra'
+      ].includes(event?.status as EEventStatus | string)
+    : false;
+
   return (
     <button type="button" className="w-full" onClick={onClick} aria-label={alt}>
       {image}
@@ -179,6 +204,8 @@ type Props = {
   showApprovedActions?: boolean;
   showHostInfo?: boolean;
   onRefetchEventDetails?: () => Promise<unknown>;
+  onCancelEvent?: (reason: string) => Promise<unknown>;
+  isCancellingEvent?: boolean;
 };
 
 type HostCandidate = {
@@ -211,7 +238,9 @@ export default function PendingEventDetail({
   showActions = true,
   showApprovedActions = false,
   showHostInfo,
-  onRefetchEventDetails
+  onRefetchEventDetails,
+  onCancelEvent,
+  isCancellingEvent = false
 }: Props) {
   const [hostDialogOpen, setHostDialogOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -268,8 +297,11 @@ export default function PendingEventDetail({
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [approveModalOpen, setApproveModalOpen] = useState(false);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
+  const [cancelReason, setCancelReason] = useState('');
   const [rejectError, setRejectError] = useState('');
+  const [cancelError, setCancelError] = useState('');
   const [rejectSuccess, setRejectSuccess] = useState('');
   const eventId = externalData?.id || '';
   useEffect(() => {
@@ -351,6 +383,32 @@ export default function PendingEventDetail({
       }
     } catch (err: any) {
       toast.error(err?.message || 'Không thể thay đổi host.');
+    }
+  };
+
+  const handleCancelEvent = async () => {
+    setCancelError('');
+
+    if (!cancelReason.trim()) {
+      setCancelError('Vui lòng nhập lý do hủy sự kiện.');
+      return;
+    }
+
+    if (!onCancelEvent) {
+      toast.error('Chức năng hủy sự kiện chưa được cấu hình.');
+      return;
+    }
+
+    try {
+      await onCancelEvent(cancelReason.trim());
+      toast.success('Đã hủy sự kiện thành công!');
+      setCancelModalOpen(false);
+      setCancelReason('');
+      if (onRefetchEventDetails) {
+        await onRefetchEventDetails();
+      }
+    } catch (err: any) {
+      setCancelError(err?.message || 'Có lỗi xảy ra khi hủy sự kiện.');
     }
   };
   interface EventData {
@@ -664,6 +722,17 @@ export default function PendingEventDetail({
         'Sắp diễn ra',
         'Đang diễn ra'
       ].includes(event.status as EEventStatus | string)
+    : false;
+
+  const canShowCancelEventButtonForAdmin = isAdmin
+    ? [
+        EEventStatus.RECRUITING,
+        EEventStatus.UPCOMING,
+        EEventStatus.ONGOING,
+        'Đang tuyển quân',
+        'Sắp diễn ra',
+        'Đang diễn ra'
+      ].includes(event?.status as EEventStatus | string)
     : false;
 
   return (
@@ -1365,14 +1434,58 @@ export default function PendingEventDetail({
                     </>
                   )}
 
-                  {showApprovedActions && canEditApprovedEvent && (
+                  {canShowCancelEventButtonForAdmin && (
                     <div className="flex flex-wrap items-center justify-end gap-2">
                       <Button
                         className="bg-red-600 text-white hover:bg-red-700"
-                        onClick={() => {}}
+                        onClick={() => setCancelModalOpen(true)}
+                        disabled={isCancellingEvent}
                       >
                         Hủy sự kiện
                       </Button>
+
+                      <Dialog
+                        open={cancelModalOpen}
+                        onOpenChange={setCancelModalOpen}
+                      >
+                        <DialogContent className="bg-white max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Nhập lý do hủy sự kiện</DialogTitle>
+                          </DialogHeader>
+                          <Input
+                            placeholder="Nhập lý do hủy sự kiện..."
+                            value={cancelReason}
+                            onChange={(e) => setCancelReason(e.target.value)}
+                            disabled={isCancellingEvent}
+                          />
+                          {cancelError && (
+                            <p className="text-red-600 text-sm mt-2">
+                              {cancelError}
+                            </p>
+                          )}
+                          <DialogFooter className="mt-4 flex gap-2">
+                            <Button
+                              variant="outline"
+                              className="bg-zinc-200 text-zinc-700 border-none hover:bg-zinc-300"
+                              onClick={() => setCancelModalOpen(false)}
+                              disabled={isCancellingEvent}
+                            >
+                              Hủy
+                            </Button>
+                            <Button
+                              className="bg-red-600 text-white hover:bg-red-700"
+                              disabled={
+                                isCancellingEvent || !cancelReason.trim()
+                              }
+                              onClick={handleCancelEvent}
+                            >
+                              {isCancellingEvent
+                                ? 'Đang hủy...'
+                                : 'Xác nhận hủy sự kiện'}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   )}
                 </div>

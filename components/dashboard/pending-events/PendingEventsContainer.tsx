@@ -1,6 +1,6 @@
 'use client';
 import PendingEvents from './index';
-import { usePendingEvents } from '@/hooks/features/commons/list-event-for-admin/usePendingEvents';
+import { usePendingEvents } from '@/hooks/features/list-event-for-admin/usePendingEvents';
 import type { User } from '@supabase/supabase-js';
 
 interface Props {

@@ -1,6 +1,6 @@
 import PendingEvents from '@/components/dashboard/pending-events';
 import PendingEventsContainer from '@/components/dashboard/pending-events/PendingEventsContainer';
-import { usePendingEvents } from '@/hooks/features/commons/list-event-for-admin/usePendingEvents';
+import { usePendingEvents } from '@/hooks/features/list-event-for-admin/usePendingEvents';
 import { createClient } from '@/utils/supabase/server';
 import { getUser, getUserDetails } from '@/utils/supabase/queries';
 import { redirect } from 'next/navigation';

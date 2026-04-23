@@ -7,3 +7,4 @@ export * from './event';
 export * from './host';
 export * from './eventMoment';
 export * from './certificate';
+export * from './systemAdmin';

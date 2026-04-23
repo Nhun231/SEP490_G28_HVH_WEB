@@ -3,6 +3,7 @@ import { PropsWithChildren } from 'react';
 import { Roboto } from 'next/font/google';
 import '../styles/globals.css';
 import AppClientServices from '@/components/AppClientServices';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const roboto = Roboto({
   subsets: ['latin'],
@@ -78,6 +79,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
           <AppClientServices />
           <main id="skip">{children}</main>
         </SupabaseProvider>
+        <SpeedInsights />
       </body>
     </html>
   );

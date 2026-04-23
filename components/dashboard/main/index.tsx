@@ -2,15 +2,19 @@
 'use client';
 
 import DashboardLayout from '@/components/layout';
-import { User } from '@supabase/supabase-js';
-import type { IRoute } from '@/types/types';
-import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { useGetStatistic } from '@/hooks/features/uc064-view-dashboard-by-admin/useGetStatistic';
+import type { IRoute } from '@/types/types';
+import { User } from '@supabase/supabase-js';
 import dynamic from 'next/dynamic';
 import {
   Activity,
+  BadgeCheck,
+  Building2,
   CalendarCheck,
   Clock3,
+  FileCheck2,
   ShieldAlert,
   Users
 } from 'lucide-react';
@@ -26,48 +30,6 @@ interface Props {
   colorVariant?: 'admin' | 'organizer';
   signInPath?: string;
 }
-
-const growthSeries = [
-  {
-    name: 'TNV mới',
-    data: [220, 260, 300, 345, 380, 420]
-  },
-  {
-    name: 'Giờ uy tín (x100)',
-    data: [180, 210, 260, 290, 330, 390]
-  }
-];
-
-const growthOptions: any = {
-  chart: {
-    toolbar: { show: false },
-    fontFamily: 'inherit'
-  },
-  colors: ['#0f766e', '#1d4ed8'],
-  stroke: {
-    width: [3, 3],
-    curve: 'smooth'
-  },
-  dataLabels: { enabled: false },
-  grid: {
-    borderColor: '#e4e4e7',
-    strokeDashArray: 4
-  },
-  xaxis: {
-    categories: ['T11', 'T12', 'T1', 'T2', 'T3', 'T4'],
-    labels: { style: { colors: '#52525b', fontWeight: 600 } }
-  },
-  yaxis: {
-    labels: { style: { colors: '#52525b', fontWeight: 600 } }
-  },
-  legend: {
-    position: 'top',
-    horizontalAlign: 'left'
-  },
-  tooltip: {
-    theme: 'dark'
-  }
-};
 
 const domainSeries = [34, 23, 19, 14, 10];
 
@@ -95,27 +57,6 @@ const domainOptions: any = {
     width: 0
   }
 };
-
-const kpis = [
-  {
-    label: 'Số tính nguyên viên mới trong tháng',
-    value: '1,245',
-    trend: '+12.5% so với tháng trước',
-    icon: Users
-  },
-  {
-    label: 'Số sự kiện đã kết thúc trong tháng',
-    value: '324',
-    trend: '+8.1% so với tháng trước',
-    icon: CalendarCheck
-  },
-  {
-    label: 'Số credit hour tích lũy trong tháng',
-    value: '45,892h',
-    trend: '+15.3% so với tháng trước',
-    icon: Clock3
-  }
-];
 
 const integrityAlerts = [
   {
@@ -145,9 +86,192 @@ const integrityAlerts = [
   }
 ];
 
-const quickHealthMetrics = [];
+const quickHealthMetrics: Array<{ label: string; value: string }> = [];
+
+const monthKey = (year: number, month: number) => year * 100 + month;
 
 export default function Main(props: Props) {
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+  const { data: statsData = [], isLoading: isStatsLoading } = useGetStatistic({
+    baseUrl: apiBaseUrl
+  });
+
+  const sortedDesc = [...statsData].sort(
+    (a, b) => monthKey(b.year, b.month) - monthKey(a.year, a.month)
+  );
+  const sortedAsc = [...sortedDesc].reverse();
+
+  const currentStats = sortedDesc[0];
+  const previousStats = sortedDesc[1];
+
+  const formatStat = (value?: number) =>
+    typeof value === 'number' ? value.toLocaleString('vi-VN') : '--';
+
+  const formatMonthLabel = (month?: number, year?: number) =>
+    month && year ? `Tháng ${month}/${year}` : 'Thống kê hệ thống';
+
+  const monthLabel = formatMonthLabel(currentStats?.month, currentStats?.year);
+  const previousMonthLabel = formatMonthLabel(
+    previousStats?.month,
+    previousStats?.year
+  );
+
+  const buildTrendText = (current?: number, previous?: number) => {
+    if (typeof current !== 'number') return 'Chưa có dữ liệu';
+    if (typeof previous !== 'number') return monthLabel;
+
+    if (previous === 0) {
+      if (current === 0) {
+        return `So với ${previousMonthLabel}: 0%`;
+      }
+
+      return `So với ${previousMonthLabel}: không so sánh được`;
+    }
+
+    const percent = ((current - previous) / previous) * 100;
+    const sign = percent > 0 ? '+' : '';
+    return `So với ${previousMonthLabel}: ${sign}${percent.toFixed(1)}%`;
+  };
+
+  const getTrendClassName = (current?: number, previous?: number) => {
+    if (typeof current !== 'number' || typeof previous !== 'number') {
+      return 'text-zinc-500';
+    }
+
+    if (previous === 0) {
+      return current === 0 ? 'text-zinc-500' : 'text-amber-600';
+    }
+
+    if (current > previous) return 'text-emerald-600';
+    if (current < previous) return 'text-rose-600';
+    return 'text-zinc-500';
+  };
+
+  const kpis = [
+    {
+      label: 'Tình nguyện viên đã xác thực',
+      value: formatStat(currentStats?.verifiedVolunteers),
+      trend: buildTrendText(
+        currentStats?.verifiedVolunteers,
+        previousStats?.verifiedVolunteers
+      ),
+      trendClassName: getTrendClassName(
+        currentStats?.verifiedVolunteers,
+        previousStats?.verifiedVolunteers
+      ),
+      icon: Users
+    },
+    {
+      label: 'Tổ chức đã xác thực',
+      value: formatStat(currentStats?.verifiedOrganizations),
+      trend: buildTrendText(
+        currentStats?.verifiedOrganizations,
+        previousStats?.verifiedOrganizations
+      ),
+      trendClassName: getTrendClassName(
+        currentStats?.verifiedOrganizations,
+        previousStats?.verifiedOrganizations
+      ),
+      icon: Building2
+    },
+    {
+      label: 'Sự kiện đã hoàn thành',
+      value: formatStat(currentStats?.completedEvents),
+      trend: buildTrendText(
+        currentStats?.completedEvents,
+        previousStats?.completedEvents
+      ),
+      trendClassName: getTrendClassName(
+        currentStats?.completedEvents,
+        previousStats?.completedEvents
+      ),
+      icon: CalendarCheck
+    },
+    {
+      label: 'Giờ uy tín tích lũy',
+      value: formatStat(currentStats?.creditHours),
+      trend: buildTrendText(
+        currentStats?.creditHours,
+        previousStats?.creditHours
+      ),
+      trendClassName: getTrendClassName(
+        currentStats?.creditHours,
+        previousStats?.creditHours
+      ),
+      icon: Clock3
+    },
+    {
+      label: 'Đơn đăng ký đã duyệt',
+      value: formatStat(currentStats?.approvedApplications),
+      trend: buildTrendText(
+        currentStats?.approvedApplications,
+        previousStats?.approvedApplications
+      ),
+      trendClassName: getTrendClassName(
+        currentStats?.approvedApplications,
+        previousStats?.approvedApplications
+      ),
+      icon: FileCheck2
+    },
+    {
+      label: 'Đơn tham gia đã điểm danh',
+      value: formatStat(currentStats?.attendedApplications),
+      trend: buildTrendText(
+        currentStats?.attendedApplications,
+        previousStats?.attendedApplications
+      ),
+      trendClassName: getTrendClassName(
+        currentStats?.attendedApplications,
+        previousStats?.attendedApplications
+      ),
+      icon: BadgeCheck
+    }
+  ];
+
+  const growthSeries = [
+    {
+      name: 'TNV đã xác thực',
+      data: sortedAsc.map((item) => item.verifiedVolunteers)
+    },
+    {
+      name: 'Giờ uy tín',
+      data: sortedAsc.map((item) => item.creditHours)
+    }
+  ];
+
+  const growthOptions: any = {
+    chart: {
+      toolbar: { show: false },
+      fontFamily: 'inherit'
+    },
+    colors: ['#0f766e', '#1d4ed8'],
+    stroke: {
+      width: [3, 3],
+      curve: 'smooth'
+    },
+    dataLabels: { enabled: false },
+    grid: {
+      borderColor: '#e4e4e7',
+      strokeDashArray: 4
+    },
+    xaxis: {
+      categories: sortedAsc.map(
+        (item) => `T${item.month}/${String(item.year).slice(-2)}`
+      ),
+      labels: { style: { colors: '#52525b', fontWeight: 600 } }
+    },
+    yaxis: {
+      labels: { style: { colors: '#52525b', fontWeight: 600 } }
+    },
+    legend: {
+      position: 'top',
+      horizontalAlign: 'left'
+    },
+    tooltip: {
+      theme: 'dark'
+    }
+  };
+
   return (
     <DashboardLayout
       user={props.user}
@@ -159,6 +283,12 @@ export default function Main(props: Props) {
       signInPath={props.signInPath}
     >
       <div className="mx-auto w-full max-w-7xl pb-10">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <Badge className="bg-zinc-900 text-white hover:bg-zinc-900">
+            {isStatsLoading ? 'Đang tải thống kê...' : monthLabel}
+          </Badge>
+        </div>
+
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {kpis.map((kpi) => {
             const Icon = kpi.icon;
@@ -175,7 +305,9 @@ export default function Main(props: Props) {
                     <p className="mt-2 text-3xl font-extrabold tracking-tight text-zinc-950">
                       {kpi.value}
                     </p>
-                    <p className="mt-2 text-xs font-medium text-emerald-600">
+                    <p
+                      className={`mt-2 text-xs font-medium ${kpi.trendClassName}`}
+                    >
                       {kpi.trend}
                     </p>
                   </div>
@@ -209,14 +341,15 @@ export default function Main(props: Props) {
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-bold text-zinc-950">
-                  Tăng trưởng 6 tháng
+                  Tăng trưởng nhiều tháng
                 </h3>
                 <p className="text-sm text-zinc-500">
-                  Biến động TNV mới và giờ uy tín theo tháng
+                  Biến động tình nguyện viên đã xác thực và credit hour theo
+                  tháng
                 </p>
               </div>
               <Badge className="bg-zinc-900 text-white hover:bg-zinc-900">
-                Global Analytics
+                {sortedAsc.length} tháng dữ liệu
               </Badge>
             </div>
             <div className="h-[320px] w-full">
@@ -262,88 +395,6 @@ export default function Main(props: Props) {
                   <p className="text-sm font-bold text-zinc-900">
                     {domainSeries[idx]}%
                   </p>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </div>
-
-        <div className="mt-5">
-          <Card className="border-zinc-200 bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center gap-2">
-              <Activity className="h-5 w-5 text-zinc-700" />
-              <h3 className="text-lg font-bold text-zinc-950">
-                Cảnh báo gian lận
-              </h3>
-            </div>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              {integrityAlerts.map((alert) => (
-                <div
-                  key={alert.title}
-                  className="rounded-xl border border-zinc-200 bg-zinc-50 p-3"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-zinc-900">
-                      {alert.title}
-                    </p>
-                    <Badge
-                      className={
-                        alert.severity === 'Cao'
-                          ? 'bg-rose-100 text-rose-700 hover:bg-rose-100'
-                          : alert.severity === 'Trung bình'
-                            ? 'bg-amber-100 text-amber-700 hover:bg-amber-100'
-                            : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100'
-                      }
-                    >
-                      <ShieldAlert className="mr-1 h-3.5 w-3.5" />
-                      {alert.severity}
-                    </Badge>
-                  </div>
-                  <p className="mt-2 text-sm text-zinc-600">
-                    {alert.description}
-                  </p>
-                  {alert.events && (
-                    <div className="mt-3 rounded-lg border border-zinc-200 bg-white px-3 py-2">
-                      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500">
-                        Sự kiện liên quan
-                      </p>
-                      <div className="mt-2 space-y-2">
-                        {alert.events.map((event) => (
-                          <div
-                            key={`${event.name}-${event.organization}`}
-                            className="flex flex-col gap-1 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
-                          >
-                            <p className="text-sm font-semibold text-zinc-900">
-                              {event.name}
-                            </p>
-                            <Badge
-                              variant="outline"
-                              className="border-zinc-300 text-zinc-700"
-                            >
-                              {event.organization}
-                            </Badge>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {alert.accounts && (
-                    <div className="mt-3 rounded-lg border border-zinc-200 bg-white px-3 py-2">
-                      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500">
-                        Tài khoản liên quan
-                      </p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {alert.accounts.map((account) => (
-                          <Badge
-                            key={account}
-                            className="bg-zinc-900 text-white hover:bg-zinc-900"
-                          >
-                            {account}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>

@@ -14,11 +14,19 @@ export interface RejectEventRequest {
   reason: string;
 }
 
+export interface CancelEventRequest {
+  reason: string;
+}
 export interface PendingEventSummaryResponse {
   id: string;
   name: string;
-  status: string;
+  organizationId?: string;
+  organizationName?: string;
+  address?: string;
+  startDate?: string;
   createdAt: string;
+  updatedAt?: string;
+  status: EEventStatus | string;
 }
 
 export interface PendingEventsResponse {
@@ -29,6 +37,18 @@ export interface PendingEventsResponse {
     totalElements: number;
     totalPages: number;
   };
+}
+
+export interface EventSimpleResponseForAdmin {
+  id: string;
+  name: string;
+  organizationId: string;
+  organizationName: string;
+  address: string;
+  startDate: string;
+  createdAt: string;
+  updatedAt: string;
+  status: EEventStatus;
 }
 
 export interface EventDetailsResponseForManager {
@@ -69,13 +89,15 @@ export interface EventDetailsResponseForSystemAdmin {
   imageUrls: string[];
   description: string;
   address: string;
+  detailAddress: string;
   activitySubDomain: string;
   servedTarget: EServedTarget;
   servingPlaceType: EServingPlaceType;
   startDate: string; // ISO date string
   recruitmentEndDate: string; // ISO date string
   autoApprove: boolean;
-  checkInLocation: Point;
+  latCheckInLocation: number;
+  lngCheckInLocation: number;
   checkInAccuracyMeters: number;
   createdAt: string; // ISO date-time string
   hostPhone: string;
@@ -84,11 +106,12 @@ export interface EventDetailsResponseForSystemAdmin {
   eventSessions: EventSessionDetailsResponse[];
   conflictSessions: EventSessionDetailsResponse[];
   note: string;
-  // Additional fields
-  numberOfRegisteredVolunteers: number;
-  numberOfJoinedVolunteers: number;
-  numberOfCheckedInVolunteers: number;
-  averageRating: number;
+  // Backward compatibility for existing UI code
+  checkInLocation?: Point;
+  numberOfRegisteredVolunteers?: number;
+  numberOfJoinedVolunteers?: number;
+  numberOfCheckedInVolunteers?: number;
+  averageRating?: number;
 }
 
 export interface EventMomentResponse {

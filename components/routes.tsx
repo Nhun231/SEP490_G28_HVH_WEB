@@ -1,14 +1,13 @@
-// Auth Imports
 import { IRoute } from '@/types/types';
 import {
   Building,
+  CalendarRange,
   CircleCheckBig,
   Loader,
-  Settings,
-  MessageSquare
+  MessageSquare,
+  Settings
 } from 'lucide-react';
 import {
-  HiOutlineCpuChip,
   HiOutlineDocumentText,
   HiOutlineHome,
   HiOutlineUser,
@@ -53,6 +52,21 @@ export const routes: IRoute[] = [
     path: '/dashboard/posts',
     icon: <MessageSquare className="-mt-[7px] h-4 w-4 stroke-2 text-inherit" />,
     collapse: false
+  },
+  {
+    name: 'Quản lý sự kiện',
+    path: '#',
+    icon: (
+      <CalendarRange className="-mt-[7px] h-4 w-4 stroke-2 text-inherit" />
+    ),
+    collapse: true,
+    items: [
+      {
+        name: 'Sự kiện đang diễn ra',
+        path: '/dashboard/running-events',
+        collapse: false
+      }
+    ]
   },
   {
     name: 'Chờ phê duyệt',

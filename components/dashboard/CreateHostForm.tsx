@@ -150,7 +150,7 @@ export default function CreateHostForm({ user, userDetails, routes }) {
             </div>
             <div>
               <label className="block font-medium mb-1">
-                Số CCCD/CMND
+                Số Căn cước công dân
                 <span className="text-red-500">*</span>
               </label>
               <Input
@@ -158,7 +158,7 @@ export default function CreateHostForm({ user, userDetails, routes }) {
                 value={form.idNumber}
                 onChange={handleChange}
                 required
-                placeholder="Nhập số CCCD/CMND"
+                placeholder="Nhập số Căn cước công dân"
               />
             </div>
           </div>

@@ -28,7 +28,7 @@ export default function BulkCreateHostPage({ user, userDetails, routes }: any) {
     'Email',
     'Số điện thoại',
     'Ngày sinh',
-    'Số CCCD/CMND',
+    'Số Căn cước công dân',
     'Phường/Xã',
     'Địa chỉ chi tiết'
   ];
@@ -195,11 +195,11 @@ export default function BulkCreateHostPage({ user, userDetails, routes }: any) {
         break;
       }
 
-      case 'Số CCCD/CMND': {
+      case 'Số Căn cước công dân': {
         if (stringValue === '') return null;
         const cidRegex = /^\d{12}$/;
         if (!cidRegex.test(stringValue)) {
-          return `Dòng ${rowIndex}: Số CCCD/CMND phải là 12 chữ số`;
+          return `Dòng ${rowIndex}: Số Căn cước công dân phải là 12 chữ số`;
         }
         break;
       }
@@ -368,7 +368,7 @@ export default function BulkCreateHostPage({ user, userDetails, routes }: any) {
         }
         if (duplicateCCCDs.length > 0) {
           setExcelError(
-            'Có giá trị Số CCCD/CMND bị trùng trong file: ' +
+            'Có giá trị Số Căn cước công dân bị trùng trong file: ' +
               duplicateCCCDs.join(', ')
           );
           setFile(null);
@@ -597,8 +597,8 @@ export default function BulkCreateHostPage({ user, userDetails, routes }: any) {
             <div className="mb-6">
               <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 rounded-lg p-3 text-sm">
                 <b>Lưu ý:</b> File Excel cần chứa các cột: Họ và tên, Email, Số
-                điện thoại, Ngày sinh, Số CCCD/CMND, Phường/Xã, Địa chỉ chi
-                tiết. Hệ thống sẽ tự động tạo mật khẩu và gửi qua email.
+                điện thoại, Ngày sinh, Số Căn cước công dân, Phường/Xã, Địa chỉ
+                chi tiết. Hệ thống sẽ tự động tạo mật khẩu và gửi qua email.
               </div>
             </div>
             <div className="flex justify-end gap-3">

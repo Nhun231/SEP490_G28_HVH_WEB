@@ -258,7 +258,7 @@ export default function HostDetailPage() {
                   </div>
                   <div className="rounded-xl border border-zinc-200 p-3">
                     <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500">
-                      CCCD/CMND
+                      Căn cước công dân
                     </p>
                     <p className="mt-1 text-sm font-medium text-zinc-900">
                       {host.cccd}
@@ -328,7 +328,7 @@ export default function HostDetailPage() {
                       Định danh
                     </p>
                     <p className="mt-1 text-sm text-zinc-600">
-                      Số CCCD/CMND: {host.cccd}
+                      Số Căn cước công dân: {host.cccd}
                     </p>
                   </div>
                 </div>

@@ -18,7 +18,7 @@ export const useGetEventMomentsFeed = ({
   const url = useMemo(() => {
     const queryParams = new URLSearchParams({
       pageNumber: String(Math.max(0, pageNumber)),
-      pageSize: String(pageSize)
+      pageSize: String(Math.min(100, Math.max(1, pageSize)))
     });
 
     if (eventId.trim() !== '') {

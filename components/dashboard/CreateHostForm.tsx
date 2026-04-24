@@ -3,14 +3,23 @@ import DashboardLayout from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { useState } from 'react';
 import { useCreateHostAccount } from '@/hooks/features/org-manager/uc067-create-host-account/useCreateHostAccount';
 import { Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import hanoiWards from '@/fixtures/hanoi-wards.json';
 
 export default function CreateHostForm({ user, userDetails, routes }) {
   const router = useRouter();
+  const wardOptions = hanoiWards.danh_sach_phuong_xa_moi;
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -167,13 +176,26 @@ export default function CreateHostForm({ user, userDetails, routes }) {
               Phường/Xã
               <span className="text-red-500">*</span>
             </label>
-            <Input
-              name="ward"
+            <Select
               value={form.ward}
-              onChange={handleChange}
-              required
-              placeholder="Chọn Phường/Xã"
-            />
+              onValueChange={(value) =>
+                setForm((prev) => ({
+                  ...prev,
+                  ward: value
+                }))
+              }
+            >
+              <SelectTrigger className="bg-white border-zinc-200 text-zinc-900">
+                <SelectValue placeholder="Chọn Phường/Xã" />
+              </SelectTrigger>
+              <SelectContent className="max-h-80">
+                {wardOptions.map((item) => (
+                  <SelectItem key={item.stt} value={item.ten_moi}>
+                    {item.ten_moi}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <label className="block font-medium mb-1">

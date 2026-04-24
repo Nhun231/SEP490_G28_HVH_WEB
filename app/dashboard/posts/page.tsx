@@ -39,7 +39,7 @@ export default function PostsPage() {
       user={user}
       userDetails={userDetails}
       title="Quản lý bài đăng"
-      description="Xem và quản lý bài đăng công động"
+      description="Xem và quản lý bài đăng cộng đồng"
     >
       <PostsManagement />
     </DashboardLayout>

@@ -45,7 +45,7 @@ import {
   ShieldCheck,
   X
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Dialog,
@@ -56,6 +56,11 @@ import {
 } from '@/components/ui/dialog';
 import { useViewVolunteerList } from '@/hooks/features/sys-admin/uc029-view-volunteer-account-list/useViewVolunteerList';
 import { useGetVolunteerActivities } from '@/hooks/features/sys-admin/uc030-get-volunteer-details/useGetVolunteerActivities';
+import { useUpdateVolAccbyAdmin } from '@/hooks/features/sys-admin/uc032-update-volunteer-account-profile/useUpdateVolAccbyAdmin';
+import { useUploadFiles } from '@/hooks/features/commons/bucket/useUploadFiles';
+import { toast } from 'sonner';
+import { getOrCreateDeviceId } from '@/hooks/use-notification-permission';
+import { getFullSupabaseImageUrl } from '@/utils/helpers';
 
 interface Props {
   user: User | null | undefined;
@@ -93,6 +98,8 @@ export default function VolunteersList(props: Props) {
     phone: string;
     email: string;
     dob: string;
+    address: string;
+    detailAddress: string;
     events: number;
     rating: number;
     reputation: number;
@@ -138,6 +145,10 @@ export default function VolunteersList(props: Props) {
   const [selectedEditUser, setSelectedEditUser] = useState<Volunteer | null>(
     null
   );
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isSavingVolunteer, setIsSavingVolunteer] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [activityQuery, setActivityQuery] = useState('');
   const [activityStatusFilter, setActivityStatusFilter] = useState<
     'all' | VolunteerActivityStatus
@@ -147,7 +158,9 @@ export default function VolunteersList(props: Props) {
     cccd: '',
     phone: '',
     email: '',
-    dob: ''
+    dob: '',
+    address: '',
+    detailAddress: ''
   });
   const [newVolunteer, setNewVolunteer] = useState({
     fullName: '',
@@ -167,6 +180,12 @@ export default function VolunteersList(props: Props) {
     Partial<Record<ValueFilterKey, string[]>>
   >({});
   const pageSize = 10;
+  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const { uploadFileToSignedUrl } = useUploadFiles();
+  const { trigger: updateVolunteerProfile } = useUpdateVolAccbyAdmin({
+    id: selectedEditUser?.id ?? '',
+    baseUrl
+  });
   const {
     data: volunteerActivitiesData,
     isLoading: isLoadingActivities,
@@ -240,6 +259,8 @@ export default function VolunteersList(props: Props) {
       phone: item.phone ?? 'Chưa cập nhật',
       email: item.email ?? 'Chưa cập nhật',
       dob: formatDateForDisplay(item.dob),
+      address: item.address ?? 'Chưa cập nhật',
+      detailAddress: item.detailAddress ?? 'Chưa cập nhật',
       events: item.activityCount ?? 0,
       rating: item.avgRating ?? 0,
       reputation: item.creditScore ?? 0,
@@ -972,8 +993,13 @@ export default function VolunteersList(props: Props) {
       cccd: user.cccd,
       phone: user.phone,
       email: user.email,
-      dob: formatDobForInput(user.dob)
+      dob: formatDobForInput(user.dob),
+      address: user.address === 'Chưa cập nhật' ? '' : user.address,
+      detailAddress:
+        user.detailAddress === 'Chưa cập nhật' ? '' : user.detailAddress
     });
+    setAvatarPreview(user.avatar);
+    setAvatarFile(null);
     setOpenEditModal(true);
   };
 
@@ -993,24 +1019,155 @@ export default function VolunteersList(props: Props) {
     setOpenLockModal(false);
   };
 
-  const handleConfirmEdit = () => {
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setAvatarFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleConfirmEdit = async () => {
     if (!selectedEditUser) return;
 
-    setUsers((prev) =>
-      prev.map((user) =>
-        user.id === selectedEditUser.id
-          ? {
-              ...user,
-              fullName: editVolunteer.fullName,
-              cccd: editVolunteer.cccd,
-              phone: editVolunteer.phone,
-              email: editVolunteer.email,
-              dob: formatDobForDisplay(editVolunteer.dob)
-            }
-          : user
-      )
-    );
-    setOpenEditModal(false);
+    const nextDeviceId = getOrCreateDeviceId();
+    const avatarExtension = avatarFile
+      ? avatarFile.name.split('.').pop()
+      : null;
+    const newErrors: Record<string, string> = {};
+
+    if (!editVolunteer.fullName.trim())
+      newErrors.fullName = 'Vui lòng nhập họ và tên';
+    if (!editVolunteer.cccd.trim()) newErrors.cccd = 'Vui lòng nhập CCCD';
+    if (!editVolunteer.phone.trim())
+      newErrors.phone = 'Vui lòng nhập số điện thoại';
+    if (!editVolunteer.email.trim()) newErrors.email = 'Vui lòng nhập email';
+    if (!editVolunteer.dob.trim()) newErrors.dob = 'Vui lòng nhập ngày sinh';
+    if (!editVolunteer.address.trim())
+      newErrors.address = 'Vui lòng nhập địa chỉ';
+    if (!editVolunteer.detailAddress.trim())
+      newErrors.detailAddress = 'Vui lòng nhập địa chỉ chi tiết';
+
+    if (Object.keys(newErrors).length > 0) {
+      toast.error('Vui lòng điền đầy đủ thông tin bắt buộc');
+      return;
+    }
+
+    const hiddenGender = selectedEditUser.gender ?? true;
+    const hiddenNickname =
+      selectedEditUser.nickName ?? selectedEditUser.fullName;
+    const hiddenBio = selectedEditUser.bio ?? selectedEditUser.fullName;
+    const hiddenEmployStatus =
+      selectedEditUser.employStatus ?? EEmployStatus.OTHER;
+    const hiddenWorkAddress =
+      selectedEditUser.workAddress ?? editVolunteer.address.trim();
+    const hiddenEducationLevel =
+      selectedEditUser.educationLevel ?? EEducationLevel.OTHER;
+    const hiddenSid = selectedEditUser.sid ?? selectedEditUser.cccd.trim();
+
+    const requestData = {
+      email: editVolunteer.email.trim(),
+      phone: editVolunteer.phone.trim(),
+      cid: editVolunteer.cccd.trim(),
+      nickName: hiddenNickname,
+      fullName: editVolunteer.fullName.trim(),
+      bio: hiddenBio,
+      gender: hiddenGender,
+      dob: editVolunteer.dob,
+      avatarExtension: avatarExtension ? `.${avatarExtension}` : null,
+      address: editVolunteer.address.trim(),
+      detailAddress: editVolunteer.detailAddress.trim(),
+      employStatus: hiddenEmployStatus,
+      workAddress: hiddenWorkAddress,
+      educationLevel: hiddenEducationLevel,
+      sid: hiddenSid,
+      deviceId: nextDeviceId
+    };
+
+    try {
+      setIsSavingVolunteer(true);
+      const response = await updateVolunteerProfile(requestData);
+
+      if (avatarFile && response?.avatarUploadUrl) {
+        const uploadUrl = response.avatarUploadUrl.startsWith('http')
+          ? response.avatarUploadUrl
+          : `${SUPABASE_URL?.replace(/\/$/, '')}${response.avatarUploadUrl}`;
+
+        const uploadResult = await uploadFileToSignedUrl(avatarFile, uploadUrl);
+        if (!uploadResult?.success) {
+          throw new Error(uploadResult?.error || 'Không thể upload avatar');
+        }
+      }
+
+      const nextAvatar = response?.avatarUrl
+        ? getFullSupabaseImageUrl(response.avatarUrl)
+        : avatarPreview || selectedEditUser.avatar;
+
+      setUsers((prev) =>
+        prev.map((user) =>
+          user.id === selectedEditUser.id
+            ? {
+                ...user,
+                avatar: nextAvatar,
+                fullName: requestData.fullName,
+                cccd: requestData.cid,
+                phone: requestData.phone,
+                email: requestData.email,
+                dob: formatDobForDisplay(requestData.dob),
+                address: requestData.address,
+                detailAddress: requestData.detailAddress,
+                nickName: requestData.nickName,
+                bio: requestData.bio,
+                gender: requestData.gender,
+                employStatus: requestData.employStatus,
+                workAddress: requestData.workAddress,
+                educationLevel: requestData.educationLevel,
+                sid: requestData.sid,
+                deviceId: requestData.deviceId
+              }
+            : user
+        )
+      );
+
+      if (selectedUser?.id === selectedEditUser.id) {
+        setSelectedUser((prev) =>
+          prev
+            ? {
+                ...prev,
+                avatar: nextAvatar,
+                fullName: requestData.fullName,
+                cccd: requestData.cid,
+                phone: requestData.phone,
+                email: requestData.email,
+                dob: formatDobForDisplay(requestData.dob),
+                address: requestData.address,
+                detailAddress: requestData.detailAddress,
+                nickName: requestData.nickName,
+                bio: requestData.bio,
+                gender: requestData.gender,
+                employStatus: requestData.employStatus,
+                workAddress: requestData.workAddress,
+                educationLevel: requestData.educationLevel,
+                sid: requestData.sid,
+                deviceId: requestData.deviceId
+              }
+            : prev
+        );
+      }
+
+      toast.success('Cập nhật tình nguyện viên thành công!');
+      setOpenEditModal(false);
+      setAvatarFile(null);
+      setAvatarPreview(null);
+    } catch (error: any) {
+      toast.error(error?.message || 'Cập nhật tình nguyện viên thất bại');
+    } finally {
+      setIsSavingVolunteer(false);
+    }
   };
 
   const handleAddVolunteer = () => {
@@ -1363,7 +1520,9 @@ export default function VolunteersList(props: Props) {
                     <h3 className="mt-3 text-xl font-bold text-slate-900">
                       {selectedUser.fullName}
                     </h3>
-                    <p className="text-sm text-slate-500">Tình nguyện viên</p>
+                    <p className="text-sm text-slate-500">
+                      Tình nguyện viên • {selectedUser.events} hoạt động
+                    </p>
                     <Badge
                       className={`mt-3 rounded-full px-3 py-1 ${
                         selectedUser.status === 'active'
@@ -1397,6 +1556,30 @@ export default function VolunteersList(props: Props) {
                         Ngày sinh:
                       </span>{' '}
                       {selectedUser.dob}
+                    </p>
+                    <p className="text-zinc-700">
+                      <span className="font-semibold text-zinc-500">
+                        Địa chỉ:
+                      </span>{' '}
+                      {selectedUser.address}
+                    </p>
+                    <p className="text-zinc-700">
+                      <span className="font-semibold text-zinc-500">
+                        Địa chỉ chi tiết:
+                      </span>{' '}
+                      {selectedUser.detailAddress}
+                    </p>
+                    <p className="text-zinc-700">
+                      <span className="font-semibold text-zinc-500">
+                        Điểm đánh giá:
+                      </span>{' '}
+                      {selectedUser.rating}
+                    </p>
+                    <p className="text-zinc-700">
+                      <span className="font-semibold text-zinc-500">
+                        Điểm uy tín:
+                      </span>{' '}
+                      {selectedUser.reputation}
                     </p>
                   </div>
                 </div>
@@ -1536,27 +1719,89 @@ export default function VolunteersList(props: Props) {
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-zinc-700">
-                  Họ và tên
-                </label>
-                <Input
-                  placeholder="Nhập họ và tên đầy đủ"
-                  value={editVolunteer.fullName}
-                  onChange={(e) =>
-                    setEditVolunteer({
-                      ...editVolunteer,
-                      fullName: e.target.value
-                    })
-                  }
-                  className="mt-1 text-zinc-900 placeholder:text-zinc-400"
-                />
+            <div className="space-y-5">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarFileChange}
+              />
+
+              <div className="flex flex-col items-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-5">
+                <Avatar className="h-24 w-24 border border-white shadow-lg shadow-blue-100/50 ring-4 ring-blue-50">
+                  <AvatarImage
+                    src={avatarPreview || selectedEditUser?.avatar}
+                    alt={editVolunteer.fullName || selectedEditUser?.fullName}
+                  />
+                  <AvatarFallback className="bg-gradient-to-br from-blue-600 via-sky-500 to-cyan-500 text-2xl font-semibold text-white">
+                    {(
+                      editVolunteer.fullName ||
+                      selectedEditUser?.fullName ||
+                      'U'
+                    )
+                      .split(' ')
+                      .map((part) => part[0])
+                      .join('')
+                      .slice(0, 2)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="text-center">
+                  <p className="text-sm font-medium text-zinc-900">
+                    Ảnh đại diện tình nguyện viên
+                  </p>
+                  <p className="text-xs text-zinc-500">
+                    JPG hoặc PNG, dung lượng nhỏ hơn 5MB
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {avatarFile ? 'Đổi ảnh khác' : 'Chọn ảnh'}
+                </Button>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  <label className="text-sm font-medium text-zinc-700">
+                    Họ và tên
+                  </label>
+                  <Input
+                    placeholder="Nhập họ và tên đầy đủ"
+                    value={editVolunteer.fullName}
+                    onChange={(e) =>
+                      setEditVolunteer({
+                        ...editVolunteer,
+                        fullName: e.target.value
+                      })
+                    }
+                    className="mt-1 text-zinc-900 placeholder:text-zinc-400"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-zinc-700">
+                    Địa chỉ
+                  </label>
+                  <Input
+                    placeholder="Nhập địa chỉ"
+                    value={editVolunteer.address}
+                    onChange={(e) =>
+                      setEditVolunteer({
+                        ...editVolunteer,
+                        address: e.target.value
+                      })
+                    }
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="text-sm font-medium text-zinc-700">
                     Số CCCD
                   </label>
                   <Input
@@ -1572,7 +1817,7 @@ export default function VolunteersList(props: Props) {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  <label className="text-sm font-medium text-zinc-700">
                     Số điện thoại
                   </label>
                   <Input
@@ -1589,53 +1834,60 @@ export default function VolunteersList(props: Props) {
                 </div>
               </div>
 
-              <div>
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  Email
-                </label>
-                <Input
-                  type="email"
-                  placeholder="Nhập địa chỉ email"
-                  value={editVolunteer.email}
-                  onChange={(e) =>
-                    setEditVolunteer({
-                      ...editVolunteer,
-                      email: e.target.value
-                    })
-                  }
-                  className="mt-1 bg-blue-50 border-blue-200 focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  Ngày sinh
-                </label>
-                <Input
-                  type="date"
-                  value={editVolunteer.dob}
-                  onChange={(e) =>
-                    setEditVolunteer({
-                      ...editVolunteer,
-                      dob: e.target.value
-                    })
-                  }
-                  className="mt-1"
-                />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="text-sm font-medium text-zinc-700">
+                    Địa chỉ chi tiết
+                  </label>
+                  <Input
+                    placeholder="Nhập địa chỉ chi tiết"
+                    value={editVolunteer.detailAddress}
+                    onChange={(e) =>
+                      setEditVolunteer({
+                        ...editVolunteer,
+                        detailAddress: e.target.value
+                      })
+                    }
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-zinc-700">
+                    Email
+                  </label>
+                  <Input
+                    type="email"
+                    placeholder="Nhập địa chỉ email"
+                    value={editVolunteer.email}
+                    onChange={(e) =>
+                      setEditVolunteer({
+                        ...editVolunteer,
+                        email: e.target.value
+                      })
+                    }
+                    className="mt-1 bg-blue-50 border-blue-200 focus:border-blue-500"
+                  />
+                </div>
               </div>
 
               <div className="flex justify-end gap-2 pt-4">
                 <Button
-                  onClick={() => setOpenEditModal(false)}
-                  className="bg-red-600 hover:bg-red-700 text-white"
+                  onClick={() => {
+                    setOpenEditModal(false);
+                    setAvatarFile(null);
+                    setAvatarPreview(null);
+                  }}
+                  className="bg-red-600 text-white hover:bg-red-700"
+                  disabled={isSavingVolunteer}
                 >
                   Hủy
                 </Button>
                 <Button
                   onClick={handleConfirmEdit}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="bg-blue-600 text-white hover:bg-blue-700"
+                  disabled={isSavingVolunteer}
                 >
-                  Cập nhật
+                  {isSavingVolunteer ? 'Đang lưu...' : 'Cập nhật'}
                 </Button>
               </div>
             </div>

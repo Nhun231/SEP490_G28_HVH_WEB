@@ -104,3 +104,36 @@ export interface VolunteerActivitiesListResponseForAdmin {
     totalPages: number;
   };
 }
+
+export interface UpdateVolunteerProfileBySystemAdminRequest {
+  email: string;
+  phone: string;
+  cid: string;
+  nickName: string;
+  fullName: string;
+  bio: string;
+  gender: boolean;
+  dob: string;
+  avatarExtension?: string | null;
+  address: string;
+  detailAddress: string;
+  employStatus: string;
+  workAddress: string;
+  educationLevel: string;
+  sid: string;
+  deviceId: string;
+}
+
+export interface UpdateVolunteerProfileBySystemAdminResponse {
+  id: string;
+  vid: string | null;
+  avatarUrl: string | null;
+  fullName: string | null;
+  cid: string | null;
+  phone: string | null;
+  email: string | null;
+  dob: string | null;
+  address: string | null;
+  detailAddress: string | null;
+  avatarUploadUrl?: string;
+}

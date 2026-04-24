@@ -11,8 +11,10 @@ import DashboardLayout from '@/components/layout';
 import { organizerRoutes } from '@/components/routes';
 import { useViewHostInfo } from '@/hooks/features/sys-admin/uc066-view-host-details/useViewHostInfo';
 import { useViewHostActivities } from '@/hooks/features/sys-admin/uc066-view-host-details/useViewHostActivities';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
+import { createClient } from '@/utils/supabase/client';
+import { User } from '@supabase/supabase-js';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
 
@@ -47,7 +49,49 @@ const calculateHours = (
 export default function HostDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const [supabase] = useState(createClient);
+  const [user, setUser] = useState<User | null>(null);
+  const [userDetails, setUserDetails] = useState<any>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const hostId = params?.id?.toString();
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchUserData = async () => {
+      try {
+        const {
+          data: { user }
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+          router.push('/signin/password_signin');
+          return;
+        }
+
+        const { data: userDetails } = await supabase
+          .from('user_details')
+          .select('*')
+          .single();
+
+        if (!isMounted) return;
+
+        setUser(user);
+        setUserDetails(userDetails);
+      } finally {
+        if (isMounted) {
+          setIsAuthLoading(false);
+        }
+      }
+    };
+
+    fetchUserData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [router, supabase]);
+
   const {
     data: hostInfo,
     isLoading,
@@ -55,7 +99,7 @@ export default function HostDetailPage() {
   } = useViewHostInfo({
     id: hostId,
     baseUrl: API_BASE_URL,
-    enabled: Boolean(hostId)
+    enabled: Boolean(hostId) && Boolean(user) && !isAuthLoading
   });
 
   const [showAllActivities, setShowAllActivities] = useState(false);
@@ -73,7 +117,7 @@ export default function HostDetailPage() {
   } = useViewHostActivities({
     id: hostId,
     baseUrl: API_BASE_URL,
-    enabled: Boolean(hostId),
+    enabled: Boolean(hostId) && Boolean(user) && !isAuthLoading,
     pageNumber: 0,
     pageSize: 100,
     fromDate: fromDate || undefined,
@@ -138,13 +182,13 @@ export default function HostDetailPage() {
       ? activeClass
       : 'border border-blue-200 bg-white text-blue-700 hover:bg-blue-50 hover:text-blue-800';
 
-  if (isLoading) {
+  if (isAuthLoading || isLoading) {
     return (
       <DashboardLayout
         title="Quản Lý Host"
         description="Đang tải dữ liệu..."
-        user={null}
-        userDetails={null}
+        user={user}
+        userDetails={userDetails}
         routes={organizerRoutes}
         colorVariant="organizer"
         signInPath="/signin/password_signin"
@@ -160,8 +204,8 @@ export default function HostDetailPage() {
     <DashboardLayout
       title="Quản Lý Host"
       description="Chi tiết tài khoản Host"
-      user={null}
-      userDetails={null}
+      user={user}
+      userDetails={userDetails}
       routes={organizerRoutes}
       colorVariant="organizer"
       signInPath="/signin/password_signin"
@@ -182,19 +226,19 @@ export default function HostDetailPage() {
           </Button>
         </div>
 
-        {isLoading && (
+        {(isAuthLoading || isLoading) && (
           <div className="flex justify-center items-center py-12">
             <p className="text-zinc-500">Đang tải thông tin host...</p>
           </div>
         )}
 
-        {error && (
+        {!isAuthLoading && error && (
           <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-lg text-rose-700">
             Không thể tải thông tin host. Vui lòng thử lại.
           </div>
         )}
 
-        {!isLoading && hostInfo && (
+        {!isAuthLoading && !isLoading && hostInfo && (
           <>
             <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
               <Card className="border-zinc-200 bg-white p-6 shadow-sm xl:col-span-1">

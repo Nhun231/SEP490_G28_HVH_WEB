@@ -39,6 +39,7 @@ import { useViewHostList } from '@/hooks/features/sys-admin/uc065-view-host-list
 interface Props {
   user: User | null | undefined;
   userDetails: { [x: string]: any } | null;
+  isAuthLoading?: boolean;
   routes?: IRoute[];
   colorVariant?: 'admin' | 'organizer';
   signInPath?: string;
@@ -62,6 +63,7 @@ const pageSize = 10;
 export default function OrganizerHostManagement({
   user,
   userDetails,
+  isAuthLoading = false,
   routes,
   colorVariant = 'organizer',
   signInPath = '/signin/password_signin'
@@ -93,8 +95,7 @@ export default function OrganizerHostManagement({
   } = useViewHostList({
     pageNumber: Math.max(0, currentPage - 1),
     pageSize,
-    baseUrl,
-    enabled: Boolean(user)
+    baseUrl
   });
 
   const mapApiStatusToHostStatus = (status: string | null): HostStatus =>
@@ -451,7 +452,8 @@ export default function OrganizerHostManagement({
   const totalPages = Math.max(1, hostListData?.page.totalPages ?? 1);
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const paginatedHosts = filteredHosts;
-  const isTableLoading = !mounted || !user || isHostListLoading;
+  const isTableLoading =
+    !mounted || (!hostListData && (isAuthLoading || isHostListLoading));
 
   useEffect(() => {
     setCurrentPage(1);
@@ -577,6 +579,15 @@ export default function OrganizerHostManagement({
                       className="py-8 text-center text-rose-500"
                     >
                       Không thể tải danh sách host. Vui lòng thử lại.
+                    </TableCell>
+                  </TableRow>
+                ) : !user && !isAuthLoading ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      className="py-8 text-center text-zinc-500"
+                    >
+                      Không tìm thấy phiên đăng nhập. Vui lòng đăng nhập lại.
                     </TableCell>
                   </TableRow>
                 ) : filteredHosts.length > 0 ? (

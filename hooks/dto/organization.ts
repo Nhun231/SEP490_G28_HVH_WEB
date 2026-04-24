@@ -139,3 +139,39 @@ export interface OrganizationRegistrationVerifyRequest {
   approve: boolean;
   rejectionReason: string | null;
 }
+
+export interface OrgManagerAccountInformationResponse {
+  id: string;
+  cid: string;
+  email: string;
+  phone: string;
+  fullName: string;
+  gender: boolean;
+  dob: string;
+  avatarUrl: string;
+  address: string;
+  detailAddress: string;
+}
+
+export interface UpdateOrgManagerProfileRequest {
+  fullName?: string;
+  gender?: boolean;
+  dob?: string;
+  avatarExtension?: string;
+  address?: string;
+  detailAddress?: string;
+}
+
+export interface UpdateOrgManagerProfileResponse {
+  id: string;
+  cid: string;
+  email: string;
+  phone: string;
+  fullName: string;
+  gender: boolean;
+  dob: string;
+  avatarUrl: string;
+  address: string;
+  detailAddress: string;
+  avatarUploadUrl?: string;
+}

@@ -4,11 +4,11 @@ export interface ShareMomentRequest {
   momentPictures: string; // file path or base64
 }
 
-export interface EventMomentFeedDetailsResponse {
+export interface EventMomentFeedItem {
   volunteerId: string;
-  volNickName: string;
+  volNickName: string | null;
   volName: string;
-  avatarUrl: string;
+  avatarUrl: string | null;
   eventId: string;
   eventName: string;
   eventAddress: string;
@@ -20,8 +20,8 @@ export interface EventMomentFeedDetailsResponse {
 }
 
 export interface EventMomentFeedResponse {
-  content: EventMomentFeedDetailsResponse[];
-  nextCursor: string;
+  eventMoments: EventMomentFeedItem[];
+  nextCursor: string | null;
   hasMore: boolean;
 }
 

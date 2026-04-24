@@ -7,7 +7,11 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { OpenContext, UserContext } from '@/contexts/layout';
+import {
+  OpenContext,
+  UserContext,
+  UserDetailsContext
+} from '@/contexts/layout';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useContext, useEffect, useState } from 'react';
@@ -18,10 +22,13 @@ import {
 } from 'react-icons/hi2';
 import { createClient } from '@/utils/supabase/client';
 import { useUnregisterToken } from '@/hooks/features/commons/notification/use-unregister-token';
+import { useGetSysAdmAccountInfo } from '@/hooks/features/sys-admin/uc088-view-profile-by-admin/useGetSysAdmAccountInfo';
+import { useGetOrgManagerAccInfo } from '@/hooks/features/org-manager/uc087-view-profile-by-org-manager/useGetOrgManagerAccInfo';
 import {
   clearStoredNotificationToken,
   getStoredNotificationToken
 } from '@/hooks/use-notification-permission';
+import { getFullSupabaseImageUrl } from '@/utils/helpers';
 
 const supabase = createClient();
 export default function HeaderLinks(props: {
@@ -32,9 +39,11 @@ export default function HeaderLinks(props: {
 }) {
   const { open, setOpen } = useContext(OpenContext);
   const user = useContext(UserContext);
+  const userDetails = useContext(UserDetailsContext);
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const { trigger: unregisterToken } = useUnregisterToken();
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
   const colorVariant = props.colorVariant ?? 'admin';
   const signInPath =
     props.signInPath ??
@@ -49,6 +58,47 @@ export default function HeaderLinks(props: {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const { data: sysAdmAccountInfo } = useGetSysAdmAccountInfo({
+    baseUrl: apiBaseUrl,
+    enabled: colorVariant === 'admin'
+  });
+  const { data: orgManagerAccountInfo } = useGetOrgManagerAccInfo({
+    baseUrl: apiBaseUrl,
+    enabled: colorVariant === 'organizer'
+  });
+
+  const profileInfo =
+    colorVariant === 'admin' ? sysAdmAccountInfo : orgManagerAccountInfo;
+
+  const rawAvatarUrl =
+    profileInfo?.avatarUrl ??
+    userDetails?.avatarUrl ??
+    userDetails?.avatar_url ??
+    userDetails?.avatar ??
+    user?.user_metadata?.avatar_url ??
+    user?.user_metadata?.avatarUrl ??
+    user?.user_metadata?.picture ??
+    user?.user_metadata?.avatar ??
+    user?.app_metadata?.avatar_url ??
+    user?.app_metadata?.picture ??
+    '';
+  const avatarSrc = rawAvatarUrl
+    ? getFullSupabaseImageUrl(String(rawAvatarUrl)) || '/default-avatar.png'
+    : '/default-avatar.png';
+
+  const fullName =
+    profileInfo?.fullName ??
+    userDetails?.fullName ??
+    userDetails?.full_name ??
+    user?.user_metadata?.full_name ??
+    user?.user_metadata?.fullName ??
+    user?.user_metadata?.name ??
+    user?.user_metadata?.display_name ??
+    '';
+  const fallbackInitial = fullName
+    ? String(fullName).trim().charAt(0).toUpperCase()
+    : user?.email?.[0]?.toUpperCase() || 'U';
 
   const handleSignOut = async (e) => {
     e.preventDefault();
@@ -106,13 +156,9 @@ export default function HeaderLinks(props: {
       </Button>
       <Link className="w-full" href={settingsPath}>
         <Avatar className="h-9 min-w-9 md:min-h-10 md:min-w-10">
-          <AvatarImage
-            src={user?.user_metadata?.avatar_url || '/default-avatar.png'}
-          />
+          <AvatarImage src={avatarSrc} />
           <AvatarFallback className="font-bold">
-            {user?.user_metadata?.full_name
-              ? `${user?.user_metadata?.full_name[0]}`
-              : user?.email?.[0]?.toUpperCase() || 'U'}
+            {fallbackInitial}
           </AvatarFallback>
         </Avatar>
       </Link>

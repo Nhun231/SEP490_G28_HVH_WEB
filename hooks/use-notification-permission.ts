@@ -36,7 +36,7 @@ export const clearStoredNotificationToken = (): void => {
   window.localStorage.removeItem(NOTIFICATION_FCM_TOKEN_KEY);
 };
 
-const getOrCreateDeviceId = (): string => {
+export const getOrCreateDeviceId = (): string => {
   if (typeof window === 'undefined') {
     return '';
   }

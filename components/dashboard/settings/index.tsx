@@ -8,7 +8,9 @@ import React, { useMemo, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { IRoute } from '@/types/types';
 import { useGetSysAdmAccountInfo } from '@/hooks/features/sys-admin/uc088-view-profile-by-admin/useGetSysAdmAccountInfo';
+import { useGetOrgManagerAccInfo } from '@/hooks/features/org-manager/uc087-view-profile-by-org-manager/useGetOrgManagerAccInfo';
 import { useUpdateSystemAminProfile } from '@/hooks/features/sys-admin/uc020-update-non-volunteer-profile/useUpdateSystemAminProfile';
+import { useUpdateOrgManagerProfile } from '@/hooks/features/org-manager/uc087-view-profile-by-org-manager/useUpdateOrgManagerProfile';
 import { getFullSupabaseImageUrl } from '@/utils/helpers';
 import { useUploadFiles } from '@/hooks/features/commons/bucket/useUploadFiles';
 import { Button } from '@/components/ui/button';
@@ -73,73 +75,99 @@ export default function Settings(props: Props) {
     props.colorVariant === 'admin' ||
     roleFromAuth.includes('admin') ||
     roleFromDetails.includes('admin');
-  const { data: sysAdmAccountInfo, mutate: refreshAccountInfo } =
+  const isOrgManagerView =
+    props.colorVariant === 'organizer' ||
+    roleFromAuth.includes('org_manager') ||
+    roleFromAuth.includes('manager') ||
+    roleFromDetails.includes('org_manager') ||
+    roleFromDetails.includes('manager');
+
+  const { data: sysAdmAccountInfo, mutate: refreshSysAdmAccountInfo } =
     useGetSysAdmAccountInfo({
       baseUrl: apiBaseUrl,
       enabled: isAdminView
     });
-  const { trigger: updateProfile, isMutating: isUpdating } =
+  const { data: orgManagerAccountInfo, mutate: refreshOrgManagerAccountInfo } =
+    useGetOrgManagerAccInfo({
+      baseUrl: apiBaseUrl,
+      enabled: !isAdminView && isOrgManagerView
+    });
+  const { trigger: updateAdminProfile, isMutating: isUpdatingAdminProfile } =
     useUpdateSystemAminProfile({
       baseUrl: apiBaseUrl
     });
+  const {
+    trigger: updateOrgManagerProfile,
+    isMutating: isUpdatingOrgManagerProfile
+  } = useUpdateOrgManagerProfile({
+    baseUrl: apiBaseUrl
+  });
   const { uploadFileToSignedUrl } = useUploadFiles();
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const hasAdminApiData = Boolean(isAdminView && sysAdmAccountInfo);
+  const accountInfo = isAdminView ? sysAdmAccountInfo : orgManagerAccountInfo;
+  const refreshAccountInfo = isAdminView
+    ? refreshSysAdmAccountInfo
+    : refreshOrgManagerAccountInfo;
+  const updateProfile = isAdminView
+    ? updateAdminProfile
+    : updateOrgManagerProfile;
+  const isUpdating = isAdminView
+    ? isUpdatingAdminProfile
+    : isUpdatingOrgManagerProfile;
+  const hasProfileApiData = Boolean(accountInfo);
 
   const displayName = useMemo(() => {
-    return hasAdminApiData
-      ? formatTextValue(sysAdmAccountInfo?.fullName)
+    return hasProfileApiData
+      ? formatTextValue(accountInfo?.fullName)
       : 'Chưa cập nhật';
-  }, [hasAdminApiData, sysAdmAccountInfo?.fullName]);
+  }, [hasProfileApiData, accountInfo?.fullName]);
 
-  const displayEmail = hasAdminApiData
-    ? formatTextValue(sysAdmAccountInfo?.email)
+  const displayEmail = hasProfileApiData
+    ? formatTextValue(accountInfo?.email)
     : 'Chưa cập nhật';
-  const displayPhone = hasAdminApiData
-    ? formatTextValue(sysAdmAccountInfo?.phone)
+  const displayPhone = hasProfileApiData
+    ? formatTextValue(accountInfo?.phone)
     : 'Chưa cập nhật';
-  const displayAvatar = hasAdminApiData
-    ? getFullSupabaseImageUrl(sysAdmAccountInfo?.avatarUrl) || undefined
+  const displayAvatar = hasProfileApiData
+    ? getFullSupabaseImageUrl(accountInfo?.avatarUrl) || undefined
     : undefined;
 
-  const displayAdminId = hasAdminApiData
-    ? formatTextValue(sysAdmAccountInfo?.id)
+  const displayAdminId = hasProfileApiData
+    ? formatTextValue(accountInfo?.id)
     : 'Chưa cập nhật';
-  const displayAdminCid = hasAdminApiData
-    ? formatTextValue(sysAdmAccountInfo?.cid)
+  const displayAdminCid = hasProfileApiData
+    ? formatTextValue(accountInfo?.cid)
     : 'Chưa cập nhật';
-  const displayAdminGender = hasAdminApiData
-    ? formatGenderValue(sysAdmAccountInfo?.gender)
+  const displayAdminGender = hasProfileApiData
+    ? formatGenderValue(accountInfo?.gender)
     : 'Chưa cập nhật';
-  const displayAdminDob = hasAdminApiData
-    ? formatDateValue(sysAdmAccountInfo?.dob)
+  const displayAdminDob = hasProfileApiData
+    ? formatDateValue(accountInfo?.dob)
     : 'Chưa cập nhật';
-  const displayAdminAddress = hasAdminApiData
-    ? formatTextValue(sysAdmAccountInfo?.address)
+  const displayAdminAddress = hasProfileApiData
+    ? formatTextValue(accountInfo?.address)
     : 'Chưa cập nhật';
-  const displayAdminDetailAddress = hasAdminApiData
-    ? formatTextValue(sysAdmAccountInfo?.detailAddress)
+  const displayAdminDetailAddress = hasProfileApiData
+    ? formatTextValue(accountInfo?.detailAddress)
     : 'Chưa cập nhật';
 
   const [isEditing, setIsEditing] = useState(false);
   const [firstName, setFirstName] = useState(
-    sysAdmAccountInfo?.fullName
-      ? sysAdmAccountInfo.fullName.split(' ')[0] || ''
-      : ''
+    accountInfo?.fullName ? accountInfo.fullName.split(' ')[0] || '' : ''
   );
   const [lastName, setLastName] = useState(
-    sysAdmAccountInfo?.fullName
-      ? sysAdmAccountInfo.fullName.split(' ').slice(1).join(' ') || ''
+    accountInfo?.fullName
+      ? accountInfo.fullName.split(' ').slice(1).join(' ') || ''
       : ''
   );
   const [timeZone, setTimeZone] = useState('+7 GMT');
-  const [phone, setPhone] = useState(sysAdmAccountInfo?.phone || '');
-  const [email, setEmail] = useState(sysAdmAccountInfo?.email || '');
-  const [cid, setCid] = useState(sysAdmAccountInfo?.cid || '');
-  const [dob, setDob] = useState(sysAdmAccountInfo?.dob || '');
-  const [address, setAddress] = useState(sysAdmAccountInfo?.address || '');
+  const [phone, setPhone] = useState(accountInfo?.phone || '');
+  const [email, setEmail] = useState(accountInfo?.email || '');
+  const [cid, setCid] = useState(accountInfo?.cid || '');
+  const [dob, setDob] = useState(accountInfo?.dob || '');
+  const [address, setAddress] = useState(accountInfo?.address || '');
   const [detailAddress, setDetailAddress] = useState(
-    sysAdmAccountInfo?.detailAddress || ''
+    accountInfo?.detailAddress || ''
   );
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -148,25 +176,25 @@ export default function Settings(props: Props) {
 
   // Store original values for cancel functionality
   const [originalValues, setOriginalValues] = useState({
-    firstName: sysAdmAccountInfo?.fullName
-      ? sysAdmAccountInfo.fullName.split(' ')[0] || ''
+    firstName: accountInfo?.fullName
+      ? accountInfo.fullName.split(' ')[0] || ''
       : '',
-    lastName: sysAdmAccountInfo?.fullName
-      ? sysAdmAccountInfo.fullName.split(' ').slice(1).join(' ') || ''
+    lastName: accountInfo?.fullName
+      ? accountInfo.fullName.split(' ').slice(1).join(' ') || ''
       : '',
     timeZone: '+7 GMT',
-    phone: sysAdmAccountInfo?.phone || '',
-    email: sysAdmAccountInfo?.email || '',
-    cid: sysAdmAccountInfo?.cid || '',
-    dob: sysAdmAccountInfo?.dob || '',
-    address: sysAdmAccountInfo?.address || '',
-    detailAddress: sysAdmAccountInfo?.detailAddress || ''
+    phone: accountInfo?.phone || '',
+    email: accountInfo?.email || '',
+    cid: accountInfo?.cid || '',
+    dob: accountInfo?.dob || '',
+    address: accountInfo?.address || '',
+    detailAddress: accountInfo?.detailAddress || ''
   });
 
   // Update values when data changes
   React.useEffect(() => {
-    if (sysAdmAccountInfo?.fullName) {
-      const nameParts = sysAdmAccountInfo.fullName.split(' ');
+    if (accountInfo?.fullName) {
+      const nameParts = accountInfo.fullName.split(' ');
       const firstNameValue = nameParts[0] || '';
       const lastNameValue = nameParts.slice(1).join(' ') || '';
       setFirstName(firstNameValue);
@@ -177,43 +205,43 @@ export default function Settings(props: Props) {
         lastName: lastNameValue
       }));
     }
-  }, [sysAdmAccountInfo?.fullName]);
+  }, [accountInfo?.fullName]);
 
   React.useEffect(() => {
-    setPhone(sysAdmAccountInfo?.phone || '');
-    setEmail(sysAdmAccountInfo?.email || '');
+    setPhone(accountInfo?.phone || '');
+    setEmail(accountInfo?.email || '');
     setOriginalValues((prev) => ({
       ...prev,
-      phone: sysAdmAccountInfo?.phone || '',
-      email: sysAdmAccountInfo?.email || ''
+      phone: accountInfo?.phone || '',
+      email: accountInfo?.email || ''
     }));
-  }, [sysAdmAccountInfo?.phone, sysAdmAccountInfo?.email]);
+  }, [accountInfo?.phone, accountInfo?.email]);
 
   React.useEffect(() => {
-    setCid(sysAdmAccountInfo?.cid || '');
+    setCid(accountInfo?.cid || '');
     setOriginalValues((prev) => ({
       ...prev,
-      cid: sysAdmAccountInfo?.cid || ''
+      cid: accountInfo?.cid || ''
     }));
-  }, [sysAdmAccountInfo?.cid]);
+  }, [accountInfo?.cid]);
 
   React.useEffect(() => {
-    setDob(sysAdmAccountInfo?.dob || '');
+    setDob(accountInfo?.dob || '');
     setOriginalValues((prev) => ({
       ...prev,
-      dob: sysAdmAccountInfo?.dob || ''
+      dob: accountInfo?.dob || ''
     }));
-  }, [sysAdmAccountInfo?.dob]);
+  }, [accountInfo?.dob]);
 
   React.useEffect(() => {
-    setAddress(sysAdmAccountInfo?.address || '');
-    setDetailAddress(sysAdmAccountInfo?.detailAddress || '');
+    setAddress(accountInfo?.address || '');
+    setDetailAddress(accountInfo?.detailAddress || '');
     setOriginalValues((prev) => ({
       ...prev,
-      address: sysAdmAccountInfo?.address || '',
-      detailAddress: sysAdmAccountInfo?.detailAddress || ''
+      address: accountInfo?.address || '',
+      detailAddress: accountInfo?.detailAddress || ''
     }));
-  }, [sysAdmAccountInfo?.address, sysAdmAccountInfo?.detailAddress]);
+  }, [accountInfo?.address, accountInfo?.detailAddress]);
 
   const initials =
     displayName && displayName.length > 0
@@ -549,7 +577,7 @@ export default function Settings(props: Props) {
                   </div>
 
                   {/* Show CID if exists */}
-                  {sysAdmAccountInfo?.cid && (
+                  {accountInfo?.cid && (
                     <div>
                       <label className="block text-sm font-semibold text-gray-600 mb-2">
                         CĂN CƯỚC CÔNG DÂN
@@ -631,13 +659,13 @@ export default function Settings(props: Props) {
                 </h2>
 
                 <div className="space-y-4">
-                  {sysAdmAccountInfo?.id && (
+                  {accountInfo?.id && (
                     <div>
                       <label className="block text-sm font-semibold text-gray-600 mb-2">
                         ID
                       </label>
                       <div className="border border-gray-300 rounded-md px-3 py-2 bg-gray-50">
-                        {sysAdmAccountInfo.id}
+                        {accountInfo.id}
                       </div>
                     </div>
                   )}
@@ -646,7 +674,7 @@ export default function Settings(props: Props) {
                       ĐỊA CHỈ EMAIL
                     </label>
                     <div className="border border-gray-300 rounded-md px-3 py-2 bg-gray-50">
-                      {sysAdmAccountInfo?.email || 'Chưa cập nhật'}
+                      {accountInfo?.email || 'Chưa cập nhật'}
                     </div>
                   </div>
                 </div>

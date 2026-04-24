@@ -1,17 +1,37 @@
-import Settings from '@/components/dashboard/settings';
-import { redirect } from 'next/navigation';
-import { createClient } from '@/utils/supabase/server';
-import { getUserDetails, getUser } from '@/utils/supabase/queries';
+'use client';
 
-export default async function SettingsPage() {
-  const supabase = await createClient();
-  const [user, userDetails] = await Promise.all([
-    getUser(supabase),
-    getUserDetails(supabase)
-  ]);
-  if (!user) {
-    return redirect('/dashboard/signin');
-  }
+import Settings from '@/components/dashboard/settings';
+import { createClient } from '@/utils/supabase/client';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+export default function SettingsPage() {
+  const supabase = createClient();
+  const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [userDetails, setUserDetails] = useState(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+      const { data: userDetails } = await supabase
+        .from('user_details')
+        .select('*')
+        .single();
+
+      if (!user) {
+        router.push('/dashboard/signin');
+        return;
+      }
+
+      setUser(user);
+      setUserDetails(userDetails);
+    };
+
+    fetchUserData();
+  }, [supabase, router]);
 
   return <Settings userDetails={userDetails} user={user} />;
 }

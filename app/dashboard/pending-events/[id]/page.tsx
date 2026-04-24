@@ -1,34 +1,49 @@
+'use client';
+
 import PendingEventDetailContainer from '@/components/dashboard/pending-events/detail-container';
-import { createClient } from '@/utils/supabase/server';
-import { getUser, getUserDetails } from '@/utils/supabase/queries';
-import { redirect } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
-export default async function PendingEventDetailPage({
-  params
-}: {
-  params: Promise<{ id: string | string[] | undefined }>;
-}) {
-  const { id } = await params;
-  const eventId = Array.isArray(id) ? id[0] : id;
-  if (!eventId) {
-    return redirect('/dashboard/pending-events');
-  }
+export default function PendingEventDetailPage() {
+  const supabase = createClient();
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [userDetails, setUserDetails] = useState(null);
 
-  const supabase = await createClient();
-  const [user, userDetails] = await Promise.all([
-    getUser(supabase),
-    getUserDetails(supabase)
-  ]);
+  useEffect(() => {
+    if (!id) {
+      router.push('/dashboard/pending-events');
+      return;
+    }
 
-  if (!user) {
-    return redirect('/dashboard/signin');
-  }
+    const fetchUserData = async () => {
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/dashboard/signin');
+        return;
+      }
+
+      const { data: userDetails } = await supabase
+        .from('user_details')
+        .select('*')
+        .single();
+
+      setUser(user);
+      setUserDetails(userDetails);
+    };
+
+    fetchUserData();
+  }, [id, supabase, router]);
 
   return (
     <PendingEventDetailContainer
       user={user}
       userDetails={userDetails}
-      id={eventId}
+      id={id ?? ''}
     />
   );
 }

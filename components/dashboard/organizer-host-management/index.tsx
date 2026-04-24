@@ -5,14 +5,6 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog';
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -33,8 +25,6 @@ import { User } from '@supabase/supabase-js';
 import {
   ArrowDown,
   ArrowUp,
-  Check,
-  ChevronRight,
   Filter as Funnel,
   ListFilter,
   Plus,
@@ -89,12 +79,6 @@ export default function OrganizerHostManagement({
   const [columnValueFilters, setColumnValueFilters] = useState<
     Partial<Record<ValueFilterKey, string[]>>
   >({});
-  const [statusOverrides, setStatusOverrides] = useState<
-    Partial<Record<string, HostStatus>>
-  >({});
-  const [confirmActionHost, setConfirmActionHost] = useState<HostRow | null>(
-    null
-  );
 
   useEffect(() => {
     setMounted(true);
@@ -125,11 +109,11 @@ export default function OrganizerHostManagement({
       district: item.address?.trim() || '-',
       email: item.email?.trim() || '-',
       phone: item.phone?.trim() || '-',
-      status: statusOverrides[item.id] ?? mapApiStatusToHostStatus(item.status),
+      status: mapApiStatusToHostStatus(item.status),
       eventCount: item.hostedEventCount,
       hours: 0
     }));
-  }, [hostListData?.content, statusOverrides]);
+  }, [hostListData?.content]);
 
   const setSortForKey = (key: SortKey, order: SortOrder) => {
     setSortCriteria((prev) => {
@@ -187,22 +171,6 @@ export default function OrganizerHostManagement({
     },
     [getFilterValueForKey, hosts]
   );
-
-  const toggleHostStatus = (hostId: string) => {
-    const targetHost = hosts.find((host) => host.id === hostId);
-    if (!targetHost) return;
-
-    setStatusOverrides((prev) => ({
-      ...prev,
-      [hostId]:
-        targetHost.status === 'Hoạt động' ? 'Ngừng hoạt động' : 'Hoạt động'
-    }));
-  };
-
-  const confirmActionText =
-    confirmActionHost?.status === 'Hoạt động'
-      ? 'Khóa tài khoản'
-      : 'Mở khóa tài khoản';
 
   const ValueFilterDropdown = (props: {
     columnKey: ValueFilterKey;
@@ -483,6 +451,7 @@ export default function OrganizerHostManagement({
   const totalPages = Math.max(1, hostListData?.page.totalPages ?? 1);
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const paginatedHosts = filteredHosts;
+  const isTableLoading = !mounted || !user || isHostListLoading;
 
   useEffect(() => {
     setCurrentPage(1);
@@ -589,145 +558,98 @@ export default function OrganizerHostManagement({
                   <TableHead className="text-center text-zinc-700">
                     Sự kiện đã host
                   </TableHead>
-                  <TableHead className="w-16 text-right text-zinc-700">
-                    Thao tác
-                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {!mounted ? (
+                {isTableLoading ? (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={6}
                       className="py-8 text-center text-zinc-500"
                     >
-                      &nbsp;
-                    </TableCell>
-                  </TableRow>
-                ) : isHostListLoading ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={7}
-                      className="py-8 text-center text-zinc-500"
-                    >
-                      Đang tải danh sách host...
+                      Đang tải dữ liệu...
                     </TableCell>
                   </TableRow>
                 ) : hostListError ? (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={6}
                       className="py-8 text-center text-rose-500"
                     >
                       Không thể tải danh sách host. Vui lòng thử lại.
                     </TableCell>
                   </TableRow>
-                ) : paginatedHosts.length > 0 ? (
-                  paginatedHosts.map((host) => {
-                    const initials = host.name
-                      .split(' ')
-                      .slice(-2)
-                      .map((part) => part[0])
-                      .join('')
-                      .toUpperCase();
+                ) : filteredHosts.length > 0 ? (
+                  <>
+                    {filteredHosts.map((host) => {
+                      const initials = host.name
+                        .split(' ')
+                        .slice(-2)
+                        .map((part) => part[0])
+                        .join('')
+                        .toUpperCase();
 
-                    return (
-                      <TableRow
-                        key={host.id}
-                        className="border-b border-zinc-200 transition-colors hover:bg-zinc-50"
-                      >
-                        <TableCell className="font-medium text-zinc-900">
-                          <div className="flex items-center gap-4">
-                            <Avatar className="h-12 w-12 border border-slate-200 shadow-sm">
-                              <AvatarFallback className="bg-gradient-to-br from-blue-600 to-indigo-500 text-sm font-semibold text-white">
-                                {initials}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-semibold text-zinc-900">
-                                {host.name}
-                              </p>
+                      return (
+                        <TableRow
+                          key={host.id}
+                          className="cursor-pointer border-b border-zinc-200 transition-colors hover:bg-zinc-50"
+                          onClick={() =>
+                            router.push(`/organizer/host-management/${host.id}`)
+                          }
+                        >
+                          <TableCell className="font-medium text-zinc-900">
+                            <div className="flex items-center gap-4">
+                              <Avatar className="h-12 w-12 border border-slate-200 shadow-sm">
+                                <AvatarFallback className="bg-gradient-to-br from-blue-600 to-indigo-500 text-sm font-semibold text-white">
+                                  {initials}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-semibold text-zinc-900">
+                                  {host.name}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-zinc-600">
-                          {host.district}
-                        </TableCell>
-                        <TableCell className="text-zinc-600">
-                          {host.email}
-                        </TableCell>
-                        <TableCell className="text-zinc-600">
-                          {host.phone}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              'rounded-full border px-3 py-1 text-xs font-semibold',
-                              statusBadgeClassName(host.status)
-                            )}
-                          >
-                            <span
+                          </TableCell>
+                          <TableCell className="text-zinc-600">
+                            {host.district}
+                          </TableCell>
+                          <TableCell className="text-zinc-600">
+                            {host.email}
+                          </TableCell>
+                          <TableCell className="text-zinc-600">
+                            {host.phone}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
                               className={cn(
-                                'mr-1.5 inline-block h-2 w-2 rounded-full',
-                                host.status === 'Hoạt động'
-                                  ? 'bg-emerald-500'
-                                  : 'bg-rose-400'
+                                'rounded-full border px-3 py-1 text-xs font-semibold',
+                                statusBadgeClassName(host.status)
                               )}
-                            />
-                            {host.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-center text-zinc-600">
-                          {host.eventCount}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-                              >
-                                <ChevronRight className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                              align="end"
-                              className="border border-zinc-200 bg-white text-zinc-900 shadow-lg"
                             >
-                              <DropdownMenuItem
-                                onSelect={(event) => {
-                                  event.preventDefault();
-                                  router.push(
-                                    `/organizer/host-management/${host.id}`
-                                  );
-                                }}
-                                className="cursor-pointer text-zinc-900 focus:bg-blue-100 focus:text-blue-800 data-[highlighted]:bg-blue-100 data-[highlighted]:text-blue-800"
-                              >
-                                Xem chi tiết
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onSelect={(event) => {
-                                  event.preventDefault();
-                                  setConfirmActionHost(host);
-                                }}
-                                className="cursor-pointer text-zinc-900 focus:bg-blue-50 focus:text-blue-800 data-[highlighted]:bg-blue-50 data-[highlighted]:text-blue-800"
-                              >
-                                {host.status === 'Hoạt động'
-                                  ? 'Khóa tài khoản'
-                                  : 'Mở khóa tài khoản'}
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
+                              <span
+                                className={cn(
+                                  'mr-1.5 inline-block h-2 w-2 rounded-full',
+                                  host.status === 'Hoạt động'
+                                    ? 'bg-emerald-500'
+                                    : 'bg-rose-400'
+                                )}
+                              />
+                              {host.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center text-zinc-600">
+                            {host.eventCount}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </>
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={6}
                       className="py-8 text-center text-zinc-500"
                     >
                       Không tìm thấy host phù hợp với bộ lọc hiện tại.
@@ -786,71 +708,6 @@ export default function OrganizerHostManagement({
             </Button>
           </div>
         </div>
-
-        <Dialog
-          open={Boolean(confirmActionHost)}
-          onOpenChange={(open) => {
-            if (!open) {
-              setConfirmActionHost(null);
-            }
-          }}
-        >
-          <DialogContent className="border-zinc-200 bg-white sm:max-w-md">
-            <DialogHeader>
-              <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100">
-                {confirmActionHost?.status === 'Hoạt động' ? (
-                  <X className="h-8 w-8 text-red-600" />
-                ) : (
-                  <Check className="h-8 w-8 text-emerald-600" />
-                )}
-              </div>
-              <DialogTitle>{confirmActionText}</DialogTitle>
-              <DialogDescription className="text-zinc-500">
-                {confirmActionHost?.status === 'Hoạt động' ? (
-                  <>
-                    Bạn có chắc chắn muốn khóa tài khoản của{' '}
-                    <span className="font-semibold text-zinc-900">
-                      {confirmActionHost?.name}
-                    </span>
-                    ? Host này sẽ bị chuyển sang trạng thái ngừng hoạt động.
-                  </>
-                ) : (
-                  <>
-                    Bạn có chắc chắn muốn mở khóa tài khoản của{' '}
-                    <span className="font-semibold text-zinc-900">
-                      {confirmActionHost?.name}
-                    </span>
-                    ? Host này sẽ được chuyển lại sang trạng thái hoạt động.
-                  </>
-                )}
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                className="border-zinc-300 bg-white text-zinc-900 hover:bg-zinc-50"
-                onClick={() => setConfirmActionHost(null)}
-              >
-                Hủy
-              </Button>
-              <Button
-                className={cn(
-                  confirmActionHost?.status === 'Hoạt động'
-                    ? 'bg-red-600 text-white hover:bg-red-700'
-                    : 'bg-emerald-500 text-white hover:bg-emerald-600'
-                )}
-                onClick={() => {
-                  if (confirmActionHost) {
-                    toggleHostStatus(confirmActionHost.id);
-                  }
-                  setConfirmActionHost(null);
-                }}
-              >
-                {confirmActionText}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
     </DashboardLayout>
   );

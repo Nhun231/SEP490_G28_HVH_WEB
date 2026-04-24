@@ -138,6 +138,24 @@ export default function HostDetailPage() {
       ? activeClass
       : 'border border-blue-200 bg-white text-blue-700 hover:bg-blue-50 hover:text-blue-800';
 
+  if (isLoading) {
+    return (
+      <DashboardLayout
+        title="Quản Lý Host"
+        description="Đang tải dữ liệu..."
+        user={null}
+        userDetails={null}
+        routes={organizerRoutes}
+        colorVariant="organizer"
+        signInPath="/signin/password_signin"
+      >
+        <div className="mx-auto w-full max-w-6xl pb-16 pt-2">
+          <p className="text-center text-zinc-500">Đang tải dữ liệu...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout
       title="Quản Lý Host"

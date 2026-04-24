@@ -1,34 +1,49 @@
+'use client';
+
 import PendingOrgDetailContainer from '@/components/dashboard/pending-orgs/detail-container';
-import { createClient } from '@/utils/supabase/server';
-import { getUser, getUserDetails } from '@/utils/supabase/queries';
-import { redirect } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
-export default async function PendingOrgDetailPage({
-  params
-}: {
-  params: Promise<{ id: string | string[] | undefined }>;
-}) {
-  const { id } = await params;
-  const orgId = Array.isArray(id) ? id[0] : id;
-  if (!orgId) {
-    return redirect('/dashboard/pending-orgs');
-  }
+export default function PendingOrgDetailPage() {
+  const supabase = createClient();
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [userDetails, setUserDetails] = useState(null);
 
-  const supabase = await createClient();
-  const [user, userDetails] = await Promise.all([
-    getUser(supabase),
-    getUserDetails(supabase)
-  ]);
+  useEffect(() => {
+    if (!id) {
+      router.push('/dashboard/pending-orgs');
+      return;
+    }
 
-  if (!user) {
-    return redirect('/dashboard/signin');
-  }
+    const fetchUserData = async () => {
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/dashboard/signin');
+        return;
+      }
+
+      const { data: userDetails } = await supabase
+        .from('user_details')
+        .select('*')
+        .single();
+
+      setUser(user);
+      setUserDetails(userDetails);
+    };
+
+    fetchUserData();
+  }, [id, supabase, router]);
 
   return (
     <PendingOrgDetailContainer
       user={user}
       userDetails={userDetails}
-      id={orgId}
+      id={id ?? ''}
     />
   );
 }

@@ -9,10 +9,17 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { IRoute } from '@/types/types';
 import { useGetSysAdmAccountInfo } from '@/hooks/features/sys-admin/uc088-view-profile-by-admin/useGetSysAdmAccountInfo';
 import { useUpdateSystemAminProfile } from '@/hooks/features/sys-admin/uc020-update-non-volunteer-profile/useUpdateSystemAminProfile';
+import { getFullSupabaseImageUrl } from '@/utils/helpers';
 import { useUploadFiles } from '@/hooks/features/commons/bucket/useUploadFiles';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { Edit } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -66,13 +73,15 @@ export default function Settings(props: Props) {
     props.colorVariant === 'admin' ||
     roleFromAuth.includes('admin') ||
     roleFromDetails.includes('admin');
-  const { data: sysAdmAccountInfo } = useGetSysAdmAccountInfo({
-    baseUrl: apiBaseUrl,
-    enabled: isAdminView
-  });
-  const { trigger: updateProfile, isMutating: isUpdating } = useUpdateSystemAminProfile({
-    baseUrl: apiBaseUrl
-  });
+  const { data: sysAdmAccountInfo, mutate: refreshAccountInfo } =
+    useGetSysAdmAccountInfo({
+      baseUrl: apiBaseUrl,
+      enabled: isAdminView
+    });
+  const { trigger: updateProfile, isMutating: isUpdating } =
+    useUpdateSystemAminProfile({
+      baseUrl: apiBaseUrl
+    });
   const { uploadFileToSignedUrl } = useUploadFiles();
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const hasAdminApiData = Boolean(isAdminView && sysAdmAccountInfo);
@@ -90,7 +99,7 @@ export default function Settings(props: Props) {
     ? formatTextValue(sysAdmAccountInfo?.phone)
     : 'Chưa cập nhật';
   const displayAvatar = hasAdminApiData
-    ? (sysAdmAccountInfo?.avatarUrl ?? undefined)
+    ? getFullSupabaseImageUrl(sysAdmAccountInfo?.avatarUrl) || undefined
     : undefined;
 
   const displayAdminId = hasAdminApiData
@@ -113,24 +122,38 @@ export default function Settings(props: Props) {
     : 'Chưa cập nhật';
 
   const [isEditing, setIsEditing] = useState(false);
-  const [firstName, setFirstName] = useState(sysAdmAccountInfo?.fullName ? sysAdmAccountInfo.fullName.split(' ')[0] || '' : '');
-  const [lastName, setLastName] = useState(sysAdmAccountInfo?.fullName ? sysAdmAccountInfo.fullName.split(' ').slice(1).join(' ') || '' : '');
+  const [firstName, setFirstName] = useState(
+    sysAdmAccountInfo?.fullName
+      ? sysAdmAccountInfo.fullName.split(' ')[0] || ''
+      : ''
+  );
+  const [lastName, setLastName] = useState(
+    sysAdmAccountInfo?.fullName
+      ? sysAdmAccountInfo.fullName.split(' ').slice(1).join(' ') || ''
+      : ''
+  );
   const [timeZone, setTimeZone] = useState('+7 GMT');
   const [phone, setPhone] = useState(sysAdmAccountInfo?.phone || '');
   const [email, setEmail] = useState(sysAdmAccountInfo?.email || '');
   const [cid, setCid] = useState(sysAdmAccountInfo?.cid || '');
   const [dob, setDob] = useState(sysAdmAccountInfo?.dob || '');
   const [address, setAddress] = useState(sysAdmAccountInfo?.address || '');
-  const [detailAddress, setDetailAddress] = useState(sysAdmAccountInfo?.detailAddress || '');
+  const [detailAddress, setDetailAddress] = useState(
+    sysAdmAccountInfo?.detailAddress || ''
+  );
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  
+
   // Store original values for cancel functionality
   const [originalValues, setOriginalValues] = useState({
-    firstName: sysAdmAccountInfo?.fullName ? sysAdmAccountInfo.fullName.split(' ')[0] || '' : '',
-    lastName: sysAdmAccountInfo?.fullName ? sysAdmAccountInfo.fullName.split(' ').slice(1).join(' ') || '' : '',
+    firstName: sysAdmAccountInfo?.fullName
+      ? sysAdmAccountInfo.fullName.split(' ')[0] || ''
+      : '',
+    lastName: sysAdmAccountInfo?.fullName
+      ? sysAdmAccountInfo.fullName.split(' ').slice(1).join(' ') || ''
+      : '',
     timeZone: '+7 GMT',
     phone: sysAdmAccountInfo?.phone || '',
     email: sysAdmAccountInfo?.email || '',
@@ -148,35 +171,35 @@ export default function Settings(props: Props) {
       const lastNameValue = nameParts.slice(1).join(' ') || '';
       setFirstName(firstNameValue);
       setLastName(lastNameValue);
-      setOriginalValues(prev => ({
+      setOriginalValues((prev) => ({
         ...prev,
         firstName: firstNameValue,
         lastName: lastNameValue
       }));
     }
   }, [sysAdmAccountInfo?.fullName]);
-  
+
   React.useEffect(() => {
     setPhone(sysAdmAccountInfo?.phone || '');
     setEmail(sysAdmAccountInfo?.email || '');
-    setOriginalValues(prev => ({
+    setOriginalValues((prev) => ({
       ...prev,
       phone: sysAdmAccountInfo?.phone || '',
       email: sysAdmAccountInfo?.email || ''
     }));
   }, [sysAdmAccountInfo?.phone, sysAdmAccountInfo?.email]);
-  
+
   React.useEffect(() => {
     setCid(sysAdmAccountInfo?.cid || '');
-    setOriginalValues(prev => ({
+    setOriginalValues((prev) => ({
       ...prev,
       cid: sysAdmAccountInfo?.cid || ''
     }));
   }, [sysAdmAccountInfo?.cid]);
-  
+
   React.useEffect(() => {
     setDob(sysAdmAccountInfo?.dob || '');
-    setOriginalValues(prev => ({
+    setOriginalValues((prev) => ({
       ...prev,
       dob: sysAdmAccountInfo?.dob || ''
     }));
@@ -185,7 +208,7 @@ export default function Settings(props: Props) {
   React.useEffect(() => {
     setAddress(sysAdmAccountInfo?.address || '');
     setDetailAddress(sysAdmAccountInfo?.detailAddress || '');
-    setOriginalValues(prev => ({
+    setOriginalValues((prev) => ({
       ...prev,
       address: sysAdmAccountInfo?.address || '',
       detailAddress: sysAdmAccountInfo?.detailAddress || ''
@@ -197,7 +220,6 @@ export default function Settings(props: Props) {
       ? displayName.charAt(0).toUpperCase()
       : displayEmail.charAt(0).toUpperCase();
 
-  
   const handleEdit = () => {
     if (!isEditing) {
       // Save current values before entering edit mode
@@ -289,29 +311,36 @@ export default function Settings(props: Props) {
 
       // Call the update API
       const response = await updateProfile(requestData);
-      
+
       console.log('API response:', response);
       console.log('avatarFile:', avatarFile);
       console.log('avatarUploadUrl:', response?.avatarUploadUrl);
-      
+
       // Upload avatar to Supabase if file is selected and upload URL is provided
       if (avatarFile && response?.avatarUploadUrl) {
-        const uploadUrl = response.avatarUploadUrl.startsWith('http') 
-          ? response.avatarUploadUrl 
+        const uploadUrl = response.avatarUploadUrl.startsWith('http')
+          ? response.avatarUploadUrl
           : `${SUPABASE_URL?.replace(/\/$/, '')}${response.avatarUploadUrl}`;
-        
+
         console.log('Uploading avatar to:', uploadUrl);
-        
+
         await uploadFileToSignedUrl(avatarFile, uploadUrl);
         console.log('Avatar uploaded successfully');
       } else {
-        console.log('Skipping avatar upload - avatarFile:', !!avatarFile, 'avatarUploadUrl:', !!response?.avatarUploadUrl);
+        console.log(
+          'Skipping avatar upload - avatarFile:',
+          !!avatarFile,
+          'avatarUploadUrl:',
+          !!response?.avatarUploadUrl
+        );
       }
-      
+
       toast.success('Cập nhật hồ sơ thành công!');
-      
+
+      // Revalidate account info to refresh UI with new values
+      await refreshAccountInfo();
+
       setIsEditing(false);
-      setAvatarPreview(null);
       setAvatarFile(null);
       console.log('Profile saved successfully');
     } catch (error: any) {
@@ -350,14 +379,14 @@ export default function Settings(props: Props) {
       signInPath={props.signInPath}
     >
       <div className="mx-auto w-full max-w-5xl pb-16 pt-2">
-        <Card className="border-blue-200 bg-blue-50 p-8 shadow-md">
+        <Card className="border-zinc-200 bg-white p-8 shadow-md">
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-[300px_minmax(0,1fr)]">
             {/* Profile Section */}
             <div className="space-y-6">
               <div className="text-center">
                 <div className="relative inline-block">
-                  <Avatar 
-                    className={`mx-auto h-40 w-40 border-4 border-white shadow-lg ${isEditing ? 'cursor-pointer' : ''}`} 
+                  <Avatar
+                    className={`mx-auto h-40 w-40 border-4 border-white shadow-lg ${isEditing ? 'cursor-pointer' : ''}`}
                     onClick={handleAvatarClick}
                   >
                     <AvatarImage src={avatarPreview || displayAvatar} />
@@ -366,7 +395,7 @@ export default function Settings(props: Props) {
                     </AvatarFallback>
                   </Avatar>
                   {isEditing && (
-                    <div 
+                    <div
                       className="absolute bottom-0 right-0 bg-blue-600 rounded-full p-2 cursor-pointer hover:bg-blue-700 shadow-md"
                       onClick={handleAvatarClick}
                     >
@@ -381,7 +410,7 @@ export default function Settings(props: Props) {
                     className="hidden"
                   />
                 </div>
-                
+
                 <div className="mt-6">
                   {isEditing ? (
                     <div className="flex gap-2 justify-center w-full max-w-xs mx-auto">
@@ -417,8 +446,10 @@ export default function Settings(props: Props) {
             <div className="space-y-8">
               {/* Profile Information Section */}
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Thông tin cá nhân</h2>
-                
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                  Thông tin cá nhân
+                </h2>
+
                 <div className="space-y-4">
                   {/* Always show name fields */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -431,7 +462,7 @@ export default function Settings(props: Props) {
                           value={firstName}
                           onChange={(e) => {
                             setFirstName(e.target.value);
-                            setErrors(prev => ({ ...prev, firstName: '' }));
+                            setErrors((prev) => ({ ...prev, firstName: '' }));
                           }}
                           placeholder="Chưa cập nhật"
                           className={`border-gray-300 bg-gray-50 ${errors.firstName ? 'border-red-500' : ''}`}
@@ -442,10 +473,12 @@ export default function Settings(props: Props) {
                         </div>
                       )}
                       {errors.firstName && (
-                        <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.firstName}
+                        </p>
                       )}
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-semibold text-gray-600 mb-2">
                         TÊN
@@ -455,7 +488,7 @@ export default function Settings(props: Props) {
                           value={lastName}
                           onChange={(e) => {
                             setLastName(e.target.value);
-                            setErrors(prev => ({ ...prev, lastName: '' }));
+                            setErrors((prev) => ({ ...prev, lastName: '' }));
                           }}
                           placeholder="Chưa cập nhật"
                           className={`border-gray-300 bg-gray-50 ${errors.lastName ? 'border-red-500' : ''}`}
@@ -466,11 +499,13 @@ export default function Settings(props: Props) {
                         </div>
                       )}
                       {errors.lastName && (
-                        <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.lastName}
+                        </p>
                       )}
                     </div>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-semibold text-gray-600 mb-2">
                       SỐ ĐIỆN THOẠI
@@ -488,7 +523,7 @@ export default function Settings(props: Props) {
                       </div>
                     )}
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-semibold text-gray-600 mb-2">
                       NGÀY SINH
@@ -499,7 +534,7 @@ export default function Settings(props: Props) {
                         value={dob}
                         onChange={(e) => {
                           setDob(e.target.value);
-                          setErrors(prev => ({ ...prev, dob: '' }));
+                          setErrors((prev) => ({ ...prev, dob: '' }));
                         }}
                         className={`border-gray-300 bg-gray-50 ${errors.dob ? 'border-red-500' : ''}`}
                       />
@@ -512,7 +547,7 @@ export default function Settings(props: Props) {
                       <p className="text-red-500 text-sm mt-1">{errors.dob}</p>
                     )}
                   </div>
-                  
+
                   {/* Show CID if exists */}
                   {sysAdmAccountInfo?.cid && (
                     <div>
@@ -533,7 +568,7 @@ export default function Settings(props: Props) {
                       )}
                     </div>
                   )}
-                  
+
                   {/* Always show address fields */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-600 mb-2">
@@ -544,7 +579,7 @@ export default function Settings(props: Props) {
                         value={address}
                         onChange={(e) => {
                           setAddress(e.target.value);
-                          setErrors(prev => ({ ...prev, address: '' }));
+                          setErrors((prev) => ({ ...prev, address: '' }));
                         }}
                         placeholder="Chưa cập nhật"
                         className={`border-gray-300 bg-gray-50 ${errors.address ? 'border-red-500' : ''}`}
@@ -555,10 +590,12 @@ export default function Settings(props: Props) {
                       </div>
                     )}
                     {errors.address && (
-                      <p className="text-red-500 text-sm mt-1">{errors.address}</p>
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.address}
+                      </p>
                     )}
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-semibold text-gray-600 mb-2">
                       ĐỊA CHỈ CHI TIẾT
@@ -568,7 +605,7 @@ export default function Settings(props: Props) {
                         value={detailAddress}
                         onChange={(e) => {
                           setDetailAddress(e.target.value);
-                          setErrors(prev => ({ ...prev, detailAddress: '' }));
+                          setErrors((prev) => ({ ...prev, detailAddress: '' }));
                         }}
                         placeholder="Chưa cập nhật"
                         className={`border-gray-300 bg-gray-50 ${errors.detailAddress ? 'border-red-500' : ''}`}
@@ -579,7 +616,9 @@ export default function Settings(props: Props) {
                       </div>
                     )}
                     {errors.detailAddress && (
-                      <p className="text-red-500 text-sm mt-1">{errors.detailAddress}</p>
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.detailAddress}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -587,10 +626,12 @@ export default function Settings(props: Props) {
 
               {/* Authentication Section */}
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Xác thực</h2>
-                
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                  Xác thực
+                </h2>
+
                 <div className="space-y-4">
-                   {sysAdmAccountInfo?.id && (
+                  {sysAdmAccountInfo?.id && (
                     <div>
                       <label className="block text-sm font-semibold text-gray-600 mb-2">
                         ID
@@ -605,11 +646,9 @@ export default function Settings(props: Props) {
                       ĐỊA CHỈ EMAIL
                     </label>
                     <div className="border border-gray-300 rounded-md px-3 py-2 bg-gray-50">
-                      {sysAdmAccountInfo?.email|| 'Chưa cập nhật'}
+                      {sysAdmAccountInfo?.email || 'Chưa cập nhật'}
                     </div>
                   </div>
-                  
-                 
                 </div>
               </div>
             </div>

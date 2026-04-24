@@ -1,35 +1,48 @@
+'use client';
+
 import ApprovedEventDetailContainer from '@/components/dashboard/approved-events/detail-container';
 import { organizerRoutes } from '@/components/routes';
-import { getUser, getUserDetails } from '@/utils/supabase/queries';
-import { createClient } from '@/utils/supabase/server';
-import { redirect } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
-export default async function OrganizerApprovedEventDetailPage({
-  params
-}: {
-  params: Promise<{ id: string | string[] | undefined }>;
-}) {
-  const { id } = await params;
-  const eventId = Array.isArray(id) ? id[0] : id;
-  if (!eventId) {
-    return redirect('/organizer/approved-events');
-  }
+export default function OrganizerApprovedEventDetailPage() {
+  const supabase = createClient();
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [userDetails, setUserDetails] = useState(null);
 
-  const supabase = await createClient();
-  const [user, userDetails] = await Promise.all([
-    getUser(supabase),
-    getUserDetails(supabase)
-  ]);
+  useEffect(() => {
+    if (!id) {
+      router.push('/organizer/approved-events');
+      return;
+    }
 
-  if (!user) {
-    return redirect('/signin/password_signin');
-  }
+    const fetchUserData = async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        router.push('/signin/password_signin');
+        return;
+      }
+
+      const { data: userDetailsData } = await supabase
+        .from('user_details')
+        .select('*')
+        .single();
+
+      setUser(userData.user as any);
+      setUserDetails(userDetailsData as any);
+    };
+
+    fetchUserData();
+  }, [id, supabase, router]);
 
   return (
     <ApprovedEventDetailContainer
       user={user}
       userDetails={userDetails}
-      id={eventId}
+      id={id ?? ''}
       routes={organizerRoutes}
       colorVariant="organizer"
     />

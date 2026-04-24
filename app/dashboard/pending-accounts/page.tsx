@@ -1,66 +1,39 @@
+'use client';
+
 import PendingAccounts from '@/components/dashboard/pending-accounts';
-import type { Tables } from '@/types/types_db';
-import { createClient } from '@/utils/supabase/server';
-import { getUser, getUserDetails } from '@/utils/supabase/queries';
-import { redirect } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
-type PendingVerification = Tables<'identity_verifications'>;
-type Volunteer = Tables<'volunteers'>;
+export default function PendingAccountsPage() {
+  const supabase = createClient();
+  const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [userDetails, setUserDetails] = useState(null);
 
-export default async function PendingAccountsPage() {
-  const supabase = await createClient();
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+      const { data: userDetails } = await supabase
+        .from('user_details')
+        .select('*')
+        .single();
 
-  const [user, userDetails] = await Promise.all([
-    getUser(supabase),
-    getUserDetails(supabase)
-  ]);
+      if (!user) {
+        router.push('/dashboard/signin');
+        return;
+      }
 
-  if (!user) {
-    return redirect('/dashboard/signin');
-  }
+      setUser(user);
+      setUserDetails(userDetails);
+    };
 
-  const { data: verificationsData } = await supabase
-    .from('identity_verifications')
-    .select('id, email, phone, cid, status, created_at, volunteer_id')
-    .eq('status', 'PENDING')
-    .order('created_at', { ascending: false });
-
-  const verifications: PendingVerification[] = verificationsData ?? [];
-
-  const volunteerIds = verifications
-    .map((item) => item.volunteer_id)
-    .filter(Boolean) as string[];
-
-  const { data: volunteersData } = volunteerIds.length
-    ? await supabase
-        .from('volunteers')
-        .select('id, full_name')
-        .in('id', volunteerIds)
-    : { data: [] };
-
-  const volunteers: Volunteer[] = volunteersData ?? [];
-
-  const volunteerMap = new Map(
-    volunteers.map((volunteer) => [volunteer.id, volunteer.full_name])
-  );
-
-  const accounts = verifications.map((item) => ({
-    id: item.id,
-    fullName: item.volunteer_id
-      ? (volunteerMap.get(item.volunteer_id) ?? null)
-      : null,
-    email: item.email ?? null,
-    phone: item.phone ?? null,
-    cid: item.cid ?? null,
-    status: item.status ?? null,
-    createdAt: item.created_at ?? null
-  }));
+    fetchUserData();
+  }, [supabase, router]);
 
   return (
-    <PendingAccounts
-      user={user}
-      userDetails={userDetails}
-      accounts={accounts}
-    />
+    <PendingAccounts user={user} userDetails={userDetails} accounts={[]} />
   );
 }

@@ -1,14 +1,29 @@
-import { getUser } from '@/utils/supabase/queries';
-import { redirect } from 'next/navigation';
-import { createClient } from '@/utils/supabase/server';
+'use client';
 
-export default async function Dashboard() {
-  const supabase = await createClient();
-  const [user] = await Promise.all([getUser(supabase)]);
+import { createClient } from '@/utils/supabase/client';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
-  if (!user) {
-    return redirect('/dashboard/signin');
-  } else {
-    redirect('/dashboard/main');
-  }
+export default function Dashboard() {
+  const supabase = createClient();
+  const router = useRouter();
+
+  useEffect(() => {
+    const redirectToTarget = async () => {
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        router.replace('/dashboard/signin');
+        return;
+      }
+
+      router.replace('/dashboard/main');
+    };
+
+    redirectToTarget();
+  }, [supabase, router]);
+
+  return <div className="p-6 text-zinc-500">Đang chuyển hướng...</div>;
 }

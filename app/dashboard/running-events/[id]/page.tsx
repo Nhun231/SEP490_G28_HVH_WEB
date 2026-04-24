@@ -1,35 +1,49 @@
+'use client';
+
 import PendingEventDetailContainer from '@/components/dashboard/pending-events/detail-container';
-import { createClient } from '@/utils/supabase/server';
-import { getUser, getUserDetails } from '@/utils/supabase/queries';
-import { redirect } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
-export default async function RunningEventDetailPage({
-  params
-}: {
-  params: Promise<{ id: string | string[] | undefined }>;
-}) {
-  const { id } = await params;
-  const eventId = Array.isArray(id) ? id[0] : id;
+export default function RunningEventDetailPage() {
+  const supabase = createClient();
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [userDetails, setUserDetails] = useState(null);
 
-  if (!eventId) {
-    return redirect('/dashboard/running-events');
-  }
+  useEffect(() => {
+    if (!id) {
+      router.push('/dashboard/running-events');
+      return;
+    }
 
-  const supabase = await createClient();
-  const [user, userDetails] = await Promise.all([
-    getUser(supabase),
-    getUserDetails(supabase)
-  ]);
+    const fetchUserData = async () => {
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/dashboard/signin');
+        return;
+      }
 
-  if (!user) {
-    return redirect('/dashboard/signin');
-  }
+      const { data: userDetails } = await supabase
+        .from('user_details')
+        .select('*')
+        .single();
+
+      setUser(user);
+      setUserDetails(userDetails);
+    };
+
+    fetchUserData();
+  }, [id, supabase, router]);
 
   return (
     <PendingEventDetailContainer
       user={user}
       userDetails={userDetails}
-      id={eventId}
+      id={id ?? ''}
       backBasePath="/dashboard/running-events"
       pageDescription="Thông tin chi tiết sự kiện đang diễn ra"
     />

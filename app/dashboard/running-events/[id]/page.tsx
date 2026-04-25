@@ -10,7 +10,6 @@ export default function RunningEventDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [userDetails, setUserDetails] = useState(null);
 
   useEffect(() => {
     if (!id) {
@@ -27,13 +26,7 @@ export default function RunningEventDetailPage() {
         return;
       }
 
-      const { data: userDetails } = await supabase
-        .from('user_details')
-        .select('*')
-        .single();
-
       setUser(user);
-      setUserDetails(userDetails);
     };
 
     fetchUserData();
@@ -42,7 +35,7 @@ export default function RunningEventDetailPage() {
   return (
     <PendingEventDetailContainer
       user={user}
-      userDetails={userDetails}
+      userDetails={null}
       id={id ?? ''}
       backBasePath="/dashboard/running-events"
       pageDescription="Thông tin chi tiết sự kiện đang diễn ra"

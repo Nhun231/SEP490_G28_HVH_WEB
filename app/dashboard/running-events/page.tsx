@@ -9,17 +9,12 @@ export default function RunningEventsPage() {
   const supabase = createClient();
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [userDetails, setUserDetails] = useState(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
       const {
         data: { user }
       } = await supabase.auth.getUser();
-      const { data: userDetails } = await supabase
-        .from('user_details')
-        .select('*')
-        .single();
 
       if (!user) {
         router.push('/dashboard/signin');
@@ -27,7 +22,6 @@ export default function RunningEventsPage() {
       }
 
       setUser(user);
-      setUserDetails(userDetails);
     };
 
     fetchUserData();
@@ -38,7 +32,7 @@ export default function RunningEventsPage() {
   return (
     <RunningEventsContainer
       user={user}
-      userDetails={userDetails}
+      userDetails={null}
       colorVariant="admin"
       apiBaseUrl={apiBaseUrl}
     />

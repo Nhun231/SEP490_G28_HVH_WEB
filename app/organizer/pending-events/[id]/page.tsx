@@ -12,7 +12,6 @@ export default function OrganizerPendingEventDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [userDetails, setUserDetails] = useState(null);
 
   const {
     data: eventData,
@@ -36,12 +35,7 @@ export default function OrganizerPendingEventDetailPage() {
         router.push('/signin/password_signin');
         return;
       }
-      const { data: userDetailsData } = await supabase
-        .from('user_details')
-        .select('*')
-        .single();
       setUser(userData.user as any);
-      setUserDetails(userDetailsData as any);
     };
 
     fetchUserData();
@@ -50,7 +44,7 @@ export default function OrganizerPendingEventDetailPage() {
   return (
     <PendingEventDetail
       user={user}
-      userDetails={userDetails}
+      userDetails={null}
       backBasePath="/organizer/pending-events"
       routes={organizerRoutes}
       colorVariant="organizer"

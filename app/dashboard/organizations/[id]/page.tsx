@@ -10,7 +10,6 @@ export default function Page() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [userDetails, setUserDetails] = useState(null);
 
   useEffect(() => {
     if (!id) {
@@ -27,13 +26,7 @@ export default function Page() {
         return;
       }
 
-      const { data: userDetails } = await supabase
-        .from('user_details')
-        .select('*')
-        .single();
-
       setUser(user);
-      setUserDetails(userDetails);
     };
 
     fetchUserData();
@@ -43,7 +36,7 @@ export default function Page() {
     <OrganizationDetailPage
       orgId={id ?? ''}
       user={user}
-      userDetails={userDetails}
+      userDetails={null}
     />
   );
 }

@@ -9,17 +9,12 @@ export default function SettingsPage() {
   const supabase = createClient();
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [userDetails, setUserDetails] = useState(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
       const {
         data: { user }
       } = await supabase.auth.getUser();
-      const { data: userDetails } = await supabase
-        .from('user_details')
-        .select('*')
-        .single();
 
       if (!user) {
         router.push('/dashboard/signin');
@@ -27,11 +22,10 @@ export default function SettingsPage() {
       }
 
       setUser(user);
-      setUserDetails(userDetails);
     };
 
     fetchUserData();
   }, [supabase, router]);
 
-  return <Settings userDetails={userDetails} user={user} />;
+  return <Settings userDetails={null} user={user} />;
 }

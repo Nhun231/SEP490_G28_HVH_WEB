@@ -52,6 +52,13 @@ export interface VolunteerRegistrationVerifyRequest {
   fullName: string;
 }
 
+export interface CreateVolunteerAccountByAdminRequest {
+  email: string;
+  phone: string;
+  cid: string;
+  fullName: string;
+}
+
 export interface VolunteerSimpleResponseForAdmin {
   id: string;
   vid: string;

@@ -11,7 +11,6 @@ export default function OrganizerApprovedEventDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [userDetails, setUserDetails] = useState(null);
 
   useEffect(() => {
     if (!id) {
@@ -26,13 +25,7 @@ export default function OrganizerApprovedEventDetailPage() {
         return;
       }
 
-      const { data: userDetailsData } = await supabase
-        .from('user_details')
-        .select('*')
-        .single();
-
       setUser(userData.user as any);
-      setUserDetails(userDetailsData as any);
     };
 
     fetchUserData();
@@ -41,7 +34,7 @@ export default function OrganizerApprovedEventDetailPage() {
   return (
     <ApprovedEventDetailContainer
       user={user}
-      userDetails={userDetails}
+      userDetails={null}
       id={id ?? ''}
       routes={organizerRoutes}
       colorVariant="organizer"

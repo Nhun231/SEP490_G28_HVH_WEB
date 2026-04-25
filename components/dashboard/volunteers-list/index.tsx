@@ -58,6 +58,7 @@ import { useViewVolunteerList } from '@/hooks/features/sys-admin/uc029-view-volu
 import { useGetVolunteerActivities } from '@/hooks/features/sys-admin/uc030-get-volunteer-details/useGetVolunteerActivities';
 import { useGetVolDetails } from '@/hooks/features/sys-admin/uc030-get-volunteer-details/useGetVolDetails';
 import { useUpdateVolAccbyAdmin } from '@/hooks/features/sys-admin/uc032-update-volunteer-account-profile/useUpdateVolAccbyAdmin';
+import { useCreateVolAccount } from '@/hooks/features/sys-admin/uc031-create-volunteer-account/useCreateVolAccount';
 import type { VolunteerAccountInformationResponse } from '@/hooks/dto';
 import { EEmployStatus, EEducationLevel } from '@/hooks/dto';
 import { useUploadFiles } from '@/hooks/features/commons/bucket/useUploadFiles';
@@ -182,12 +183,9 @@ export default function VolunteersList(props: Props) {
   });
   const [newVolunteer, setNewVolunteer] = useState({
     fullName: '',
-    cccd: '',
+    cid: '',
     phone: '',
-    email: '',
-    password: '',
-    dob: '',
-    address: ''
+    email: ''
   });
   const [searchField, setSearchField] = useState('name');
   const [searchQuery, setSearchQuery] = useState('');
@@ -204,6 +202,7 @@ export default function VolunteersList(props: Props) {
     id: selectedEditUser?.id ?? '',
     baseUrl
   });
+  const { trigger: createVolAccount } = useCreateVolAccount({ baseUrl });
   const {
     data: volunteerActivitiesData,
     isLoading: isLoadingActivities,
@@ -1270,44 +1269,45 @@ export default function VolunteersList(props: Props) {
     }
   };
 
-  const handleAddVolunteer = () => {
-    if (
-      !newVolunteer.fullName ||
-      !newVolunteer.cccd ||
-      !newVolunteer.phone ||
-      !newVolunteer.email ||
-      !newVolunteer.password
-    ) {
+  const handleAddVolunteer = async () => {
+    // Validate each field individually
+    if (!newVolunteer.fullName?.trim()) {
+      toast.error('Vui lòng nhập họ và tên');
+      return;
+    }
+    if (!newVolunteer.cid?.trim()) {
+      toast.error('Vui lòng nhập số CMND/CCCD');
+      return;
+    }
+    if (!newVolunteer.phone?.trim()) {
+      toast.error('Vui lòng nhập số điện thoại');
+      return;
+    }
+    if (!newVolunteer.email?.trim()) {
+      toast.error('Vui lòng nhập địa chỉ email');
       return;
     }
 
-    const newUser: Volunteer = {
-      id: crypto.randomUUID(),
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${Math.random()}`,
-      fullName: newVolunteer.fullName,
-      cccd: newVolunteer.cccd,
-      phone: newVolunteer.phone,
-      email: newVolunteer.email,
-      dob: newVolunteer.dob || '01/01/2000',
-      address: '',
-      detailAddress: '',
-      events: 0,
-      rating: 0,
-      reputation: 0,
-      status: 'active' as const
-    };
-
-    setUsers((prev) => [...prev, newUser]);
-    setNewVolunteer({
-      fullName: '',
-      cccd: '',
-      phone: '',
-      email: '',
-      password: '',
-      dob: '',
-      address: ''
-    });
-    setOpenAddModal(false);
+    try {
+      await createVolAccount({
+        fullName: newVolunteer.fullName,
+        cid: newVolunteer.cid,
+        phone: newVolunteer.phone,
+        email: newVolunteer.email
+      });
+      
+      toast.success('Tạo tài khoản tình nguyện viên thành công');
+      setNewVolunteer({
+        fullName: '',
+        cid: '',
+        phone: '',
+        email: ''
+      });
+      setOpenAddModal(false);
+      refreshVolunteerList();
+    } catch (error: any) {
+      toast.error(error?.message || 'Tạo tài khoản tình nguyện viên thất bại');
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -1655,7 +1655,7 @@ export default function VolunteersList(props: Props) {
                     </div>
                     {volunteerDetails.bio && (
                       <p className="mt-3 text-sm text-slate-600 italic max-w-[280px]">
-                        "{volunteerDetails.bio}"
+                        &ldquo;{volunteerDetails.bio}&rdquo;
                       </p>
                     )}
                   </div>
@@ -2357,15 +2357,15 @@ export default function VolunteersList(props: Props) {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                        Số CCCD <span className="text-red-500">*</span>
+                        Số CMND/CCCD <span className="text-red-500">*</span>
                       </label>
                       <Input
-                        placeholder="Nhập 12 số CCCD"
-                        value={newVolunteer.cccd}
+                        placeholder="Nhập 12 số CMND/CCCD"
+                        value={newVolunteer.cid}
                         onChange={(e) =>
                           setNewVolunteer({
                             ...newVolunteer,
-                            cccd: e.target.value
+                            cid: e.target.value
                           })
                         }
                         className="mt-1"
@@ -2401,66 +2401,6 @@ export default function VolunteersList(props: Props) {
                         setNewVolunteer({
                           ...newVolunteer,
                           email: e.target.value
-                        })
-                      }
-                      className="mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                      Mật khẩu <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      type="password"
-                      placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
-                      value={newVolunteer.password}
-                      onChange={(e) =>
-                        setNewVolunteer({
-                          ...newVolunteer,
-                          password: e.target.value
-                        })
-                      }
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Optional Information Section */}
-              <div>
-                <h3 className="font-semibold text-sm text-yellow-600 dark:text-zinc-300 mb-3">
-                  Thông tin bổ sung
-                </h3>
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                      Ngày sinh
-                    </label>
-                    <Input
-                      type="date"
-                      value={newVolunteer.dob}
-                      onChange={(e) =>
-                        setNewVolunteer({
-                          ...newVolunteer,
-                          dob: e.target.value
-                        })
-                      }
-                      className="mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                      Địa chỉ
-                    </label>
-                    <Input
-                      placeholder="Nhập địa chỉ đầy đủ"
-                      value={newVolunteer.address}
-                      onChange={(e) =>
-                        setNewVolunteer({
-                          ...newVolunteer,
-                          address: e.target.value
                         })
                       }
                       className="mt-1"

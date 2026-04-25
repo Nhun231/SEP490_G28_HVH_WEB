@@ -10,17 +10,12 @@ export default function PostsPage() {
   const supabase = createClient();
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [userDetails, setUserDetails] = useState(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
       const {
         data: { user }
       } = await supabase.auth.getUser();
-      const { data: userDetails } = await supabase
-        .from('user_details')
-        .select('*')
-        .single();
 
       if (!user) {
         router.push('/dashboard/signin');
@@ -28,7 +23,6 @@ export default function PostsPage() {
       }
 
       setUser(user);
-      setUserDetails(userDetails);
     };
 
     fetchUserData();
@@ -37,7 +31,7 @@ export default function PostsPage() {
   return (
     <DashboardLayout
       user={user}
-      userDetails={userDetails}
+      userDetails={null}
       title="Quản lý bài đăng"
       description="Xem và quản lý bài đăng cộng đồng"
     >

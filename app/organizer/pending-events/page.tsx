@@ -10,7 +10,6 @@ import { useRouter } from 'next/navigation';
 export default function OrganizerPendingEventsPage() {
   const supabase = createClient();
   const [user, setUser] = useState(null);
-  const [userDetails, setUserDetails] = useState(null);
   const router = useRouter();
 
   const {
@@ -24,10 +23,6 @@ export default function OrganizerPendingEventsPage() {
   useEffect(() => {
     const fetchUserData = async () => {
       const { data: user } = await supabase.auth.getUser();
-      const { data: userDetails } = await supabase
-        .from('user_details')
-        .select('*')
-        .single();
 
       if (!user) {
         router.push('/signin/password_signin');
@@ -35,7 +30,6 @@ export default function OrganizerPendingEventsPage() {
       }
 
       setUser(user);
-      setUserDetails(userDetails);
     };
 
     fetchUserData();
@@ -59,7 +53,7 @@ export default function OrganizerPendingEventsPage() {
     <div>
       <PendingEvents
         user={user}
-        userDetails={userDetails}
+        userDetails={null}
         detailBasePath="/organizer/pending-events"
         routes={organizerRoutes}
         colorVariant="organizer"

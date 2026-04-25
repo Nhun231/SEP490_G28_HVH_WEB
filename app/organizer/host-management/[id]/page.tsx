@@ -51,7 +51,6 @@ export default function HostDetailPage() {
   const router = useRouter();
   const [supabase] = useState(createClient);
   const [user, setUser] = useState<User | null>(null);
-  const [userDetails, setUserDetails] = useState<any>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const hostId = params?.id?.toString();
 
@@ -69,15 +68,9 @@ export default function HostDetailPage() {
           return;
         }
 
-        const { data: userDetails } = await supabase
-          .from('user_details')
-          .select('*')
-          .single();
-
         if (!isMounted) return;
 
         setUser(user);
-        setUserDetails(userDetails);
       } finally {
         if (isMounted) {
           setIsAuthLoading(false);
@@ -188,7 +181,7 @@ export default function HostDetailPage() {
         title="Quản Lý Host"
         description="Đang tải dữ liệu..."
         user={user}
-        userDetails={userDetails}
+        userDetails={null}
         routes={organizerRoutes}
         colorVariant="organizer"
         signInPath="/signin/password_signin"
@@ -205,7 +198,7 @@ export default function HostDetailPage() {
       title="Quản Lý Host"
       description="Chi tiết tài khoản Host"
       user={user}
-      userDetails={userDetails}
+      userDetails={null}
       routes={organizerRoutes}
       colorVariant="organizer"
       signInPath="/signin/password_signin"

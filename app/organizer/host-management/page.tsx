@@ -11,7 +11,6 @@ export default function OrganizerHostManagementPage() {
   const [supabase] = useState(createClient);
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [userDetails, setUserDetails] = useState(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   useEffect(() => {
@@ -28,15 +27,9 @@ export default function OrganizerHostManagementPage() {
           return;
         }
 
-        const { data: userDetails } = await supabase
-          .from('user_details')
-          .select('*')
-          .single();
-
         if (!isMounted) return;
 
         setUser(user);
-        setUserDetails(userDetails);
       } finally {
         if (isMounted) {
           setIsAuthLoading(false);
@@ -54,7 +47,7 @@ export default function OrganizerHostManagementPage() {
   return (
     <OrganizerHostManagement
       user={user}
-      userDetails={userDetails}
+      userDetails={null}
       isAuthLoading={isAuthLoading}
       routes={organizerRoutes}
       colorVariant="organizer"

@@ -10,15 +10,10 @@ export default function OrganizerSettingsPage() {
   const supabase = createClient();
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [userDetails, setUserDetails] = useState(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      const { data: userDetails } = await supabase
-        .from('user_details')
-        .select('*')
-        .single();
 
       if (!user) {
         router.push('/signin/password_signin');
@@ -26,7 +21,6 @@ export default function OrganizerSettingsPage() {
       }
 
       setUser(user);
-      setUserDetails(userDetails);
     };
 
     fetchUserData();
@@ -34,7 +28,7 @@ export default function OrganizerSettingsPage() {
 
   return (
     <Settings
-      userDetails={userDetails}
+      userDetails={null}
       user={user}
       routes={organizerRoutes}
       colorVariant="organizer"

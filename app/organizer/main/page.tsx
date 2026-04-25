@@ -11,7 +11,6 @@ export default function OrganizerMain() {
   const supabase = createClient();
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [userDetails, setUserDetails] = useState(null);
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
   const { data: orgStats } = useGetStatistic({
@@ -41,7 +40,6 @@ export default function OrganizerMain() {
       : [];
 
     return {
-      ...(userDetails ?? {}),
       ...(counts ?? {}),
       monthlyStats: statsList,
       ...(currentStats
@@ -64,37 +62,22 @@ export default function OrganizerMain() {
             }))
           }
         : {}),
-      totalHosts: counts?.hostsCount ?? (userDetails as any)?.totalHosts ?? 0,
-      hostCount: counts?.hostsCount ?? (userDetails as any)?.hostCount ?? 0,
-      hostsCount: counts?.hostsCount ?? (userDetails as any)?.hostsCount ?? 0,
-      totalEvents:
-        totalCompletedEvents || (userDetails as any)?.totalEvents || 0,
-      hostedEventCount:
-        totalCompletedEvents || (userDetails as any)?.hostedEventCount || 0,
-      ongoingEventCount:
-        counts?.ongoingEventsCount ??
-        (userDetails as any)?.ongoingEventCount ??
-        0,
-      activeEventCount:
-        counts?.ongoingEventsCount ??
-        (userDetails as any)?.activeEventCount ??
-        0,
-      currentEventCount:
-        counts?.ongoingEventsCount ??
-        (userDetails as any)?.currentEventCount ??
-        0
+      totalHosts: counts?.hostsCount ?? 0,
+      hostCount: counts?.hostsCount ?? 0,
+      hostsCount: counts?.hostsCount ?? 0,
+      totalEvents: totalCompletedEvents || 0,
+      hostedEventCount: totalCompletedEvents || 0,
+      ongoingEventCount: counts?.ongoingEventsCount ?? 0,
+      activeEventCount: counts?.ongoingEventsCount ?? 0,
+      currentEventCount: counts?.ongoingEventsCount ?? 0
     };
-  }, [orgCounts, orgStats, userDetails]);
+  }, [orgCounts, orgStats]);
 
   useEffect(() => {
     const fetchUserData = async () => {
       const {
         data: { user }
       } = await supabase.auth.getUser();
-      const { data: userDetails } = await supabase
-        .from('user_details')
-        .select('*')
-        .single();
 
       if (!user) {
         router.push('/signin/password_signin');
@@ -102,7 +85,6 @@ export default function OrganizerMain() {
       }
 
       setUser(user);
-      setUserDetails(userDetails);
     };
 
     fetchUserData();

@@ -10,15 +10,10 @@ export default function OrganizerApprovedEventsPage() {
   const supabase = createClient();
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [userDetails, setUserDetails] = useState(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      const { data: userDetails } = await supabase
-        .from('user_details')
-        .select('*')
-        .single();
 
       if (!user) {
         router.push('/signin/password_signin');
@@ -26,7 +21,6 @@ export default function OrganizerApprovedEventsPage() {
       }
 
       setUser(user);
-      setUserDetails(userDetails);
     };
 
     fetchUserData();
@@ -35,7 +29,7 @@ export default function OrganizerApprovedEventsPage() {
   return (
     <ApprovedEventsClient
       user={user}
-      userDetails={userDetails}
+      userDetails={null}
       detailBasePath="/organizer/approved-events"
       routes={organizerRoutes}
       colorVariant="organizer"

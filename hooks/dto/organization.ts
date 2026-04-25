@@ -175,3 +175,28 @@ export interface UpdateOrgManagerProfileResponse {
   detailAddress: string;
   avatarUploadUrl?: string;
 }
+
+export interface TopHostPayload {
+  hostId: string;
+  fullName: string;
+  email: string;
+  totalEvent: number;
+  totalCreditHour: number;
+}
+
+export interface OrganizationStatsResponseForManager {
+  year: number;
+  month: number;
+  completedEvents: number;
+  creditHours: number;
+  approvedApplications: number;
+  attendedApplications: number;
+  topHostPayloads: TopHostPayload[];
+}
+
+export interface OrganizationCountHostsAndEventsResponse {
+  hostsCount: number;
+  recruitingEventsCount: number;
+  upcomingEventsCount: number;
+  ongoingEventsCount: number;
+}

@@ -137,3 +137,48 @@ export interface UpdateVolunteerProfileBySystemAdminResponse {
   detailAddress: string | null;
   avatarUploadUrl?: string;
 }
+
+// Volunteer Account Information DTO (uc030)
+export enum EEducationLevel {
+  SECONDARY = 'SECONDARY',
+  HIGH_SCHOOL = 'HIGH_SCHOOL',
+  COLLEGE = 'COLLEGE',
+  UNDERGRADUATE = 'UNDERGRADUATE',
+  POSTGRADUATE = 'POSTGRADUATE',
+  PROFESSIONAL = 'PROFESSIONAL',
+  OTHER = 'OTHER'
+}
+
+export enum EEmployStatus {
+  STUDENT = 'STUDENT',
+  EMPLOYED = 'EMPLOYED',
+  UNEMPLOYED = 'UNEMPLOYED',
+  RETIRED = 'RETIRED',
+  OTHER = 'OTHER'
+}
+
+export interface VolunteerAccountInformationResponse {
+  id: string;
+  vid: string;
+  cid: string;
+  email: string;
+  phone: string;
+  phoneVerified: boolean;
+  nickname: string;
+  fullName: string;
+  bio: string;
+  gender: boolean;
+  dob: string; // ISO date string
+  level: number;
+  avatarUrl: string;
+  address: string;
+  detailAddress: string;
+  employStatus: EEmployStatus;
+  workAddress: string;
+  educationLevel: EEducationLevel;
+  sid: string;
+  creditScore: number;
+  honorScore: number;
+  avgRating: number;
+  activityCount: number;
+}

@@ -14,7 +14,6 @@ import {
   CalendarCheck,
   ClipboardList,
   Clock3,
-  Star,
   TrendingUp,
   Users
 } from 'lucide-react';
@@ -30,23 +29,12 @@ interface Props {
   signInPath?: string;
 }
 
-const monthlyActivitySeries = [
-  {
-    name: 'Đơn đăng ký tham gia',
-    data: [48, 56, 61, 72, 78, 84]
-  },
-  {
-    name: 'Người tham gia thực tế',
-    data: [31, 39, 44, 52, 58, 65]
-  }
-];
-
-const monthlyActivityOptions: any = {
+const monthlyGrowthOptions: any = {
   chart: {
     toolbar: { show: false },
     fontFamily: 'inherit'
   },
-  colors: ['#0f766e', '#2563eb'],
+  colors: ['#ef4444', '#0f766e', '#2563eb'],
   stroke: {
     width: 3,
     curve: 'smooth'
@@ -57,24 +45,66 @@ const monthlyActivityOptions: any = {
     strokeDashArray: 4
   },
   xaxis: {
-    categories: ['T11', 'T12', 'T1', 'T2', 'T3', 'T4'],
     labels: { style: { colors: '#52525b', fontWeight: 600 } }
   },
-  yaxis: {
-    labels: { style: { colors: '#52525b', fontWeight: 600 } }
-  },
+  yaxis: [
+    {
+      seriesName: 'Tỷ lệ vắng mặt (%)',
+      title: {
+        text: 'Tỷ lệ vắng mặt (%)',
+        style: { color: '#ef4444' }
+      },
+      labels: {
+        style: { colors: '#52525b', fontWeight: 600 },
+        formatter: (value: number) => `${value}%`
+      }
+    },
+    {
+      seriesName: 'Số sự kiện hoàn thành',
+      opposite: true,
+      title: {
+        text: 'Số sự kiện',
+        style: { color: '#0f766e' }
+      },
+      labels: { style: { colors: '#52525b', fontWeight: 600 } }
+    },
+    {
+      seriesName: 'Số giờ tích lũy',
+      opposite: true,
+      show: false,
+      labels: {
+        style: { colors: '#52525b', fontWeight: 600 },
+        formatter: (value: number) => `${value}h`
+      }
+    }
+  ],
   tooltip: {
-    theme: 'dark'
+    theme: 'dark',
+    y: {
+      formatter: function (val: number, { seriesIndex }: { seriesIndex: number }) {
+        if (seriesIndex === 0) return `${val}%`;
+        if (seriesIndex === 2) return `${val} giờ`;
+        return val;
+      }
+    }
   }
-};
+}
 
-const defaultTopHosts = [
-  { name: 'Trần Đức Lợi', events: 18, hours: 420 },
-  { name: 'Nguyễn Minh Châu', events: 15, hours: 366 },
-  { name: 'Phạm Bảo Ngọc', events: 13, hours: 314 },
-  { name: 'Lê Khánh Linh', events: 12, hours: 295 },
-  { name: 'Võ Gia Hân', events: 10, hours: 248 }
-];
+interface MonthlyStat {
+  year: number;
+  month: number;
+  completedEvents: number;
+  creditHours: number;
+  approvedApplications: number;
+  attendedApplications: number;
+  topHostPayloads: Array<{
+    hostId: string;
+    fullName: string;
+    email: string;
+    totalEvent: number;
+    totalCreditHour: number;
+  }>;
+}
 
 const safeNumber = (value: unknown) => {
   if (typeof value === 'number' && Number.isFinite(value)) {
@@ -160,11 +190,12 @@ export default function OrganizerMainDashboard(props: Props) {
   const endedEventsThisMonth = firstNumber(
     props.userDetails,
     [
+      'endedEventsThisMonth',
       'endedEventCountThisMonth',
       'finishedEventCountThisMonth',
       'monthlyEndedEventCount'
     ],
-    totalEvents
+    0
   );
   const monthlyApplications = firstNumber(props.userDetails, [
     'monthlyApplicationCount',
@@ -176,65 +207,116 @@ export default function OrganizerMainDashboard(props: Props) {
     'attendedApplicationCountThisMonth',
     'attendedApplicationsThisMonth'
   ]);
-  const monthlyCreditHour = firstNumber(
-    props.userDetails,
-    ['monthlyCreditHour', 'creditHourThisMonth', 'monthlyHours'],
-    firstNumber(props.userDetails, ['creditHour'])
-  );
+  const monthlyCreditHour = firstNumber(props.userDetails, [
+    'monthlyCreditHour',
+    'creditHourThisMonth',
+    'monthlyHours'
+  ]);
+  const recruitingEventsCount = firstNumber(props.userDetails, [
+    'recruitingEventsCount'
+  ]);
+  const upcomingEventsCount = firstNumber(props.userDetails, [
+    'upcomingEventsCount'
+  ]);
+  const ongoingEventsCount = firstNumber(props.userDetails, [
+    'ongoingEventsCount',
+    'activeEventCount',
+    'currentEventCount'
+  ]);
   const avgRating = firstNumber(props.userDetails, [
     'avgRating',
     'averageRating',
     'rating'
   ]);
-  const ratingCount = firstNumber(props.userDetails, [
-    'ratingCount',
-    'totalRatingCount',
-    'reviewCount'
-  ]);
 
-  const topHosts = (
-    Array.isArray(props.userDetails?.topHostsLastMonth)
-      ? props.userDetails.topHostsLastMonth
-      : Array.isArray(props.userDetails?.topHosts)
-        ? props.userDetails.topHosts
-        : defaultTopHosts
-  ) as Array<{
-    name: string;
-    events: number;
-    hours: number;
-  }>;
+  // Lấy dữ liệu thống kê tháng từ BE
+  const monthlyStats = (
+    Array.isArray(props.userDetails?.monthlyStats)
+      ? props.userDetails.monthlyStats
+      : []
+  ) as MonthlyStat[];
+
+  // Sắp xếp theo thời gian (cũ -> mới) để hiển thị biểu đồ
+  const sortedMonthlyStats = [...monthlyStats].sort((a, b) => {
+    if (a.year !== b.year) return a.year - b.year;
+    return a.month - b.month;
+  });
+
+  // Tính tỷ lệ vắng mặt
+  const calculateAbsenceRate = (stat: MonthlyStat) => {
+    if (stat.approvedApplications === 0) return 0;
+    const absent = stat.approvedApplications - stat.attendedApplications;
+    return Number(((absent / stat.approvedApplications) * 100).toFixed(1));
+  };
+
+  // Tạo series cho biểu đồ (lấy 6 tháng gần nhất)
+  const last6Months = sortedMonthlyStats.slice(-6);
+  const monthlyGrowthSeries = [
+    {
+      name: 'Tỷ lệ vắng mặt (%)',
+      data: last6Months.map(calculateAbsenceRate)
+    },
+    {
+      name: 'Số sự kiện hoàn thành',
+      data: last6Months.map((s) => s.completedEvents)
+    },
+    {
+      name: 'Số giờ tích lũy',
+      data: last6Months.map((s) => s.creditHours)
+    }
+  ];
+
+  // Format label tháng (T1, T2, ...)
+  const monthLabels = last6Months.map(
+    (s) => `T${s.month}`
+  );
+
+  // Lấy top hosts của tháng hiện tại (tháng mới nhất)
+  const currentMonthStat = monthlyStats[0];
+  const topHosts = currentMonthStat?.topHostPayloads || [];
+
+  // Chuyển đổi sang format hiển thị và sắp xếp theo số sự kiện
+  const sortedTopHosts = topHosts
+    .map((h) => ({
+      name: h.fullName,
+      events: h.totalEvent,
+      hours: h.totalCreditHour
+    }))
+    .sort((a, b) => b.events - a.events);
 
   const metricCards = [
     {
-      label: 'Số lượt rate',
-      value: ratingCount > 0 ? formatNumber(ratingCount) : '--',
+      label: 'Số sự kiện đang tuyển quân',
+      value: formatNumber(recruitingEventsCount),
       detail:
-        ratingCount > 0
-          ? 'Số lượng đánh giá đã ghi nhận'
-          : 'Chưa có dữ liệu lượt rate',
-      icon: Star,
-      cardClass: 'from-amber-50 to-white',
-      iconClass: 'text-amber-700'
-    },
-    {
-      label: 'Số host trong tổ chức',
-      value: formatNumber(totalHosts),
-      detail:
-        totalHosts > 0 ? 'Host đang hoạt động và quản lý' : 'Chưa có dữ liệu',
+        recruitingEventsCount > 0
+          ? 'Các sự kiện đang mở đơn đăng ký'
+          : 'Chưa có sự kiện tuyển quân',
       icon: Users,
       cardClass: 'from-emerald-50 to-white',
       iconClass: 'text-emerald-700'
     },
     {
-      label: 'Số sự kiện đang diễn ra của tổ chức',
-      value: formatNumber(activeEvents),
+      label: 'Số sự kiện sắp diễn ra',
+      value: formatNumber(upcomingEventsCount),
       detail:
-        activeEvents > 0
-          ? 'Đang được theo dõi theo thời gian thực'
-          : 'Chưa cập nhật',
+        upcomingEventsCount > 0
+          ? 'Các sự kiện đã lên lịch trong thời gian tới'
+          : 'Chưa có sự kiện sắp diễn ra',
       icon: CalendarCheck,
       cardClass: 'from-sky-50 to-white',
       iconClass: 'text-sky-700'
+    },
+    {
+      label: 'Số sự kiện đang diễn ra',
+      value: formatNumber(ongoingEventsCount),
+      detail:
+        ongoingEventsCount > 0
+          ? 'Sự kiện đang được theo dõi theo thời gian thực'
+          : 'Chưa có sự kiện đang diễn ra',
+      icon: ClipboardList,
+      cardClass: 'from-violet-50 to-white',
+      iconClass: 'text-violet-700'
     },
     {
       label: 'Số sự kiện đã kết thúc trong tháng',
@@ -243,9 +325,20 @@ export default function OrganizerMainDashboard(props: Props) {
         endedEventsThisMonth > 0
           ? `Tổng sự kiện của tổ chức: ${formatNumber(totalEvents)}`
           : 'Chưa có số liệu tháng này',
-      icon: ClipboardList,
-      cardClass: 'from-violet-50 to-white',
-      iconClass: 'text-violet-700'
+      icon: BarChart3,
+      cardClass: 'from-indigo-50 to-white',
+      iconClass: 'text-indigo-700'
+    },
+    {
+      label: 'Số giờ uy tín trong tháng',
+      value: `${formatNumber(monthlyCreditHour)}h`,
+      detail:
+        monthlyCreditHour > 0
+          ? 'Giờ uy tín được ghi nhận trong tháng hiện tại'
+          : 'Chưa có dữ liệu giờ uy tín tháng này',
+      icon: Clock3,
+      cardClass: 'from-cyan-50 to-white',
+      iconClass: 'text-cyan-700'
     },
     {
       label: 'Tỉ lệ vắng mặt trong tháng',
@@ -260,17 +353,6 @@ export default function OrganizerMainDashboard(props: Props) {
       icon: TrendingUp,
       cardClass: 'from-rose-50 to-white',
       iconClass: 'text-rose-700'
-    },
-    {
-      label: 'Số giờ credit hour tích lũy trong tháng',
-      value: `${formatNumber(monthlyCreditHour)}h`,
-      detail:
-        monthlyCreditHour > 0
-          ? 'Credit hour đã ghi nhận trong tháng'
-          : 'Chưa có dữ liệu credit hour',
-      icon: Clock3,
-      cardClass: 'from-cyan-50 to-white',
-      iconClass: 'text-cyan-700'
     }
   ];
 
@@ -311,7 +393,7 @@ export default function OrganizerMainDashboard(props: Props) {
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
                 <p className="text-xs uppercase tracking-[0.15em] text-zinc-400">
-                  Sự kiện
+                  Tổng số sự kiện đã hoàn thành
                 </p>
                 <p className="mt-1 text-xl font-semibold text-white">
                   {formatNumber(totalEvents)}
@@ -327,10 +409,19 @@ export default function OrganizerMainDashboard(props: Props) {
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
                 <p className="text-xs uppercase tracking-[0.15em] text-zinc-400">
-                  Credit hour
+                  Tổng số giờ uy tín
                 </p>
                 <p className="mt-1 text-xl font-semibold text-white">
-                  {formatNumber(monthlyCreditHour)}h
+                  {formatNumber(
+                    firstNumber(props.userDetails, [
+                      'totalCreditHour',
+                      'creditHour',
+                      'monthlyCreditHour',
+                      'creditHourThisMonth',
+                      'monthlyHours'
+                    ])
+                  )}
+                  h
                 </p>
               </div>
             </div>
@@ -377,12 +468,12 @@ export default function OrganizerMainDashboard(props: Props) {
                 <div className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5 text-zinc-700" />
                   <h3 className="text-lg font-bold text-zinc-950">
-                    Số đơn đăng ký và số người tham gia thực tế theo tháng
+                    Phân tích tăng trưởng theo tháng
                   </h3>
                 </div>
                 <p className="mt-1 text-sm text-zinc-500">
-                  So sánh số đơn đăng ký với số người tham gia thực tế, từ đó
-                  theo dõi tỷ lệ tham gia và tỷ lệ vắng mặt của tổ chức.
+                  Theo dõi tỷ lệ vắng mặt, số sự kiện đã hoàn thành và số giờ
+                  tích lũy qua từng tháng.
                 </p>
               </div>
             </div>
@@ -390,8 +481,14 @@ export default function OrganizerMainDashboard(props: Props) {
             <div className="h-[320px] w-full">
               <ApexChart
                 type="line"
-                options={monthlyActivityOptions}
-                series={monthlyActivitySeries}
+                options={{
+                  ...monthlyGrowthOptions,
+                  xaxis: {
+                    ...monthlyGrowthOptions.xaxis,
+                    categories: monthLabels
+                  }
+                }}
+                series={monthlyGrowthSeries}
                 height="100%"
                 width="100%"
               />
@@ -403,16 +500,16 @@ export default function OrganizerMainDashboard(props: Props) {
               <Award className="h-5 w-5 text-zinc-700" />
               <div>
                 <h3 className="text-lg font-bold text-zinc-950">
-                  Top host của tháng trước
+                  Top host của tháng này
                 </h3>
                 <p className="text-sm text-zinc-500">
-                  Xếp hạng theo số sự kiện và credit hour.
+                  Xếp hạng theo số sự kiện và giờ uy tín trong tháng hiện tại.
                 </p>
               </div>
             </div>
 
             <div className="space-y-2">
-              {topHosts.slice(0, 5).map((host, index) => (
+              {sortedTopHosts.slice(0, 5).map((host, index) => (
                 <div
                   key={`${host.name}-${index}`}
                   className="flex items-center justify-between rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3"
@@ -426,7 +523,7 @@ export default function OrganizerMainDashboard(props: Props) {
                         {host.name}
                       </p>
                       <p className="text-xs text-zinc-500">
-                        {formatNumber(safeNumber(host.hours))}h credit hour
+                        {formatNumber(safeNumber(host.hours))} giờ uy tín
                       </p>
                     </div>
                   </div>
@@ -438,33 +535,6 @@ export default function OrganizerMainDashboard(props: Props) {
                   </Badge>
                 </div>
               ))}
-            </div>
-
-            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500">
-                  Sự kiện đang diễn ra
-                </p>
-                <p className="mt-2 text-2xl font-bold text-zinc-950">
-                  {formatNumber(activeEvents)}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500">
-                  Sự kiện kết thúc tháng này
-                </p>
-                <p className="mt-2 text-2xl font-bold text-zinc-950">
-                  {formatNumber(endedEventsThisMonth)}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500">
-                  Credit hour tháng này
-                </p>
-                <p className="mt-2 text-2xl font-bold text-zinc-950">
-                  {formatNumber(monthlyCreditHour)}h
-                </p>
-              </div>
             </div>
           </Card>
         </div>

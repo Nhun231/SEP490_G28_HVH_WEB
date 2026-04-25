@@ -56,11 +56,18 @@ import {
 } from '@/components/ui/dialog';
 import { useViewVolunteerList } from '@/hooks/features/sys-admin/uc029-view-volunteer-account-list/useViewVolunteerList';
 import { useGetVolunteerActivities } from '@/hooks/features/sys-admin/uc030-get-volunteer-details/useGetVolunteerActivities';
+import { useGetVolDetails } from '@/hooks/features/sys-admin/uc030-get-volunteer-details/useGetVolDetails';
 import { useUpdateVolAccbyAdmin } from '@/hooks/features/sys-admin/uc032-update-volunteer-account-profile/useUpdateVolAccbyAdmin';
+import type { VolunteerAccountInformationResponse } from '@/hooks/dto';
+import { EEmployStatus, EEducationLevel } from '@/hooks/dto';
 import { useUploadFiles } from '@/hooks/features/commons/bucket/useUploadFiles';
 import { toast } from 'sonner';
 import { getOrCreateDeviceId } from '@/hooks/use-notification-permission';
 import { getFullSupabaseImageUrl } from '@/utils/helpers';
+import {
+  getEmployStatusViLabel,
+  getGraduationStatusViLabel
+} from '@/constants/volunteer-status-vi';
 
 interface Props {
   user: User | null | undefined;
@@ -125,7 +132,8 @@ export default function VolunteersList(props: Props) {
   const {
     data: volunteerListData,
     isLoading,
-    error
+    error,
+    mutate: refreshVolunteerList
   } = useViewVolunteerList({
     pageNumber: 0,
     pageSize: 100,
@@ -142,9 +150,11 @@ export default function VolunteersList(props: Props) {
   const [openLockModal, setOpenLockModal] = useState(false);
   const [openAddModal, setOpenAddModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
-  const [selectedEditUser, setSelectedEditUser] = useState<Volunteer | null>(
+  const [selectedEditUserId, setSelectedEditUserId] = useState<string | null>(
     null
   );
+  const [selectedEditUser, setSelectedEditUser] =
+    useState<VolunteerAccountInformationResponse | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isSavingVolunteer, setIsSavingVolunteer] = useState(false);
@@ -160,7 +170,15 @@ export default function VolunteersList(props: Props) {
     email: '',
     dob: '',
     address: '',
-    detailAddress: ''
+    detailAddress: '',
+    vid: '',
+    nickname: '',
+    bio: '',
+    gender: true,
+    employStatus: EEmployStatus.OTHER,
+    educationLevel: EEducationLevel.OTHER,
+    sid: '',
+    workAddress: ''
   });
   const [newVolunteer, setNewVolunteer] = useState({
     fullName: '',
@@ -194,6 +212,22 @@ export default function VolunteersList(props: Props) {
     id: selectedUser?.id,
     baseUrl,
     enabled: openDetailModal && Boolean(selectedUser?.id)
+  });
+
+  const {
+    data: volunteerDetails,
+    isLoading: isLoadingDetails,
+    error: detailsError
+  } = useGetVolDetails({
+    id: selectedUser?.id,
+    baseUrl,
+    enabled: openDetailModal && Boolean(selectedUser?.id)
+  });
+
+  const { data: volunteerEditDetails } = useGetVolDetails({
+    id: selectedEditUserId,
+    baseUrl,
+    enabled: openEditModal && Boolean(selectedEditUserId)
   });
 
   const formatDateForDisplay = (value: string | null | undefined) => {
@@ -252,7 +286,7 @@ export default function VolunteersList(props: Props) {
     const mappedUsers = content.map((item, index) => ({
       id: item.id,
       avatar:
-        item.avatarUrl ??
+        getFullSupabaseImageUrl(item.avatarUrl) ||
         `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(item.fullName ?? item.vid ?? String(index + 1))}`,
       fullName: item.fullName ?? 'Chưa cập nhật',
       cccd: item.cid ?? 'Chưa cập nhật',
@@ -270,6 +304,38 @@ export default function VolunteersList(props: Props) {
     setUsers(mappedUsers);
   }, [volunteerListData]);
 
+  useEffect(() => {
+    if (!openEditModal || !volunteerEditDetails) return;
+
+    setSelectedEditUser(volunteerEditDetails);
+    setEditVolunteer((prev) => ({
+      ...prev,
+      fullName: volunteerEditDetails.fullName || '',
+      cccd: volunteerEditDetails.cid || '',
+      phone: volunteerEditDetails.phone || '',
+      email: volunteerEditDetails.email || '',
+      dob: formatDobForInput(volunteerEditDetails.dob || ''),
+      address:
+        volunteerEditDetails.address === 'Chưa cập nhật'
+          ? ''
+          : (volunteerEditDetails.address ?? ''),
+      detailAddress:
+        volunteerEditDetails.detailAddress === 'Chưa cập nhật'
+          ? ''
+          : (volunteerEditDetails.detailAddress ?? ''),
+      vid: volunteerEditDetails.id || '',
+      nickname: volunteerEditDetails.nickname || '',
+      bio: volunteerEditDetails.bio || '',
+      gender: volunteerEditDetails.gender ?? true,
+      employStatus: volunteerEditDetails.employStatus || EEmployStatus.OTHER,
+      educationLevel:
+        volunteerEditDetails.educationLevel || EEducationLevel.OTHER,
+      sid: volunteerEditDetails.sid || '',
+      workAddress: volunteerEditDetails.workAddress || ''
+    }));
+    setAvatarPreview(getFullSupabaseImageUrl(volunteerEditDetails.avatarUrl));
+  }, [openEditModal, volunteerEditDetails]);
+
   const setSortForKey = (key: SortKey, order: SortOrder) => {
     if (key === 'none') return;
     setSortCriteria((prev) => {
@@ -286,12 +352,16 @@ export default function VolunteersList(props: Props) {
     setCurrentPage(1);
   };
   const formatDobForInput = (dob: string) => {
-    if (!dob) return '';
+    if (!dob || dob === 'Chưa cập nhật') return '';
     if (dob.includes('/')) {
       const [day, month, year] = dob.split('/');
       return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
     }
-    return dob;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dob)) return dob;
+
+    const parsed = new Date(dob);
+    if (Number.isNaN(parsed.getTime())) return '';
+    return parsed.toISOString().slice(0, 10);
   };
 
   const formatDobForDisplay = (dob: string) => {
@@ -987,7 +1057,8 @@ export default function VolunteersList(props: Props) {
   const handleEdit = (userId: string) => {
     const user = users.find((u) => u.id === userId);
     if (!user) return;
-    setSelectedEditUser(user);
+    setSelectedEditUserId(userId);
+    setSelectedEditUser(user as any);
     setEditVolunteer({
       fullName: user.fullName,
       cccd: user.cccd,
@@ -996,7 +1067,15 @@ export default function VolunteersList(props: Props) {
       dob: formatDobForInput(user.dob),
       address: user.address === 'Chưa cập nhật' ? '' : user.address,
       detailAddress:
-        user.detailAddress === 'Chưa cập nhật' ? '' : user.detailAddress
+        user.detailAddress === 'Chưa cập nhật' ? '' : user.detailAddress,
+      vid: user.id,
+      nickname: (user as any).nickname || '',
+      bio: (user as any).bio || '',
+      gender: (user as any).gender ?? true,
+      employStatus: (user as any).employStatus || EEmployStatus.OTHER,
+      educationLevel: (user as any).educationLevel || EEducationLevel.OTHER,
+      sid: (user as any).sid || '',
+      workAddress: (user as any).workAddress || ''
     });
     setAvatarPreview(user.avatar);
     setAvatarFile(null);
@@ -1031,14 +1110,33 @@ export default function VolunteersList(props: Props) {
     reader.readAsDataURL(file);
   };
 
+  const editAvatarSrc =
+    avatarPreview ||
+    getFullSupabaseImageUrl(selectedEditUser?.avatarUrl) ||
+    undefined;
+
   const handleConfirmEdit = async () => {
     if (!selectedEditUser) return;
 
     const nextDeviceId = getOrCreateDeviceId();
+    const currentAvatarUrl =
+      users.find((user) => user.id === selectedEditUser.id)?.avatar ??
+      selectedUser?.avatar ??
+      '';
     const avatarExtension = avatarFile
       ? avatarFile.name.split('.').pop()
       : null;
+    const normalizedDob = formatDobForInput(editVolunteer.dob);
     const newErrors: Record<string, string> = {};
+    const requiredFieldLabels: Record<string, string> = {
+      fullName: 'Họ và tên',
+      cccd: 'CCCD',
+      phone: 'Số điện thoại',
+      email: 'Email',
+      dob: 'Ngày sinh',
+      address: 'Địa chỉ',
+      detailAddress: 'Địa chỉ chi tiết'
+    };
 
     if (!editVolunteer.fullName.trim())
       newErrors.fullName = 'Vui lòng nhập họ và tên';
@@ -1046,47 +1144,46 @@ export default function VolunteersList(props: Props) {
     if (!editVolunteer.phone.trim())
       newErrors.phone = 'Vui lòng nhập số điện thoại';
     if (!editVolunteer.email.trim()) newErrors.email = 'Vui lòng nhập email';
-    if (!editVolunteer.dob.trim()) newErrors.dob = 'Vui lòng nhập ngày sinh';
+    if (!normalizedDob) newErrors.dob = 'Vui lòng nhập ngày sinh';
     if (!editVolunteer.address.trim())
       newErrors.address = 'Vui lòng nhập địa chỉ';
     if (!editVolunteer.detailAddress.trim())
       newErrors.detailAddress = 'Vui lòng nhập địa chỉ chi tiết';
 
     if (Object.keys(newErrors).length > 0) {
-      toast.error('Vui lòng điền đầy đủ thông tin bắt buộc');
+      const missingFields = Object.keys(newErrors).map(
+        (key) => requiredFieldLabels[key] || key
+      );
+      toast.error(
+        `Vui lòng điền các thông tin bắt buộc: ${missingFields.join(', ')}`
+      );
       return;
     }
 
-    const hiddenGender = selectedEditUser.gender ?? true;
-    const hiddenNickname =
-      selectedEditUser.nickName ?? selectedEditUser.fullName;
-    const hiddenBio = selectedEditUser.bio ?? selectedEditUser.fullName;
-    const hiddenEmployStatus =
-      selectedEditUser.employStatus ?? EEmployStatus.OTHER;
-    const hiddenWorkAddress =
-      selectedEditUser.workAddress ?? editVolunteer.address.trim();
-    const hiddenEducationLevel =
-      selectedEditUser.educationLevel ?? EEducationLevel.OTHER;
-    const hiddenSid = selectedEditUser.sid ?? selectedEditUser.cccd.trim();
-
-    const requestData = {
-      email: editVolunteer.email.trim(),
+    const requestData: any = {
+      email: (selectedEditUser.email || editVolunteer.email).trim(),
       phone: editVolunteer.phone.trim(),
       cid: editVolunteer.cccd.trim(),
-      nickName: hiddenNickname,
+      nickName: editVolunteer.nickname.trim() || editVolunteer.fullName.trim(),
       fullName: editVolunteer.fullName.trim(),
-      bio: hiddenBio,
-      gender: hiddenGender,
-      dob: editVolunteer.dob,
-      avatarExtension: avatarExtension ? `.${avatarExtension}` : null,
+      bio: editVolunteer.bio.trim() || editVolunteer.fullName.trim(),
+      gender: editVolunteer.gender,
+      dob: normalizedDob || '',
       address: editVolunteer.address.trim(),
       detailAddress: editVolunteer.detailAddress.trim(),
-      employStatus: hiddenEmployStatus,
-      workAddress: hiddenWorkAddress,
-      educationLevel: hiddenEducationLevel,
-      sid: hiddenSid,
+      employStatus: editVolunteer.employStatus,
+      workAddress:
+        editVolunteer.workAddress.trim() || editVolunteer.address.trim(),
+      educationLevel: editVolunteer.educationLevel,
+      sid: editVolunteer.sid.trim() || editVolunteer.cccd.trim(),
       deviceId: nextDeviceId
     };
+
+    if (avatarFile) {
+      requestData.avatarExtension = avatarExtension
+        ? `.${avatarExtension}`
+        : '';
+    }
 
     try {
       setIsSavingVolunteer(true);
@@ -1105,7 +1202,7 @@ export default function VolunteersList(props: Props) {
 
       const nextAvatar = response?.avatarUrl
         ? getFullSupabaseImageUrl(response.avatarUrl)
-        : avatarPreview || selectedEditUser.avatar;
+        : (avatarPreview ?? currentAvatarUrl);
 
       setUsers((prev) =>
         prev.map((user) =>
@@ -1121,6 +1218,7 @@ export default function VolunteersList(props: Props) {
                 address: requestData.address,
                 detailAddress: requestData.detailAddress,
                 nickName: requestData.nickName,
+                nickname: requestData.nickName,
                 bio: requestData.bio,
                 gender: requestData.gender,
                 employStatus: requestData.employStatus,
@@ -1147,6 +1245,7 @@ export default function VolunteersList(props: Props) {
                 address: requestData.address,
                 detailAddress: requestData.detailAddress,
                 nickName: requestData.nickName,
+                nickname: requestData.nickName,
                 bio: requestData.bio,
                 gender: requestData.gender,
                 employStatus: requestData.employStatus,
@@ -1160,6 +1259,7 @@ export default function VolunteersList(props: Props) {
       }
 
       toast.success('Cập nhật tình nguyện viên thành công!');
+      await refreshVolunteerList();
       setOpenEditModal(false);
       setAvatarFile(null);
       setAvatarPreview(null);
@@ -1189,6 +1289,8 @@ export default function VolunteersList(props: Props) {
       phone: newVolunteer.phone,
       email: newVolunteer.email,
       dob: newVolunteer.dob || '01/01/2000',
+      address: '',
+      detailAddress: '',
       events: 0,
       rating: 0,
       reputation: 0,
@@ -1500,17 +1602,20 @@ export default function VolunteersList(props: Props) {
               </div>
             </DialogHeader>
 
-            {selectedUser && (
+            {volunteerDetails && (
               <div className="grid gap-5 px-6 pb-6 pt-6 lg:grid-cols-[320px_minmax(0,1fr)]">
                 <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-md shadow-blue-100/35">
                   <div className="flex flex-col items-center text-center">
                     <Avatar className="h-24 w-24 border border-white shadow-lg shadow-blue-100/50 ring-4 ring-blue-50">
                       <AvatarImage
-                        src={selectedUser.avatar}
-                        alt={selectedUser.fullName}
+                        src={
+                          getFullSupabaseImageUrl(volunteerDetails.avatarUrl) ||
+                          `https://api.dicebear.com/7.x/avataaars/svg?seed=${volunteerDetails.fullName}`
+                        }
+                        alt={volunteerDetails.fullName || 'Avatar'}
                       />
                       <AvatarFallback className="bg-gradient-to-br from-blue-600 via-sky-500 to-cyan-500 text-2xl font-semibold text-white">
-                        {selectedUser.fullName
+                        {(volunteerDetails.fullName || 'TV')
                           .split(' ')
                           .map((part) => part[0])
                           .join('')
@@ -1518,68 +1623,136 @@ export default function VolunteersList(props: Props) {
                       </AvatarFallback>
                     </Avatar>
                     <h3 className="mt-3 text-xl font-bold text-slate-900">
-                      {selectedUser.fullName}
+                      {volunteerDetails.fullName || 'Chưa cập nhật'}
                     </h3>
                     <p className="text-sm text-slate-500">
-                      Tình nguyện viên • {selectedUser.events} hoạt động
+                      Tình nguyện viên • {volunteerDetails.activityCount ?? 0}{' '}
+                      hoạt động
                     </p>
-                    <Badge
-                      className={`mt-3 rounded-full px-3 py-1 ${
-                        selectedUser.status === 'active'
-                          ? 'border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-700'
-                          : 'border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-50 hover:text-rose-700'
-                      }`}
-                    >
-                      {selectedUser.status === 'active' ? 'Kích hoạt' : 'Khóa'}
-                    </Badge>
+                    <div className="mt-3 flex flex-wrap justify-center gap-2">
+                      <Badge
+                        className={`rounded-full px-3 py-1 ${
+                          selectedUser?.status === 'active'
+                            ? 'border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700'
+                            : 'border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700'
+                        }`}
+                      >
+                        {selectedUser?.status === 'active'
+                          ? 'Kích hoạt'
+                          : 'Khóa'}
+                      </Badge>
+                      <Badge variant="outline" className="rounded-full">
+                        Cấp {volunteerDetails.level ?? 0}
+                      </Badge>
+                      {volunteerDetails.phoneVerified && (
+                        <Badge
+                          variant="outline"
+                          className="rounded-full border-blue-200 text-blue-700"
+                        >
+                          SĐT đã xác minh
+                        </Badge>
+                      )}
+                    </div>
+                    {volunteerDetails.bio && (
+                      <p className="mt-3 text-sm text-slate-600 italic max-w-[280px]">
+                        "{volunteerDetails.bio}"
+                      </p>
+                    )}
                   </div>
 
                   <div className="mt-5 space-y-3 border-t border-zinc-200 pt-4 text-sm">
                     <p className="text-zinc-700">
+                      <span className="font-semibold text-zinc-500">
+                        Mã TNV:
+                      </span>{' '}
+                      {volunteerDetails.vid || 'Chưa cập nhật'}
+                    </p>
+                    <p className="text-zinc-700">
                       <span className="font-semibold text-zinc-500">CCCD:</span>{' '}
-                      {selectedUser.cccd}
+                      {volunteerDetails.cid || 'Chưa cập nhật'}
                     </p>
                     <p className="text-zinc-700">
                       <span className="font-semibold text-zinc-500">
                         Số điện thoại:
                       </span>{' '}
-                      {selectedUser.phone}
+                      {volunteerDetails.phone || 'Chưa cập nhật'}
+                      {volunteerDetails.phoneVerified && (
+                        <span className="text-emerald-600 ml-1">✓</span>
+                      )}
                     </p>
                     <p className="text-zinc-700">
                       <span className="font-semibold text-zinc-500">
                         Email:
                       </span>{' '}
-                      {selectedUser.email}
+                      {volunteerDetails.email || 'Chưa cập nhật'}
                     </p>
                     <p className="text-zinc-700">
                       <span className="font-semibold text-zinc-500">
                         Ngày sinh:
                       </span>{' '}
-                      {selectedUser.dob}
+                      {formatDateForDisplay(volunteerDetails.dob)}
+                    </p>
+                    <p className="text-zinc-700">
+                      <span className="font-semibold text-zinc-500">
+                        Giới tính:
+                      </span>{' '}
+                      {volunteerDetails.gender ? 'Nam' : 'Nữ'}
                     </p>
                     <p className="text-zinc-700">
                       <span className="font-semibold text-zinc-500">
                         Địa chỉ:
                       </span>{' '}
-                      {selectedUser.address}
+                      {volunteerDetails.address || 'Chưa cập nhật'}
                     </p>
                     <p className="text-zinc-700">
                       <span className="font-semibold text-zinc-500">
                         Địa chỉ chi tiết:
                       </span>{' '}
-                      {selectedUser.detailAddress}
+                      {volunteerDetails.detailAddress || 'Chưa cập nhật'}
                     </p>
                     <p className="text-zinc-700">
                       <span className="font-semibold text-zinc-500">
-                        Điểm đánh giá:
+                        Địa chỉ làm việc:
                       </span>{' '}
-                      {selectedUser.rating}
+                      {volunteerDetails.workAddress || 'Chưa cập nhật'}
+                    </p>
+                    <p className="text-zinc-700">
+                      <span className="font-semibold text-zinc-500">
+                        Trạng thái việc làm:
+                      </span>{' '}
+                      {getEmployStatusViLabel(volunteerDetails.employStatus)}
+                    </p>
+                    <p className="text-zinc-700">
+                      <span className="font-semibold text-zinc-500">
+                        Trình độ học vấn:
+                      </span>{' '}
+                      {getGraduationStatusViLabel(
+                        volunteerDetails.educationLevel
+                      )}
+                    </p>
+                    <p className="text-zinc-700">
+                      <span className="font-semibold text-zinc-500">
+                        Mã HS/SV:
+                      </span>{' '}
+                      {volunteerDetails.sid || 'Chưa cập nhật'}
+                    </p>
+                    <p className="text-zinc-700">
+                      <span className="font-semibold text-zinc-500">
+                        Điểm đánh giá TB:
+                      </span>{' '}
+                      {volunteerDetails.avgRating ?? 0}/5
                     </p>
                     <p className="text-zinc-700">
                       <span className="font-semibold text-zinc-500">
                         Điểm uy tín:
                       </span>{' '}
-                      {selectedUser.reputation}
+                      {volunteerDetails.creditScore ?? 0}
+                    </p>
+                    <p className="text-zinc-700">
+                      <span className="font-semibold text-zinc-500">
+                        Điểm vinh dự:
+                      </span>{' '}
+                      {volunteerDetails.honorScore ?? 0}
                     </p>
                   </div>
                 </div>
@@ -1709,8 +1882,8 @@ export default function VolunteersList(props: Props) {
 
         {/* Edit Volunteer Modal */}
         <Dialog open={openEditModal} onOpenChange={setOpenEditModal}>
-          <DialogContent className="max-w-2xl bg-white">
-            <DialogHeader>
+          <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden bg-white p-0">
+            <DialogHeader className="px-6 pt-6 pb-2">
               <DialogTitle className="text-zinc-900 dark:text-white">
                 Cập nhật thông tin tình nguyện viên
               </DialogTitle>
@@ -1719,7 +1892,7 @@ export default function VolunteersList(props: Props) {
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-5">
+            <div className="flex-1 overflow-y-auto px-6 pb-4 space-y-5">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -1730,10 +1903,12 @@ export default function VolunteersList(props: Props) {
 
               <div className="flex flex-col items-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-5">
                 <Avatar className="h-24 w-24 border border-white shadow-lg shadow-blue-100/50 ring-4 ring-blue-50">
-                  <AvatarImage
-                    src={avatarPreview || selectedEditUser?.avatar}
-                    alt={editVolunteer.fullName || selectedEditUser?.fullName}
-                  />
+                  {editAvatarSrc ? (
+                    <AvatarImage
+                      src={editAvatarSrc}
+                      alt={editVolunteer.fullName || selectedEditUser?.fullName}
+                    />
+                  ) : null}
                   <AvatarFallback className="bg-gradient-to-br from-blue-600 via-sky-500 to-cyan-500 text-2xl font-semibold text-white">
                     {(
                       editVolunteer.fullName ||
@@ -1802,6 +1977,35 @@ export default function VolunteersList(props: Props) {
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="text-sm font-medium text-zinc-700">
+                    Mã TNV
+                  </label>
+                  <Input
+                    value={selectedEditUser?.id || editVolunteer.vid}
+                    readOnly
+                    className="mt-1 bg-zinc-100 text-zinc-600 cursor-not-allowed"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-zinc-700">
+                    Số điện thoại
+                  </label>
+                  <Input
+                    placeholder="Nhập số điện thoại"
+                    value={editVolunteer.phone}
+                    onChange={(e) =>
+                      setEditVolunteer({
+                        ...editVolunteer,
+                        phone: e.target.value
+                      })
+                    }
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="text-sm font-medium text-zinc-700">
                     Số CCCD
                   </label>
                   <Input
@@ -1818,15 +2022,15 @@ export default function VolunteersList(props: Props) {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-zinc-700">
-                    Số điện thoại
+                    Ngày sinh
                   </label>
                   <Input
-                    placeholder="Nhập số điện thoại"
-                    value={editVolunteer.phone}
+                    type="date"
+                    value={editVolunteer.dob}
                     onChange={(e) =>
                       setEditVolunteer({
                         ...editVolunteer,
-                        phone: e.target.value
+                        dob: e.target.value
                       })
                     }
                     className="mt-1"
@@ -1857,39 +2061,214 @@ export default function VolunteersList(props: Props) {
                   </label>
                   <Input
                     type="email"
-                    placeholder="Nhập địa chỉ email"
-                    value={editVolunteer.email}
-                    onChange={(e) =>
-                      setEditVolunteer({
-                        ...editVolunteer,
-                        email: e.target.value
-                      })
-                    }
-                    className="mt-1 bg-blue-50 border-blue-200 focus:border-blue-500"
+                    value={selectedEditUser?.email || editVolunteer.email}
+                    readOnly
+                    className="mt-1 bg-zinc-100 text-zinc-600 cursor-not-allowed"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-4">
-                <Button
-                  onClick={() => {
-                    setOpenEditModal(false);
-                    setAvatarFile(null);
-                    setAvatarPreview(null);
-                  }}
-                  className="bg-red-600 text-white hover:bg-red-700"
-                  disabled={isSavingVolunteer}
-                >
-                  Hủy
-                </Button>
-                <Button
-                  onClick={handleConfirmEdit}
-                  className="bg-blue-600 text-white hover:bg-blue-700"
-                  disabled={isSavingVolunteer}
-                >
-                  {isSavingVolunteer ? 'Đang lưu...' : 'Cập nhật'}
-                </Button>
+              {/* Thông tin bổ sung - editable */}
+              <div className="border-t border-zinc-200 pt-4">
+                <h4 className="mb-3 text-sm font-semibold text-zinc-800">
+                  Thông tin bổ sung
+                </h4>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="text-sm font-medium text-zinc-700">
+                      Nickname
+                    </label>
+                    <Input
+                      placeholder="Nhập nickname"
+                      value={editVolunteer.nickname}
+                      onChange={(e) =>
+                        setEditVolunteer({
+                          ...editVolunteer,
+                          nickname: e.target.value
+                        })
+                      }
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-zinc-700">
+                      Giới tính
+                    </label>
+                    <Select
+                      value={editVolunteer.gender ? 'male' : 'female'}
+                      onValueChange={(value) =>
+                        setEditVolunteer({
+                          ...editVolunteer,
+                          gender: value === 'male'
+                        })
+                      }
+                    >
+                      <SelectTrigger className="mt-1 bg-white border-zinc-200">
+                        <SelectValue placeholder="Chọn giới tính" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        <SelectItem value="male">Nam</SelectItem>
+                        <SelectItem value="female">Nữ</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="mt-3">
+                  <label className="text-sm font-medium text-zinc-700">
+                    Giới thiệu (Bio)
+                  </label>
+                  <textarea
+                    placeholder="Nhập giới thiệu về tình nguyện viên"
+                    value={editVolunteer.bio}
+                    onChange={(e) =>
+                      setEditVolunteer({
+                        ...editVolunteer,
+                        bio: e.target.value
+                      })
+                    }
+                    className="mt-1 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    rows={3}
+                  />
+                </div>
+
+                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="text-sm font-medium text-zinc-700">
+                      Trạng thái việc làm
+                    </label>
+                    <Select
+                      value={editVolunteer.employStatus}
+                      onValueChange={(value) =>
+                        setEditVolunteer({
+                          ...editVolunteer,
+                          employStatus: value as EEmployStatus
+                        })
+                      }
+                    >
+                      <SelectTrigger className="mt-1 bg-white border-zinc-200">
+                        <SelectValue placeholder="Chọn trạng thái" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        <SelectItem value={EEmployStatus.STUDENT}>
+                          Học sinh / Sinh viên
+                        </SelectItem>
+                        <SelectItem value={EEmployStatus.EMPLOYED}>
+                          Đang đi làm
+                        </SelectItem>
+                        <SelectItem value={EEmployStatus.UNEMPLOYED}>
+                          Thất nghiệp
+                        </SelectItem>
+                        <SelectItem value={EEmployStatus.RETIRED}>
+                          Đã nghỉ hưu
+                        </SelectItem>
+                        <SelectItem value={EEmployStatus.OTHER}>
+                          Khác
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-zinc-700">
+                      Trình độ học vấn
+                    </label>
+                    <Select
+                      value={editVolunteer.educationLevel}
+                      onValueChange={(value) =>
+                        setEditVolunteer({
+                          ...editVolunteer,
+                          educationLevel: value as EEducationLevel
+                        })
+                      }
+                    >
+                      <SelectTrigger className="mt-1 bg-white border-zinc-200">
+                        <SelectValue placeholder="Chọn trình độ" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        <SelectItem value={EEducationLevel.SECONDARY}>
+                          Trung học cơ sở
+                        </SelectItem>
+                        <SelectItem value={EEducationLevel.HIGH_SCHOOL}>
+                          Trung học phổ thông
+                        </SelectItem>
+                        <SelectItem value={EEducationLevel.COLLEGE}>
+                          Cao đẳng
+                        </SelectItem>
+                        <SelectItem value={EEducationLevel.UNDERGRADUATE}>
+                          Đại học
+                        </SelectItem>
+                        <SelectItem value={EEducationLevel.POSTGRADUATE}>
+                          Sau đại học
+                        </SelectItem>
+                        <SelectItem value={EEducationLevel.PROFESSIONAL}>
+                          Chuyên môn
+                        </SelectItem>
+                        <SelectItem value={EEducationLevel.OTHER}>
+                          Khác
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="text-sm font-medium text-zinc-700">
+                      Mã HS/SV
+                    </label>
+                    <Input
+                      placeholder="Nhập mã học sinh/sinh viên"
+                      value={editVolunteer.sid}
+                      onChange={(e) =>
+                        setEditVolunteer({
+                          ...editVolunteer,
+                          sid: e.target.value
+                        })
+                      }
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-zinc-700">
+                      Địa chỉ làm việc
+                    </label>
+                    <Input
+                      placeholder="Nhập địa chỉ làm việc"
+                      value={editVolunteer.workAddress}
+                      onChange={(e) =>
+                        setEditVolunteer({
+                          ...editVolunteer,
+                          workAddress: e.target.value
+                        })
+                      }
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
               </div>
+            </div>
+
+            <div className="flex justify-end gap-2 border-t border-zinc-200 bg-white px-6 py-4">
+              <Button
+                onClick={() => {
+                  setOpenEditModal(false);
+                  setSelectedEditUserId(null);
+                  setAvatarFile(null);
+                  setAvatarPreview(null);
+                }}
+                className="bg-red-600 text-white hover:bg-red-700"
+                disabled={isSavingVolunteer}
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={handleConfirmEdit}
+                className="bg-blue-600 text-white hover:bg-blue-700"
+                disabled={isSavingVolunteer}
+              >
+                {isSavingVolunteer ? 'Đang lưu...' : 'Cập nhật'}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>

@@ -3,8 +3,21 @@ export function getFullSupabaseImageUrl(
   url: string | null | undefined
 ): string {
   if (!url) return '';
-  if (url.startsWith('http')) return url;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  if (url.startsWith('http')) {
+    try {
+      const parsed = new URL(url);
+      if (parsed.pathname.startsWith('/storage/v1/object/')) {
+        return supabaseUrl + parsed.pathname + parsed.search;
+      }
+      if (parsed.pathname.startsWith('/object/')) {
+        return supabaseUrl + '/storage/v1' + parsed.pathname + parsed.search;
+      }
+    } catch {
+      return url;
+    }
+    return url;
+  }
   const normalized = url.startsWith('/') ? url : `/${url}`;
   if (normalized.startsWith('/storage/v1/')) {
     return supabaseUrl + normalized;

@@ -22,6 +22,7 @@ import { ArrowLeft, Check, Edit, Star, X } from 'lucide-react';
 import { useViewOrgDetails } from '@/hooks/features/sys-admin/uc076-view-org-details-by-admin/useViewOrgDetails';
 import { ORG_TYPE_LABELS } from '@/constants/org-type-labels';
 import type { OrganizationDetail } from '@/hooks/entity';
+import { getFullSupabaseImageUrl } from '@/utils/helpers';
 
 interface Props {
   orgId: string;
@@ -31,9 +32,9 @@ interface Props {
 
 const statusBadgeClass = (status: OrganizationDetail['status']) => {
   if (status === 'Hoạt động') {
-    return 'border-green-200 bg-green-50 text-green-700';
+    return 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100';
   }
-  return 'border-red-200 bg-red-50 text-red-700';
+  return 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100';
 };
 
 const mapApiStatusToDisplay = (
@@ -113,7 +114,8 @@ export default function OrganizationDetailPage({
       volunteers: orgData.totalHosts ?? 0,
       donations: legacyOrgData.creditHour ?? legacyOrgData.totalHonorHours ?? 0,
       imageUrl:
-        orgData.avatarImageUrl || 'https://picsum.photos/seed/org/200/200',
+        getFullSupabaseImageUrl(orgData.avatarImageUrl) ||
+        'https://picsum.photos/seed/org/200/200',
       introduction: orgData.orgIntroduction || 'Chưa có thông tin giới thiệu.',
       applicationReason: '',
       basicInfo: {
@@ -132,8 +134,12 @@ export default function OrganizationDetailPage({
         email: orgData.managerEmail || 'N/A',
         cccd: orgData.managerCID || 'N/A'
       },
-      registrationImages: orgData.legalDocumentUrls || [],
-      supportingDocuments: orgData.otherEvidencesUrls || [],
+      registrationImages: (orgData.legalDocumentUrls || []).map((url) =>
+        getFullSupabaseImageUrl(url)
+      ),
+      supportingDocuments: (orgData.otherEvidencesUrls || []).map((url) =>
+        getFullSupabaseImageUrl(url)
+      ),
       note: orgData.note || ''
     };
   }, [orgData]);
@@ -263,7 +269,7 @@ export default function OrganizationDetailPage({
                         <Badge className={statusBadgeClass(orgStatus)}>
                           {orgStatus}
                         </Badge>
-                        <Badge className="border-blue-200 bg-blue-50 text-blue-700">
+                        <Badge className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100">
                           {org.location}
                         </Badge>
                       </div>

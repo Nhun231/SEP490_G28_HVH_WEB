@@ -10,7 +10,27 @@ export interface CreateHostAccountRequest {
   detailAddress: string;
 }
 
+export interface UpdateHostProfileRequest {
+  fullName?: string;
+  gender?: boolean;
+  dob?: string;
+  avatarExtension?: string;
+  address?: string;
+  detailAddress?: string;
+}
+
 export interface HostActivitiesResponse {
+  eventId: string;
+  eventName: string | null;
+  eventAddress: string | null;
+  eventDetailAddress: string | null;
+  eventStatus: EEventStatus | null;
+  sessionId: string;
+  sessionStartTime: string | null;
+  sessionEndTime: string | null;
+}
+
+export interface HostActivitiesResponseForSystemAdmin {
   eventId: string;
   eventName: string | null;
   eventAddress: string | null;
@@ -47,6 +67,7 @@ export interface HostInfoResponseForSystemAdmin {
   address: string | null;
   detailAddress: string | null;
   createdAt: string | null;
+  avatarUploadUrl?: string | null;
 }
 
 export interface HostSimpleResponseForManager {
@@ -92,6 +113,16 @@ export interface HostListResponseForSystemAdmin {
 
 export interface HostActivitiesListResponse {
   content: HostActivitiesResponse[];
+  page: {
+    size: number;
+    number: number;
+    totalElements: number;
+    totalPages: number;
+  };
+}
+
+export interface HostActivitiesListResponseForSystemAdmin {
+  content: HostActivitiesResponseForSystemAdmin[];
   page: {
     size: number;
     number: number;

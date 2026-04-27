@@ -3,27 +3,27 @@ import { EEventStatus, EVENT_STATUS_LABELS } from './event-status';
 // Mapping badge color for each event status (by status code)
 export const EVENT_BADGE_CLASSNAME_BY_STATUS: Record<EEventStatus, string> = {
   [EEventStatus.EDITING]:
-    'rounded-full bg-gray-400 text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150 hover:bg-gray-500',
+    'rounded-full bg-gray-400 text-white font-medium px-1.5 py-0 text-[10px] whitespace-nowrap',
   [EEventStatus.SUBMITTED]:
-    'rounded-full bg-blue-500 text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150 hover:bg-blue-600',
+    'rounded-full bg-blue-500 text-white font-medium px-1.5 py-0 text-[10px] whitespace-nowrap',
   [EEventStatus.APPROVED_BY_MNG]:
-    'rounded-full bg-green-600 text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150 hover:bg-green-700',
+    'rounded-full bg-green-600 text-white font-medium px-1.5 py-0 text-[10px] whitespace-nowrap',
   [EEventStatus.REJECTED_BY_MNG]:
-    'rounded-full bg-red-400 text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150 hover:bg-red-500',
+    'rounded-full bg-red-400 text-white font-medium px-1.5 py-0 text-[10px] whitespace-nowrap',
   [EEventStatus.REJECTED_BY_AD]:
-    'rounded-full bg-red-700 text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150 hover:bg-red-800',
+    'rounded-full bg-red-700 text-white font-medium px-1.5 py-0 text-[10px] whitespace-nowrap',
   [EEventStatus.RECRUITING]:
-    'rounded-full bg-blue-600 text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150 hover:bg-blue-700',
+    'rounded-full bg-blue-600 text-white font-medium px-1.5 py-0 text-[10px] whitespace-nowrap',
   [EEventStatus.UPCOMING]:
-    'rounded-full bg-yellow-400 text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150 hover:bg-yellow-500',
+    'rounded-full bg-yellow-400 text-white font-medium px-1.5 py-0 text-[10px] whitespace-nowrap',
   [EEventStatus.ONGOING]:
-    'rounded-full bg-green-600 text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150 hover:bg-green-700',
+    'rounded-full bg-green-600 text-white font-medium px-1.5 py-0 text-[10px] whitespace-nowrap',
   [EEventStatus.ENDED]:
-    'rounded-full bg-red-600 text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150 hover:bg-red-700',
+    'rounded-full bg-red-600 text-white font-medium px-1.5 py-0 text-[10px] whitespace-nowrap',
   [EEventStatus.COMPLETED]:
-    'rounded-full bg-black text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150 hover:bg-zinc-900',
+    'rounded-full bg-black text-white font-medium px-1.5 py-0 text-[10px] whitespace-nowrap',
   [EEventStatus.CANCELLED]:
-    'rounded-full bg-zinc-500 text-white font-semibold px-3 py-0.5 text-xs transition-colors duration-150 hover:bg-zinc-600'
+    'rounded-full bg-zinc-500 text-white font-medium px-1.5 py-0 text-[10px] whitespace-nowrap'
 };
 
 // Helper: get badge class by status code or label
@@ -40,5 +40,5 @@ export function getBadgeClassNameByStatus(status: string): string {
     return EVENT_BADGE_CLASSNAME_BY_STATUS[found[0] as EEventStatus];
   }
   // Default
-  return 'rounded-full bg-zinc-500 text-white font-semibold px-3 py-0.5 text-xs';
+  return 'rounded-full bg-zinc-500 text-white font-medium px-1.5 py-0 text-[10px] whitespace-nowrap';
 }

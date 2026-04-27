@@ -1,29 +1,23 @@
 'use client';
 
-import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
+import { useSupabase } from '@/app/supabase-provider';
 import {
   renderThumb,
   renderTrack,
   renderView
 } from '@/components/scrollbar/Scrollbar';
 import Links from '@/components/sidebar/components/Links';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card } from '@/components/ui/card';
-import { IRoute } from '@/types/types';
-import Image from 'next/image';
-import React, { PropsWithChildren, useContext } from 'react';
-import { Scrollbars } from 'react-custom-scrollbars-2';
-import { HiX } from 'react-icons/hi';
-import { HiBolt } from 'react-icons/hi2';
-import { HiOutlineArrowRightOnRectangle } from 'react-icons/hi2';
 import { UserContext, UserDetailsContext } from '@/contexts/layout';
-import { useSupabase } from '@/app/supabase-provider';
 import { useUnregisterToken } from '@/hooks/features/commons/notification/use-unregister-token';
 import {
   clearStoredNotificationToken,
   getStoredNotificationToken
 } from '@/hooks/use-notification-permission';
+import { IRoute } from '@/types/types';
+import Image from 'next/image';
+import { PropsWithChildren, useContext } from 'react';
+import { Scrollbars } from 'react-custom-scrollbars-2';
+import { HiX } from 'react-icons/hi';
 
 export interface SidebarProps extends PropsWithChildren {
   routes: IRoute[];

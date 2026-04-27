@@ -45,7 +45,8 @@ import {
   Users,
   X
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Dialog,
   DialogContent,
@@ -53,9 +54,19 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
-import type { HostSimpleResponseForSystemAdmin } from '@/hooks/dto';
+import { EEventStatus, EVENT_STATUS_LABELS } from '@/constants/event-status';
+import { getBadgeClassNameByStatus } from '@/constants/event-badge-status';
+import type {
+  HostActivitiesResponseForSystemAdmin,
+  HostSimpleResponseForSystemAdmin
+} from '@/hooks/dto';
 import { useGetHostsofOrgsbySysAdmin } from '@/hooks/features/sys-admin/uc033-view-org-member-accounts-list/useGetHostsofOrgsbySysAdmin';
+import { useGetHostActivitesbySysAdmin } from '@/hooks/features/sys-admin/uc034-view-organization-member-account-profile/useGetHostActivitesbySysAdmin';
 import { useGetHostInfobySysAdmin } from '@/hooks/features/sys-admin/uc034-view-organization-member-account-profile/useGetHostInfobySysAdmin';
+import { useUpdateHostProfile } from '@/hooks/features/sys-admin/uc036-update-organization-member-account-profile/useUpdateHostProfile';
+import { useUploadFiles } from '@/hooks/features/commons/bucket/useUploadFiles';
+import { toast } from 'sonner';
+import { getFullSupabaseImageUrl } from '@/utils/helpers';
 
 interface Props {
   user: User | null | undefined;
@@ -111,7 +122,7 @@ const mapHostToOrganizer = (
     id: resolvedId,
     avatarUrl: item.avatarUrl,
     avatar:
-      item.avatarUrl?.trim() ||
+      getFullSupabaseImageUrl(item.avatarUrl) ||
       `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(item.id || String(resolvedId))}`,
     orgName: item.address?.trim() || 'Chưa cập nhật',
     fullName: item.fullName?.trim() || 'Chưa cập nhật',
@@ -146,6 +157,7 @@ export default function OrganizersList(props: Props) {
     | 'status';
 
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
+  const router = useRouter();
   const [organizers, setOrganizers] = useState<Organizer[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState<Organizer | null>(null);
@@ -160,15 +172,33 @@ export default function OrganizersList(props: Props) {
     null
   );
   const [editOrganizer, setEditOrganizer] = useState({
-    orgName: '',
     fullName: '',
     cccd: '',
     phone: '',
     email: '',
-    dob: ''
+    dob: '',
+    gender: true,
+    address: '',
+    detailAddress: ''
+  });
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isSavingOrganizer, setIsSavingOrganizer] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const [editHostUuid, setEditHostUuid] = useState<string | null>(null);
+  const [isLoadingEditDetails, setIsLoadingEditDetails] = useState(false);
+  const [tempHostIdForEdit, setTempHostIdForEdit] = useState<string | undefined>(undefined);
+  
+  const { data: editHostDetailsData } = useGetHostInfobySysAdmin({
+    id: tempHostIdForEdit,
+    baseUrl,
+    enabled: Boolean(tempHostIdForEdit)
   });
   const [searchField, setSearchField] = useState('name');
   const [searchQuery, setSearchQuery] = useState('');
+  const [activitySearchQuery, setActivitySearchQuery] = useState('');
+  const [activityStatusFilter, setActivityStatusFilter] = useState('all');
   const [sortField, setSortField] = useState<SortKey>('none');
   const [sortOrder, setSortOrder] = useState('desc');
   const [columnValueFilters, setColumnValueFilters] = useState<
@@ -204,12 +234,44 @@ export default function OrganizersList(props: Props) {
       enabled: openDetailModal && Boolean(selectedHostId)
     });
 
+  const { data: hostActivitiesData, isLoading: isHostActivitiesLoading } =
+    useGetHostActivitesbySysAdmin({
+      hostId: selectedHostId,
+      pageNumber: 0,
+      pageSize,
+      baseUrl,
+      enabled: openDetailModal && Boolean(selectedHostId)
+    });
+
   useEffect(() => {
     const content = hostListData?.content ?? [];
     setOrganizers(
       content.map((item, index) => mapHostToOrganizer(item, index))
     );
   }, [hostListData?.content]);
+
+  // Populate edit form when host details are loaded
+  useEffect(() => {
+    if (editHostDetailsData && tempHostIdForEdit) {
+      setEditHostUuid(editHostDetailsData.id);
+      setEditOrganizer({
+        fullName: editHostDetailsData.fullName?.trim() || 'Chưa cập nhật',
+        cccd: editHostDetailsData.cid || '-',
+        phone: editHostDetailsData.phone?.trim() || '-',
+        email: editHostDetailsData.email?.trim() || '-',
+        dob: editHostDetailsData.dob || '',
+        gender: editHostDetailsData.gender ?? true,
+        address: editHostDetailsData.address?.trim() || '',
+        detailAddress: editHostDetailsData.detailAddress?.trim() || ''
+      });
+      setAvatarPreview(
+        getFullSupabaseImageUrl(editHostDetailsData.avatarUrl) ||
+        `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(editHostDetailsData.id || '')}`
+      );
+      setIsLoadingEditDetails(false);
+      setTempHostIdForEdit(undefined); // Reset to prevent re-triggering
+    }
+  }, [editHostDetailsData, tempHostIdForEdit]);
 
   const availableOrganizations = useMemo<RegisteredOrganization[]>(() => {
     const uniqueNames = Array.from(
@@ -651,6 +713,8 @@ export default function OrganizersList(props: Props) {
     if (org) {
       setSelectedUser(org);
       setSelectedHostId(org.cccd);
+      setActivitySearchQuery('');
+      setActivityStatusFilter('all');
       setOpenDetailModal(true);
     }
   };
@@ -663,19 +727,46 @@ export default function OrganizersList(props: Props) {
     }
   };
 
+  const { uploadFileToSignedUrl } = useUploadFiles();
+
+  const { trigger: updateHostProfile } = useUpdateHostProfile({
+    hostId: editHostUuid ?? '',
+    baseUrl
+  });
+
   const handleEdit = (orgId: number) => {
     const org = organizers.find((o) => o.id === orgId);
     if (!org) return;
+    
+    setIsLoadingEditDetails(true);
     setSelectedEditUser(org);
+    setTempHostIdForEdit(org.cccd); // This will trigger the hook to fetch data
+    
+    // Set temporary fallback data while loading
     setEditOrganizer({
-      orgName: org.orgName,
       fullName: org.fullName,
-      cccd: org.cccd,
+      cccd: '-',
       phone: org.phone,
       email: org.email,
-      dob: ''
+      dob: '',
+      gender: true,
+      address: org.orgName || '',
+      detailAddress: ''
     });
+    setAvatarPreview(org.avatar);
+    setAvatarFile(null);
     setOpenEditModal(true);
+  };
+
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleConfirmLock = () => {
@@ -694,25 +785,96 @@ export default function OrganizersList(props: Props) {
     setOpenLockModal(false);
   };
 
-  const handleConfirmEdit = () => {
+  const handleConfirmEdit = async () => {
     if (!selectedEditUser) return;
 
-    setOrganizers((prev) =>
-      prev.map((org) =>
-        org.id === selectedEditUser.id
-          ? {
-              ...org,
-              orgName: editOrganizer.orgName,
-              fullName: editOrganizer.fullName,
-              cccd: editOrganizer.cccd,
-              phone: editOrganizer.phone,
-              email: editOrganizer.email,
-              dob: formatDobForDisplay(editOrganizer.dob)
-            }
-          : org
-      )
-    );
-    setOpenEditModal(false);
+    const newErrors: Record<string, string> = {};
+    const requiredFieldLabels: Record<string, string> = {
+      fullName: 'Họ và tên',
+      dob: 'Ngày sinh',
+      address: 'Địa chỉ',
+      detailAddress: 'Địa chỉ chi tiết'
+    };
+
+    if (!editOrganizer.fullName.trim())
+      newErrors.fullName = 'Vui lòng nhập họ và tên';
+    if (!editOrganizer.dob.trim())
+      newErrors.dob = 'Vui lòng nhập ngày sinh';
+    if (!editOrganizer.address.trim())
+      newErrors.address = 'Vui lòng nhập địa chỉ';
+    if (!editOrganizer.detailAddress.trim())
+      newErrors.detailAddress = 'Vui lòng nhập địa chỉ chi tiết';
+
+    if (Object.keys(newErrors).length > 0) {
+      const missingFields = Object.keys(newErrors).map(
+        (key) => requiredFieldLabels[key] || key
+      );
+      toast.error(
+        `Vui lòng điền các thông tin bắt buộc: ${missingFields.join(', ')}`
+      );
+      return;
+    }
+
+    // Helper to filter placeholder values - return null for placeholders
+    const filterPlaceholder = (value: string): string | null => {
+      const trimmed = value.trim();
+      if (trimmed === '-' || trimmed === 'Chưa cập nhật' || trimmed === '') return null;
+      return trimmed;
+    };
+
+    const requestData: any = {
+      fullName: filterPlaceholder(editOrganizer.fullName),
+      cid: filterPlaceholder(editOrganizer.cccd),
+      phone: filterPlaceholder(editOrganizer.phone),
+      email: filterPlaceholder(editOrganizer.email),
+      gender: editOrganizer.gender,
+      dob: editOrganizer.dob || null,
+      address: filterPlaceholder(editOrganizer.address),
+      detailAddress: filterPlaceholder(editOrganizer.detailAddress)
+    };
+
+    if (avatarFile) {
+      const avatarExtension = avatarFile.name.split('.').pop();
+      requestData.avatarExtension = avatarExtension ? `.${avatarExtension}` : '';
+    }
+
+    try {
+      setIsSavingOrganizer(true);
+      const response = await updateHostProfile(requestData);
+
+      if (avatarFile && response?.avatarUploadUrl) {
+        const uploadUrl = response.avatarUploadUrl.startsWith('http')
+          ? response.avatarUploadUrl
+          : `${SUPABASE_URL?.replace(/\/$/, '')}${response.avatarUploadUrl}`;
+        const uploadResult = await uploadFileToSignedUrl(avatarFile, uploadUrl);
+        if (!uploadResult?.success) {
+          throw new Error(uploadResult?.error || 'Không thể upload avatar');
+        }
+      }
+
+      toast.success('Cập nhật thông tin người tổ chức thành công!');
+
+      // Update local state
+      setOrganizers((prev) =>
+        prev.map((org) =>
+          org.id === selectedEditUser.id
+            ? {
+                ...org,
+                fullName: editOrganizer.fullName,
+                avatar: avatarPreview || org.avatar
+              }
+            : org
+        )
+      );
+
+      setOpenEditModal(false);
+      setAvatarFile(null);
+      setAvatarPreview(null);
+    } catch (error: any) {
+      toast.error(error.message || 'Không thể cập nhật thông tin người tổ chức');
+    } finally {
+      setIsSavingOrganizer(false);
+    }
   };
 
   const handleOrgSearch = (query: string) => {
@@ -790,29 +952,41 @@ export default function OrganizersList(props: Props) {
     switch (status) {
       case 'active':
         return (
-          <Badge className="bg-green-500 hover:bg-green-600">active</Badge>
+          <Badge className="bg-emerald-500 text-white hover:bg-emerald-500 hover:text-white">
+            Kích hoạt
+          </Badge>
         );
       case 'inactive':
         return (
-          <Badge className="bg-gray-500 hover:bg-gray-600">inactive</Badge>
+          <Badge className="bg-gray-500 text-white hover:bg-gray-500 hover:text-white">
+            Không kích hoạt
+          </Badge>
         );
       case 'locked':
-        return <Badge className="bg-red-500 hover:bg-red-600">locked</Badge>;
+        return (
+          <Badge className="bg-rose-500 text-white hover:bg-rose-500 hover:text-white">
+            Đã khóa
+          </Badge>
+        );
       default:
-        return <Badge>{status}</Badge>;
+        return (
+          <Badge className="bg-gray-500 text-white hover:bg-gray-500 hover:text-white">
+            {status}
+          </Badge>
+        );
     }
   };
 
   const getRoleBadge = (role: string) => {
     switch (role) {
       case 'Manager':
-        return <Badge className="bg-blue-500 hover:bg-blue-600">Manager</Badge>;
+        return <Badge className="rounded-full bg-blue-500 text-[10px] px-1.5 py-0">Manager</Badge>;
       case 'Host':
         return (
-          <Badge className="bg-purple-500 hover:bg-purple-600">Host</Badge>
+          <Badge className="rounded-full bg-purple-500 text-[10px] px-1.5 py-0">Host</Badge>
         );
       default:
-        return <Badge>{role}</Badge>;
+        return <Badge className="rounded-full text-[10px] px-1.5 py-0">{role}</Badge>;
     }
   };
 
@@ -843,7 +1017,7 @@ export default function OrganizersList(props: Props) {
     selectedUser?.fullName ||
     'Chua cap nhat';
   const detailAvatar =
-    hostDetailData?.avatarUrl?.trim() || selectedUser?.avatar || '';
+    getFullSupabaseImageUrl(hostDetailData?.avatarUrl) || selectedUser?.avatar || '';
   const detailId = hostDetailData?.id || selectedUser?.cccd || '-';
   const detailCid = hostDetailData?.cid?.trim() || '-';
   const detailAddress =
@@ -865,6 +1039,45 @@ export default function OrganizersList(props: Props) {
   const detailCreatedAt = hostDetailData?.createdAt
     ? new Date(hostDetailData.createdAt).toLocaleString('vi-VN')
     : 'Chua cap nhat';
+
+  const formatDateTimeVi = (value: string | null | undefined) => {
+    if (!value) return '-';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '-';
+    return date.toLocaleString('vi-VN');
+  };
+
+  const hostActivities = useMemo<HostActivitiesResponseForSystemAdmin[]>(
+    () => hostActivitiesData?.content ?? [],
+    [hostActivitiesData?.content]
+  );
+
+  const filteredHostActivities = useMemo(() => {
+    const normalizedQuery = normalizeText(activitySearchQuery || '');
+
+    return hostActivities.filter((activity) => {
+      const eventName = activity.eventName?.trim() || '';
+      const normalizedEventName = normalizeText(eventName);
+      const isMatchingQuery =
+        !normalizedQuery || normalizedEventName.includes(normalizedQuery);
+
+      const eventStatus = String(activity.eventStatus || '').trim();
+      const isMatchingStatus =
+        activityStatusFilter === 'all' || eventStatus === activityStatusFilter;
+
+      return isMatchingQuery && isMatchingStatus;
+    });
+  }, [activitySearchQuery, activityStatusFilter, hostActivities]);
+
+  const availableActivityStatuses = useMemo(() => {
+    return Array.from(
+      new Set(
+        hostActivities
+          .map((activity) => String(activity.eventStatus || '').trim())
+          .filter(Boolean)
+      )
+    );
+  }, [hostActivities]);
 
   return (
     <DashboardLayout
@@ -915,21 +1128,21 @@ export default function OrganizersList(props: Props) {
         </div>
         <div className="rounded-lg border border-zinc-200 bg-white text-zinc-950 shadow-sm overflow-hidden">
           <div className="w-full overflow-x-auto">
-            <Table className="min-w-[1200px] bg-white">
+            <Table className="min-w-[1000px] bg-white text-sm">
               <TableHeader className="bg-white">
                 <TableRow className="bg-white">
-                  <TableHead className="min-w-[170px]">
+                  <TableHead className="min-w-[140px]">
                     <div className="flex items-center justify-between gap-2">
-                      <span>ID</span>
-                      <SortOnlyDropdown sortKey="id" label="ID" />
+                      <span>CCCD</span>
+                      <SortOnlyDropdown sortKey="id" label="CCCD" />
                     </div>
                   </TableHead>
-                  <TableHead className="w-[80px]">
+                  <TableHead className="w-[60px]">
                     <div className="flex items-center justify-between gap-2">
                       <span>Avatar</span>
                     </div>
                   </TableHead>
-                  <TableHead className="min-w-[150px]">
+                  <TableHead className="min-w-[120px]">
                     <div className="flex items-center justify-between gap-2">
                       <span>Họ và tên</span>
                       <ValueFilterDropdown
@@ -938,7 +1151,7 @@ export default function OrganizersList(props: Props) {
                       />
                     </div>
                   </TableHead>
-                  <TableHead className="min-w-[160px]">
+                  <TableHead className="min-w-[120px]">
                     <div className="flex items-center justify-between gap-2">
                       <span>Địa chỉ</span>
                       <ValueFilterDropdown
@@ -947,7 +1160,7 @@ export default function OrganizersList(props: Props) {
                       />
                     </div>
                   </TableHead>
-                  <TableHead className="min-w-[120px]">
+                  <TableHead className="min-w-[100px]">
                     <div className="flex items-center justify-between gap-2">
                       <span>Số điện thoại</span>
                       <ValueFilterDropdown
@@ -956,19 +1169,19 @@ export default function OrganizersList(props: Props) {
                       />
                     </div>
                   </TableHead>
-                  <TableHead className="min-w-[200px]">
+                  <TableHead className="min-w-[160px]">
                     <div className="flex items-center justify-between gap-2">
                       <span>Email</span>
                       <ValueFilterDropdown columnKey="email" label="Email" />
                     </div>
                   </TableHead>
-                  <TableHead className="w-[120px] text-center whitespace-nowrap">
+                  <TableHead className="w-[80px] text-center whitespace-nowrap">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="w-full text-center">Số sự kiện</span>
+                      <span className="w-full text-center">Sự kiện</span>
                       <SortOnlyDropdown sortKey="events" label="Số sự kiện" />
                     </div>
                   </TableHead>
-                  <TableHead className="w-[110px]">
+                  <TableHead className="w-[220px]">
                     <div className="flex items-center justify-between gap-2">
                       <span>Trạng thái</span>
                       <ValueFilterDropdown
@@ -977,7 +1190,7 @@ export default function OrganizersList(props: Props) {
                       />
                     </div>
                   </TableHead>
-                  <TableHead className="w-[120px] text-center">
+                  <TableHead className="w-[100px] text-center">
                     Thao tác
                   </TableHead>
                 </TableRow>
@@ -1008,7 +1221,7 @@ export default function OrganizersList(props: Props) {
                     <TableCell>{org.phone}</TableCell>
                     <TableCell>{org.email}</TableCell>
                     <TableCell className="text-center">{org.events}</TableCell>
-                    <TableCell>{getStatusBadge(org.status)}</TableCell>
+                    <TableCell className="whitespace-nowrap">{getStatusBadge(org.status)}</TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center gap-2">
                         <Button
@@ -1026,14 +1239,6 @@ export default function OrganizersList(props: Props) {
                           onClick={() => handleEdit(org.id)}
                         >
                           <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => handleLock(org.id)}
-                        >
-                          <Lock className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
@@ -1089,6 +1294,8 @@ export default function OrganizersList(props: Props) {
             setOpenDetailModal(open);
             if (!open) {
               setSelectedHostId(undefined);
+              setActivitySearchQuery('');
+              setActivityStatusFilter('all');
             }
           }}
         >
@@ -1132,7 +1339,7 @@ export default function OrganizersList(props: Props) {
                       {detailId}
                     </p>
                     <p className="text-zinc-700">
-                      <span className="font-semibold text-zinc-500">CID:</span>{' '}
+                      <span className="font-semibold text-zinc-500">CCCD:</span>{' '}
                       {detailCid}
                     </p>
                     <p className="text-zinc-700">
@@ -1185,37 +1392,99 @@ export default function OrganizersList(props: Props) {
                     Lịch sử sự kiện đã tham gia
                   </h3>
                   <p className="mt-1 text-sm text-slate-500">
-                    Danh sách sự kiện host đã tham gia sẽ được tích hợp bằng
-                    hook.
+                    Danh sách sự kiện host đã tham gia.
                   </p>
 
                   <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
                     <Input
                       placeholder="Tìm kiếm theo tên sự kiện..."
+                      value={activitySearchQuery}
+                      onChange={(e) => setActivitySearchQuery(e.target.value)}
                       className="bg-white border-zinc-200"
                     />
-                    <Select defaultValue="all">
+                    <Select
+                      value={activityStatusFilter}
+                      onValueChange={setActivityStatusFilter}
+                    >
                       <SelectTrigger className="bg-white border-zinc-200">
                         <SelectValue placeholder="Tất cả trạng thái" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                        <SelectItem value="completed">Hoàn thành</SelectItem>
-                        <SelectItem value="ongoing">Đang diễn ra</SelectItem>
-                        <SelectItem value="upcoming">Sắp diễn ra</SelectItem>
+                        {availableActivityStatuses.map((status) => (
+                          <SelectItem key={status} value={status}>
+                            {EVENT_STATUS_LABELS[status as EEventStatus] ||
+                              status}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
 
-                  <div className="mt-4 rounded-xl border border-dashed border-zinc-300 bg-zinc-50 p-6 text-center">
-                    <p className="text-sm font-medium text-zinc-700">
-                      Chưa có dữ liệu lịch sử sự kiện
-                    </p>
-                    <p className="mt-1 text-xs text-zinc-500">
-                      Bước tiếp theo: tích hợp hook lấy danh sách sự kiện đã
-                      tham gia.
-                    </p>
-                  </div>
+                  {isHostActivitiesLoading ? (
+                    <div className="mt-4 rounded-xl border border-dashed border-zinc-300 bg-zinc-50 p-6 text-center">
+                      <p className="text-sm font-medium text-zinc-700">
+                        Đang tải dữ liệu lịch sử sự kiện...
+                      </p>
+                    </div>
+                  ) : filteredHostActivities.length === 0 ? (
+                    <div className="mt-4 rounded-xl border border-dashed border-zinc-300 bg-zinc-50 p-6 text-center">
+                      <p className="text-sm font-medium text-zinc-700">
+                        Chưa có dữ liệu lịch sử sự kiện
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="mt-4 overflow-x-auto overflow-y-auto max-h-[500px] rounded-xl border border-zinc-200">
+                      <Table className="min-w-[800px]">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Tên sự kiện</TableHead>
+                            <TableHead>Trạng thái</TableHead>
+                            <TableHead>Địa chỉ</TableHead>
+                            <TableHead>Bắt đầu</TableHead>
+                            <TableHead>Kết thúc</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredHostActivities.map((activity) => (
+                            <TableRow
+                              key={activity.sessionId}
+                              className="cursor-pointer hover:bg-zinc-100"
+                              onClick={() => router.push(`/dashboard/organizers-list/events/${activity.eventId}`)}
+                            >
+                              <TableCell className="font-medium">
+                                {activity.eventName || '-'}
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  className={getBadgeClassNameByStatus(
+                                    String(activity.eventStatus || '')
+                                  )}
+                                >
+                                  {activity.eventStatus
+                                    ? EVENT_STATUS_LABELS[
+                                        activity.eventStatus as EEventStatus
+                                      ] || activity.eventStatus
+                                    : '-'}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                {[activity.eventAddress, activity.eventDetailAddress]
+                                  .filter(Boolean)
+                                  .join(' - ') || '-'}
+                              </TableCell>
+                              <TableCell>
+                                {formatDateTimeVi(activity.sessionStartTime)}
+                              </TableCell>
+                              <TableCell>
+                                {formatDateTimeVi(activity.sessionEndTime)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1223,45 +1492,93 @@ export default function OrganizersList(props: Props) {
         </Dialog>
         {/* Edit Organizer Modal */}
         <Dialog open={openEditModal} onOpenChange={setOpenEditModal}>
-          <DialogContent className="max-w-2xl bg-white">
-            <DialogHeader>
+          <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden bg-white p-0">
+            <DialogHeader className="px-6 pt-6 pb-2">
               <DialogTitle className="text-zinc-900 dark:text-white">
                 Cập nhật thông tin người tổ chức
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-slate-400">
                 Chỉnh sửa thông tin cơ bản của người tổ chức
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  Tên tổ chức
-                </label>
-                <Input
-                  placeholder="Nhập tên tổ chức"
-                  value={editOrganizer.orgName}
-                  onChange={(e) =>
-                    setEditOrganizer({
-                      ...editOrganizer,
-                      orgName: e.target.value
-                    })
-                  }
-                  className="mt-1"
-                />
+            <div className="flex-1 overflow-y-auto px-6 pb-4 space-y-5 relative">
+              {isLoadingEditDetails && (
+                <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
+                  <div className="flex items-center gap-2 text-zinc-600">
+                    <div className="w-5 h-5 border-2 border-zinc-300 border-t-blue-500 rounded-full animate-spin" />
+                    Đang tải thông tin...
+                  </div>
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarFileChange}
+              />
+
+              <div className="flex flex-col items-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-5">
+                <Avatar className="h-24 w-24 border border-white shadow-lg shadow-purple-100/50 ring-4 ring-purple-50">
+                  {avatarPreview ? (
+                    <AvatarImage
+                      src={avatarPreview}
+                      alt={editOrganizer.fullName || selectedEditUser?.fullName}
+                    />
+                  ) : null}
+                  <AvatarFallback className="bg-gradient-to-br from-purple-600 via-violet-500 to-fuchsia-500 text-2xl font-semibold text-white">
+                    {(editOrganizer.fullName || selectedEditUser?.fullName || 'U')
+                      .split(' ')
+                      .map((part) => part[0])
+                      .join('')
+                      .slice(0, 2)}
+                  </AvatarFallback>
+                </Avatar>
+
+                <div className="text-center">
+                  <p className="text-sm font-medium text-zinc-900">
+                    Ảnh đại diện người tổ chức
+                  </p>
+                  <p className="text-xs text-zinc-500">
+                    JPG hoặc PNG, dung lượng nhỏ hơn 5MB
+                  </p>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {avatarFile ? 'Đổi ảnh khác' : 'Chọn ảnh'}
+                </Button>
               </div>
 
-              <div>
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  Họ và tên
-                </label>
-                <Input
-                  placeholder="Nhập họ và tên đầy đủ"
-                  value={editOrganizer.fullName}
-                  onChange={(e) =>
-                    setEditOrganizer({
-                      ...editOrganizer,
-                      fullName: e.target.value
+              <div className="space-y-4">
+                {/* Mã Host (ID) - Read only */}
+                <div>
+                  <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    Mã Host (ID)
+                  </label>
+                  <Input
+                    value={editHostUuid || selectedEditUser?.cccd || '-'}
+                    disabled
+                    className="mt-1 bg-zinc-100 text-zinc-500 cursor-not-allowed"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    Họ và tên
+                  </label>
+                  <Input
+                    placeholder="Nhập họ và tên đầy đủ"
+                    value={editOrganizer.fullName}
+                    onChange={(e) =>
+                      setEditOrganizer({
+                        ...editOrganizer,
+                        fullName: e.target.value
                     })
                   }
                   className="mt-1"
@@ -1321,38 +1638,99 @@ export default function OrganizersList(props: Props) {
                 />
               </div>
 
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    Ngày sinh
+                  </label>
+                  <Input
+                    type="date"
+                    value={editOrganizer.dob}
+                    onChange={(e) =>
+                      setEditOrganizer({
+                        ...editOrganizer,
+                        dob: e.target.value
+                      })
+                    }
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    Giới tính
+                  </label>
+                  <Select
+                    value={editOrganizer.gender ? 'male' : 'female'}
+                    onValueChange={(value) =>
+                      setEditOrganizer({
+                        ...editOrganizer,
+                        gender: value === 'male'
+                      })
+                    }
+                  >
+                    <SelectTrigger className="mt-1 bg-white border-zinc-200">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border-zinc-200">
+                      <SelectItem value="male">Nam</SelectItem>
+                      <SelectItem value="female">Nữ</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               <div>
                 <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  Ngày sinh
+                  Địa chỉ
                 </label>
                 <Input
-                  type="date"
-                  value={editOrganizer.dob}
+                  placeholder="Nhập địa chỉ"
+                  value={editOrganizer.address}
                   onChange={(e) =>
                     setEditOrganizer({
                       ...editOrganizer,
-                      dob: e.target.value
+                      address: e.target.value
                     })
                   }
                   className="mt-1"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-4">
-                <Button
-                  onClick={() => setOpenEditModal(false)}
-                  className="bg-red-600 hover:bg-red-700 text-white"
-                >
-                  Hủy
-                </Button>
-                <Button
-                  onClick={handleConfirmEdit}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  Cập nhật
-                </Button>
+              <div>
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  Địa chỉ chi tiết
+                </label>
+                <Input
+                  placeholder="Nhập địa chỉ chi tiết"
+                  value={editOrganizer.detailAddress}
+                  onChange={(e) =>
+                    setEditOrganizer({
+                      ...editOrganizer,
+                      detailAddress: e.target.value
+                    })
+                  }
+                  className="mt-1"
+                />
               </div>
             </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4 px-6 pb-6">
+            <Button
+              onClick={() => setOpenEditModal(false)}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={isSavingOrganizer}
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={handleConfirmEdit}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              disabled={isSavingOrganizer || isLoadingEditDetails}
+            >
+              {isSavingOrganizer ? 'Đang lưu...' : isLoadingEditDetails ? 'Đang tải...' : 'Cập nhật'}
+            </Button>
+          </div>
           </DialogContent>
         </Dialog>
         {/* Lock Confirmation Modal */}

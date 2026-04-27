@@ -100,7 +100,7 @@ interface Props {
   userDetails: { [x: string]: any } | null;
 }
 
-type VolunteerActivityStatus = 'completed' | 'ongoing' | 'cancelled';
+type VolunteerActivityStatus = 'completed' | 'ongoing' | 'cancelled' | 'approved';
 
 type VolunteerActivity = {
   id: string;
@@ -384,9 +384,13 @@ export default function VolunteersList(props: Props) {
       return 'cancelled';
     }
 
+    // APPROVED (đã phê duyệt) is different from COMPLETED (hoàn thành)
+    if (normalizedApplicationStatus === 'APPROVED') {
+      return 'approved';
+    }
+
     if (
       normalizedApplicationStatus === 'COMPLETED' ||
-      normalizedApplicationStatus === 'APPROVED' ||
       normalizedEventStatus === 'COMPLETED' ||
       normalizedEventStatus === 'ENDED'
     ) {
@@ -1963,8 +1967,9 @@ export default function VolunteersList(props: Props) {
 
                       <TableCell>
                         <Avatar className="h-10 w-10">
-                          <AvatarImage src={user.avatar} alt={user.fullName} />
-
+                          {user.avatar ? (
+                            <AvatarImage src={user.avatar} alt={user.fullName} />
+                          ) : null}
                           <AvatarFallback>
                             {user.fullName.charAt(0)}
                           </AvatarFallback>
@@ -2021,14 +2026,6 @@ export default function VolunteersList(props: Props) {
                             <Pencil className="h-4 w-4" />
                           </Button>
 
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleLock(user.id)}
-                          >
-                            <Lock className="h-4 w-4" />
-                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -2316,6 +2313,8 @@ export default function VolunteersList(props: Props) {
                       <SelectContent className="bg-white text-zinc-900 border border-zinc-200">
                         <SelectItem value="all">Tất cả trạng thái</SelectItem>
 
+                        <SelectItem value="approved">Đã phê duyệt</SelectItem>
+
                         <SelectItem value="completed">Hoàn thành</SelectItem>
 
                         <SelectItem value="ongoing">Đang diễn ra</SelectItem>
@@ -2339,9 +2338,9 @@ export default function VolunteersList(props: Props) {
                         Không có hoạt động phù hợp.
                       </div>
                     ) : (
-                      filteredVolunteerActivities.map((activity) => (
+                      filteredVolunteerActivities.map((activity, index) => (
                         <div
-                          key={activity.id}
+                          key={`${activity.id}-${index}`}
                           role="button"
                           tabIndex={0}
                           onClick={() =>
@@ -2367,17 +2366,21 @@ export default function VolunteersList(props: Props) {
                               <Badge
                                 className={`rounded-full px-2.5 py-0.5 text-xs ${
                                   activity.status === 'completed'
-                                    ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
-                                    : activity.status === 'ongoing'
-                                      ? 'border border-blue-200 bg-blue-50 text-blue-700'
-                                      : 'border border-rose-200 bg-rose-50 text-rose-700'
+                                    ? 'border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-50'
+                                    : activity.status === 'approved'
+                                      ? 'border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-50'
+                                      : activity.status === 'ongoing'
+                                        ? 'border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-50'
+                                        : 'border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-50'
                                 }`}
                               >
                                 {activity.status === 'completed'
                                   ? 'Hoàn thành'
-                                  : activity.status === 'ongoing'
-                                    ? 'Đang diễn ra'
-                                    : 'Đã hủy'}
+                                  : activity.status === 'approved'
+                                    ? 'Đã phê duyệt'
+                                    : activity.status === 'ongoing'
+                                      ? 'Đang diễn ra'
+                                      : 'Đã hủy'}
                               </Badge>
 
                               <ChevronRight className="h-4 w-4 text-zinc-400" />

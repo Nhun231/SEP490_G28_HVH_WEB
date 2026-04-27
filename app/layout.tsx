@@ -13,7 +13,7 @@ const roboto = Roboto({
 
 export default function RootLayout({ children }: PropsWithChildren) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="vi" suppressHydrationWarning>
       <head>
         <title>
           Hà Nội Thiện Nguyện - Nền tảng kết nối tình nguyện viên và tổ chức từ
